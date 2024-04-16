@@ -14,7 +14,12 @@
 #include"GBBMonitorManager\SerializedBuffer.h"
 #include<AgentBase.h>
 #include"Infra_HT_GBB_Defs.h"
+#include"EntityFunc.h"
 EntityIterator;
+
+void SetEntity(Entity CurrentEntity) {
+
+}
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
@@ -33,11 +38,23 @@ int main(int argc, char *argv[]) {
 			GBBMonitor::SerializedBuffer* p2 = NULL;
 			GBBMonitor::SerializedBuffer* p3 = NULL;
 			GBBMonitor::SerializedBuffer* p4 = NULL;
+			//获取静态staticdata
 			if (theMonitorManager.GetEntitiesData()) {
 				//获取填充的数据
+				std::list<Entity> m_lstAllEntities;
 				p1 = theMonitorManager.GetSerializedBuffer();
-				for (const char* p = p1->GetBuffer(); *p != '\0'; ++p) {
-					qDebug() << *p;
+				//for (const char* p = p1->GetBuffer(); *p != '\0'; ++p) {
+ 				//	qDebug() << *p;
+				//}
+				//GetAllEntities，获取系统中结构数目BufferLength
+				void* ptr = (void*)p1->GetBuffer();
+				int CurrentPos = 0;
+				CurrentPos	+= sizeof(int32_t);
+				int NumOfEntities = *reinterpret_cast<const int32_t*>(static_cast<const char*>(ptr) + (CurrentPos - sizeof(int32_t)));
+				//SetAllEntities实现
+				for (int i = 0; i < NumOfEntities; ++i) {
+					m_lstAllEntities.push_back(Entity());
+					EntityFunc::SetStringFromPtr
 				}
 				status_t status = SUCCESS;
 				EntityIterator iter(HT_GBB::EntityMission, status);
@@ -47,16 +64,6 @@ int main(int argc, char *argv[]) {
 				}
 				
 			}
-			if (theMonitorManager.GetDesriptorsMappingToStructures()) {
-				p2 = theMonitorManager.GetSerializedBuffer();
-			}
-			if (theMonitorManager.GetMessagesData()) {
-				p3 = theMonitorManager.GetSerializedBuffer();
-			}
-			if(theMonitorManager.GetStructuresData()) {
-				qDebug() << "hello";
-			}
-
             if (theProcessHelper->waitForBlackboardToStart() == SUCCESS)
             {
 				
