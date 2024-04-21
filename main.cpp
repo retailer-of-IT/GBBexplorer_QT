@@ -34,20 +34,14 @@ int main(int argc, char *argv[]) {
         {
             bool flag = theMonitorManager.Init();
 			qDebug() << flag;
-			GBBMonitor::SerializedBuffer* p1 = NULL;
-			//获取静态staticdata
-			if (theMonitorManager.GetEntitiesData()) {
-				//获取填充的数据
-				std::list<Entity> m_lstAllEntities;
-				p1 = theMonitorManager.GetSerializedBuffer();
-				//GetAllEntities，获取系统中结构数目BufferLength
-				const void* ptr = (const void*)p1->GetBuffer();
-				EntityFunc entityfun;
-				int num = entityfun.GetInteger(ptr);
-				////SetAllEntities实现
-				//for (int i = 0; i < NumOfEntities; ++i) {
-				//	m_lstAllEntities.push_back(Entity());
-				//}
+				EntityFunc entityfunc;
+				int32_t num;
+				if (entityfunc.GetAllEntities()) {
+					num = entityfunc.BufferLength;
+				}
+				qDebug() << num;
+				//初始化实体
+				//entityfunc.InitEntities();
 				status_t status = SUCCESS;
 				EntityIterator iter(HT_GBB::EntityMission, status);
 				for (iter.begin(); !iter.end(); iter.next()) {
@@ -61,7 +55,6 @@ int main(int argc, char *argv[]) {
 				
             }
         }
-    }
     tabWidget.addTab(new QWidget(), "tab_1");
     tabWidget.addTab(new QWidget(), "tab_2");
     //detail detailpage;

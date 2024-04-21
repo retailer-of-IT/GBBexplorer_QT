@@ -1,26 +1,20 @@
 #include "EntityFunc.h"
-#include <algorithm>
-#include <string>
-#include <unordered_map>
-
 
 EntityFunc::EntityFunc()
 {
 }
 
-//变量定义
-int CurrentPos = 0;
-const char* EntityIntPtr;
 
-
-int32_t EntityFunc::GetInteger(const void * CurrentPtr)
+//获取当前指针，并进行按需递增（4位）
+int32_t EntityFunc::GetInteger(const void* CurrentPtr)
 {
 	CurrentPos += sizeof(int32_t);
 	int NumOfEntities = *reinterpret_cast<const int32_t*>(static_cast<const char*>(CurrentPtr) + (CurrentPos - sizeof(int32_t)));
 	return NumOfEntities;
 }
 
-void EntityFunc::SetStringFromPtr(const char* CurrentIntPtr, std::string& StringName)
+//设置string
+void EntityFunc::SetStringFromPtr(const int* CurrentIntPtr, std::string& StringName)
 {
 	StringName.clear();
 	char temp;
@@ -40,12 +34,21 @@ void EntityFunc::SetStringFromPtr(const char* CurrentIntPtr, std::string& String
 	}
 }
 
+
+//GetAllEntities，获取系统中结构数目BufferLength
 bool EntityFunc::GetAllEntities()
 {
-	return false;
+	//获取静态staticdata
+	if (theMonitorManager.GetEntitiesData()) {
+		//获取填充的数据
+		GBBMonitor::SerializedBuffer* p = theMonitorManager.GetSerializedBuffer();
+		const void* ptr = (const void*)p->GetBuffer();
+		BufferLength = GetInteger(ptr);
+	}
+	return true;
 }
 
-//
+
 //void EntityFunc::SetEntity(Entity& CurrentEntity)
 //{
 //	//Entity结构在entity.cs中定义，如何在entity.h中引用,待解决
@@ -67,10 +70,40 @@ bool EntityFunc::GetAllEntities()
 //
 //	std::sort(CurrentEntity.AllDescriptores.begin(), CurrentEntity.AllDescriptores.end());
 //
-//	m_DicAllEntitiesEnum[CurrentEntity.m_sName] = CurrentEntity.EnumType;
+//	m_dicAllEntitiesEnum[CurrentEntity.m_sName] = CurrentEntity.EnumType;
 //	m_DicAllEntitiesNameByEnum[CurrentEntity.EnumType] = CurrentEntity.m_sName;
 //}
+//
+////设置实体实现
+//void EntityFunc::SetAllEntities()
+//{
+//	int32_t NumOfEntities = GetInteger(EntityIntPtr);
+//
+//	for (int i = 0; i < NumOfEntities; ++i)
+//	{
+//		m_lstAllEntities.push_back(Entity());
+//		SetEntity(m_lstAllEntities.back());
+//
+//		// In case the entity doesn't define in the GBBConfig
+//		if (m_lstAllEntities.back().MaxEntityNum == 0)
+//		{
+//			m_lstAllEntities.pop_back();
+//		}
+//	}
+//
+//	std::sort(m_lstAllEntities.begin(), m_lstAllEntities.end(),
+//		[](const auto& e1, const auto& e2) { return e1->Compare(e2.get()); });
+//}
 
+//void EntityFunc::InitEntities()
+//{
+//	int* EntityIntPtr = nullptr;
+//	CurrentPos = 0;
+//	if (GetAllEntities())             // Get the pointer for all the Entities from the GBBMonitorManager
+//	{
+//		SetAllEntities();             // Read from pointer and create all the Entities
+//	}
+//}
 
 EntityFunc::~EntityFunc()
 {
