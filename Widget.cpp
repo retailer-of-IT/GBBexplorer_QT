@@ -33,7 +33,7 @@ void Widget::initForm()
 {
     if(Data)
     {
-        //shu
+        //这里用于检测GBBExplorer是否已经启动，能连接到数据
     }
     else
     {

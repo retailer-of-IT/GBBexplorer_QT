@@ -186,6 +186,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="EntityFunc.cpp" />
+    <ClCompile Include="StaticData.cpp" />
     <ClCompile Include="Widget.cpp" />
     <ClCompile Include="detail.cpp" />
     <ClCompile Include="main.cpp" />
@@ -221,6 +222,7 @@
     </QtUic>
   </ItemGroup>
   <ItemGroup>
+    <QtMoc Include="StaticData.h" />
     <QtMoc Include="EntityFunc.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
