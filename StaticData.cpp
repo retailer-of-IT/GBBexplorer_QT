@@ -40,11 +40,11 @@ struct M_EntityInfo
 struct M_MessageInfo
 {
 	int EnumType;
-	//bool m_bIsDescAsMessage;
-	//bool m_bWithAck;
+	bool m_bIsDescAsMessage;
+	bool m_bWithAck;
 	int MaxMessageNum;
 	std::string MessageName = "";
-	M_DescriptorsInfo m_cCurrentDescriptor;
+	//M_DescriptorsInfo m_cCurrentDescriptor;
 };
 
 
@@ -68,13 +68,17 @@ void StaticData::InitDescriptors()
 		int NumMax = *(int*)(ptr1); ptr1 += sizeof(int);// 结构数据的总个数
 		for (int i = 0; i < NumMax; ++i)
 		{
-			vecDescriptorsInfo.push_back(M_DescriptorsInfo());
-			M_DescriptorsInfo &cInfo = vecDescriptorsInfo[i];
+			//vecDescriptorsInfo.push_back(M_DescriptorsInfo());
+			M_DescriptorsInfo &cInfo = M_DescriptorsInfo();
+			//M_DescriptorsInfo &cInfo = vecDescriptorsInfo[i];
 			ptr1 += SetStringFromPtr(ptr1, cInfo.DescriptorName);
 			ptr1 += SetStringFromPtr(ptr1, cInfo.StructureName);
 			cInfo.EnumType = *(int*)(ptr1); ptr1 += sizeof(int);
 			cInfo.MaxMessageNum = *(int*)(ptr1); ptr1 += sizeof(int);
-			vecDescriptorsInfo.push_back(cInfo);
+			//调试发现只有maxmessagenum!=0的才会显示在界面上，这里做修改
+			if (cInfo.MaxMessageNum != 0) {
+				vecDescriptorsInfo.push_back(cInfo);
+			}
 		}
 	}
 }
@@ -146,14 +150,20 @@ void StaticData::InitMessages()
 			M_MessageInfo &cInfo = vecMessageInfo[i];
 			ptr1 += SetStringFromPtr(ptr1, cInfo.MessageName);
 			cInfo.EnumType = *(int*)(ptr1); ptr1 += sizeof(int);
+			cInfo.m_bIsDescAsMessage = *(bool*)(ptr1); ptr1 += sizeof(bool);
+			cInfo.m_bWithAck = *(bool*)(ptr1); ptr1 += sizeof(bool);
 			cInfo.MaxMessageNum = *(int*)(ptr1); ptr1 += sizeof(int);
-			ptr1 += SetStringFromPtr(ptr1, cInfo.m_cCurrentDescriptor.DescriptorName);
-			ptr1 += SetStringFromPtr(ptr1, cInfo.m_cCurrentDescriptor.StructureName);
-			cInfo.m_cCurrentDescriptor.EnumType = *(int*)(ptr1); ptr1 += sizeof(int);
-			cInfo.m_cCurrentDescriptor.MaxMessageNum = *(int*)(ptr1); ptr1 += sizeof(int);
-			//cInfo.m_bIsDescAsMessage = *(bool*)(ptr1); ptr1 += sizeof(bool);
-			//cInfo.m_bWithAck = *(bool*)(ptr1); ptr1 += sizeof(bool);
+			//ptr1 += SetStringFromPtr(ptr1, cInfo.m_cCurrentDescriptor.DescriptorName);
+			//ptr1 += SetStringFromPtr(ptr1, cInfo.m_cCurrentDescriptor.StructureName);
+			//cInfo.m_cCurrentDescriptor.EnumType = *(int*)(ptr1); ptr1 += sizeof(int);
+			//cInfo.m_cCurrentDescriptor.MaxMessageNum = *(int*)(ptr1); ptr1 += sizeof(int);
+
 		}
+		//char a[10000];
+		//for (int i = 0; i < 10000; i++) {
+		//	a[i] = *ptr1;
+		//	ptr1++;
+		//}
 	}
 }
 
