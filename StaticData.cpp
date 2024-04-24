@@ -153,10 +153,8 @@ void StaticData::InitMessages()
 			cInfo.m_bIsDescAsMessage = *(bool*)(ptr1); ptr1 += sizeof(bool);
 			cInfo.m_bWithAck = *(bool*)(ptr1); ptr1 += sizeof(bool);
 			cInfo.MaxMessageNum = *(int*)(ptr1); ptr1 += sizeof(int);
-			//ptr1 += SetStringFromPtr(ptr1, cInfo.m_cCurrentDescriptor.DescriptorName);
-			//ptr1 += SetStringFromPtr(ptr1, cInfo.m_cCurrentDescriptor.StructureName);
-			//cInfo.m_cCurrentDescriptor.EnumType = *(int*)(ptr1); ptr1 += sizeof(int);
-			//cInfo.m_cCurrentDescriptor.MaxMessageNum = *(int*)(ptr1); ptr1 += sizeof(int);
+			//调试得出后面还有一个重复的messagename,有点奇怪，这里指针再移动一个字符串距离
+			ptr1 += SetStringFromPtr(ptr1, cInfo.MessageName);
 
 		}
 		//char a[10000];
