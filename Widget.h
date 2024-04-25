@@ -15,7 +15,7 @@ class Widget : public QWidget
 public:
     explicit Widget(QWidget *parent = 0);
     ~Widget();
-    bool Data;
+	bool Data = false;
 
 private:
     Ui::Widget *ui;

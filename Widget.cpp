@@ -1,5 +1,6 @@
 ﻿#include "Widget.h"
 #include "ui_widget.h"
+#include "StaticData.h"
 #include <QTableWidgetItem>
 #include <QStandardItemModel>
 #include <QTableView>
@@ -13,7 +14,7 @@
 #include <QTreeWidgetItem>
 #include <QStandardItemModel>
 #include <QStandardItem>
-
+#include "StaticData.h"
 Widget::Widget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Widget)
@@ -33,10 +34,12 @@ void Widget::initForm()
 {
     if(Data)
     {
-        //这里用于检测GBBExplorer是否已经启动，能连接到数据
+        //这里用于检测GBBExplorer是否已经启动，能连接到数据,false为未连接
+		qDebug() << u8"GBB未启动，连接失败";
     }
     else
     {
+		qDebug() << u8"GBB启动成功";
         QStandardItemModel* model = new QStandardItemModel(this);
         model->setHorizontalHeaderItem(0,new QStandardItem("GBB"));
         model->setHorizontalHeaderItem(1,new QStandardItem("Entities"));
@@ -45,6 +48,18 @@ void Widget::initForm()
         model->setHorizontalHeaderItem(4,new QStandardItem("%"));
 
         //预设一些值
+		StaticData staticdata;
+		staticdata.InitEntities();
+		QVector<M_EntityInfo> vecEntityInfo;
+		for (int i = 0; i < vecEntityInfo.size(); i++)
+		{
+			model->setItem(i, 0, new QStandardItem(vecEntityInfo.EnumType));
+			model->setItem(i, 1, new QStandardItem(vecEntityInfo.EntityName));
+			model->setItem(0, 2, new QStandardItem(0));
+			model->setItem(0, 3, new QStandardItem(vecEntityInfo.MaxEntityNum));
+			double rate = 0;
+			model->setItem(0, 0, new QStandardItem(rate));
+		}
         model->setItem(0, 0, new QStandardItem(u8"张三"));
         model->setItem(0, 1, new QStandardItem("3"));
         model->setItem(0, 2, new QStandardItem(u8"男"));
