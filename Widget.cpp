@@ -47,22 +47,23 @@ void Widget::initForm()
         model->setHorizontalHeaderItem(3,new QStandardItem(u8"最大"));
         model->setHorizontalHeaderItem(4,new QStandardItem("%"));
 
-        //预设一些值
+		//初始化实例
 		StaticData staticdata;
-		staticdata.InitEntities();
-		QVector<M_EntityInfo> vecEntityInfo;
-		for (int i = 0; i < vecEntityInfo.size(); i++)
+
+        //读取静态实体数据显示
+		staticdata.InitEntities();	
+		for (int i = 0; i < staticdata.vecEntityInfo.size(); i++)
 		{
-			model->setItem(i, 0, new QStandardItem(vecEntityInfo.EnumType));
-			model->setItem(i, 1, new QStandardItem(vecEntityInfo.EntityName));
-			model->setItem(0, 2, new QStandardItem(0));
-			model->setItem(0, 3, new QStandardItem(vecEntityInfo.MaxEntityNum));
-			double rate = 0;
-			model->setItem(0, 0, new QStandardItem(rate));
+			QString EnumType = QString::number(staticdata.vecEntityInfo[i].EnumType);
+			QString EntityName = QString::fromStdString(staticdata.vecEntityInfo[i].EntityName);
+			QString MaxEntityNum = QString::number(staticdata.vecEntityInfo[i].MaxEntityNum);
+			model->setItem(i, 0, new QStandardItem(EnumType));
+			model->setItem(i, 1, new QStandardItem(EntityName));
+			model->setItem(i, 2, new QStandardItem("0"));
+			model->setItem(i, 3, new QStandardItem(MaxEntityNum));
+			//double rate = 0;
+			model->setItem(i, 4, new QStandardItem("0"));
 		}
-        model->setItem(0, 0, new QStandardItem(u8"张三"));
-        model->setItem(0, 1, new QStandardItem("3"));
-        model->setItem(0, 2, new QStandardItem(u8"男"));
 
         ui->tableView_1->setModel(model);
         ui->tableView_1->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
@@ -77,9 +78,20 @@ void Widget::initForm()
         model2->setHorizontalHeaderItem(3,new QStandardItem(u8"最大"));
         model2->setHorizontalHeaderItem(4,new QStandardItem("%"));
 
-        model2->setItem(0, 0, new QStandardItem(u8"张三"));
-        model2->setItem(0, 1, new QStandardItem("4"));
-        model2->setItem(0, 2, new QStandardItem(u8"男"));
+		//读取message数据显示
+		staticdata.InitMessages();
+		for (int i = 0; i < staticdata.vecMessageInfo.size(); i++)
+		{
+			QString EnumType = QString::number(staticdata.vecMessageInfo[i].EnumType);
+			QString MessageName = QString::fromStdString(staticdata.vecMessageInfo[i].MessageName);
+			QString MaxMessageNum = QString::number(staticdata.vecMessageInfo[i].MaxMessageNum);
+			model2->setItem(i, 0, new QStandardItem(EnumType));
+			model2->setItem(i, 1, new QStandardItem(MessageName));
+			model2->setItem(i, 2, new QStandardItem("0"));
+			model2->setItem(i, 3, new QStandardItem(MaxMessageNum));
+			//double rate = 0;
+			model2->setItem(i, 4, new QStandardItem("0"));
+		}
 
         ui->tableView_2->setModel(model2);
         ui->tableView_2->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
@@ -94,9 +106,20 @@ void Widget::initForm()
         model3->setHorizontalHeaderItem(3,new QStandardItem(u8"最大"));
         model3->setHorizontalHeaderItem(4,new QStandardItem("%"));
 
-        model3->setItem(0, 0, new QStandardItem(u8"张三"));
-        model3->setItem(0, 1, new QStandardItem("5"));
-        model3->setItem(0, 2, new QStandardItem(u8"男"));
+		//读取descriptors数据显示
+		staticdata.InitDescriptors();
+		for (int i = 0; i < staticdata.vecDescriptorsInfo.size(); i++)
+		{
+			QString EnumType = QString::number(staticdata.vecDescriptorsInfo[i].EnumType);
+			QString DescriptorName = QString::fromStdString(staticdata.vecDescriptorsInfo[i].DescriptorName);
+			QString MaxDescriptorNum = QString::number(staticdata.vecDescriptorsInfo[i].MaxMessageNum);
+			model3->setItem(i, 0, new QStandardItem(EnumType));
+			model3->setItem(i, 1, new QStandardItem(DescriptorName));
+			model3->setItem(i, 2, new QStandardItem("0"));
+			model3->setItem(i, 3, new QStandardItem(MaxDescriptorNum));
+			//double rate = 0;
+			model3->setItem(i, 4, new QStandardItem("0"));
+		}
 
         ui->tableView_3->setModel(model3);
         ui->tableView_3->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);

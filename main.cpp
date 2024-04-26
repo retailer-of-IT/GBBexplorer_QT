@@ -29,11 +29,11 @@ int main(int argc, char *argv[]) {
 			&&theProcessHelper->waitForBlackboardToStart() == SUCCESS
 			&&theMonitorManager.Init())
 		{
-			StaticData staticdata;
-			staticdata.InitDescriptors();
-			staticdata.InitStructures();
-			staticdata.InitEntities();
-			staticdata.InitMessages();
+			//StaticData staticdata;
+			//staticdata.InitDescriptors();
+			//staticdata.InitStructures();
+			//staticdata.InitEntities();
+			//staticdata.InitMessages();
 			//初始化实体
 			//entityfunc.InitEntities();
 			status_t status = SUCCESS;

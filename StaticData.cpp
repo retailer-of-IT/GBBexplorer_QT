@@ -1,61 +1,10 @@
 #include "StaticData.h"
-#include <QVector>
-#include <QMap>
+
 
 StaticData::StaticData()
 {
 }
 
-struct M_DescriptorsInfo
-{
-	int EnumType;
-	int MaxMessageNum;
-	std::string DescriptorName = "";
-	std::string StructureName = "";
-};
-struct M_FieldInfo
-{
-	int FieldType;
-	int ArrayMaxSize;
-	std::string FieldName = "";
-	std::string NestedName = "";
-};
-struct M_StructuresInfo
-{
-	int NumOfFields;
-	std::string StructureName = "";
-	QVector<M_FieldInfo> vecField;
-};
-
-
-struct M_EntityInfo
-{
-	int EnumType;
-	int MaxEntityNum;
-	int NumOfDescriptors;
-	std::string EntityName = "";
-	QMap<int, std::string> mapDescriptores;
-};
-
-struct M_MessageInfo
-{
-	int EnumType;
-	bool m_bIsDescAsMessage;
-	bool m_bWithAck;
-	int MaxMessageNum;
-	std::string MessageName = "";
-	//M_DescriptorsInfo m_cCurrentDescriptor;
-};
-
-
-//获取Descriptors信息
-QVector<M_DescriptorsInfo> vecDescriptorsInfo;
-//获取Structures信息
-QVector<M_StructuresInfo> vecStructuresInfo;
-//获取Entity信息
-QVector<M_EntityInfo> vecEntityInfo;
-//获取Message信息
-QVector<M_MessageInfo> vecMessageInfo;
 
 void StaticData::InitDescriptors()
 {
