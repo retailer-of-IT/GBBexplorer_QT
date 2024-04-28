@@ -50,6 +50,8 @@ void Widget::initForm()
 		//初始化实例
 		StaticData staticdata;
 
+		staticdata.InitStructures();
+
         //读取静态实体数据显示
 		staticdata.InitEntities();	
 		for (int i = 0; i < staticdata.vecEntityInfo.size(); i++)
@@ -186,7 +188,7 @@ void Widget::on_tableViewdoubleClicked(const QModelIndex &index)
     ui->tabWidget->addTab(newTab, u8"详情页");
     ui->tabWidget->setCurrentWidget(newTab);
     int openTabsCount = ui->tabWidget->count()+1;
-    qDebug(u8"整数：%d", openTabsCount);
+    //qDebug(u8"整数：%d", openTabsCount);
     ui->tabWidget->setCurrentIndex(openTabsCount);
 
     //TODO 详情页展示
