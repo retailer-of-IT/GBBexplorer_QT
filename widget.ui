@@ -43,7 +43,10 @@
    <item row="1" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
+     </property>
+     <property name="tabBarAutoHide">
+      <bool>false</bool>
      </property>
      <widget class="QWidget" name="tab_1">
       <attribute name="title">
@@ -132,7 +135,7 @@
                  </font>
                 </property>
                 <property name="text">
-                 <string>Entities</string>
+                 <string>Descriptors</string>
                 </property>
                </widget>
               </item>
@@ -197,7 +200,7 @@
                  </font>
                 </property>
                 <property name="text">
-                 <string>Descriptors</string>
+                 <string>Entities</string>
                 </property>
                </widget>
               </item>
@@ -252,11 +255,29 @@
       </layout>
       <zorder></zorder>
      </widget>
+     <widget class="detail" name="tab_3">
+      <attribute name="title">
+       <string>Tab3</string>
+      </attribute>
+     </widget>
+     <widget class="detail" name="tab_4">
+      <attribute name="title">
+       <string>Tab4</string>
+      </attribute>
+     </widget>
     </widget>
    </item>
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>detail</class>
+   <extends>QWidget</extends>
+   <header>detail.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

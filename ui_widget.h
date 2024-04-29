@@ -25,6 +25,7 @@
 #include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
+#include "detail.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -70,6 +71,8 @@ public:
     QPushButton *pushButton_2;
     QPushButton *pushButton;
     QPushButton *pushButton_4;
+    detail *tab_3;
+    detail *tab_4;
 
     void setupUi(QWidget *Widget)
     {
@@ -100,6 +103,7 @@ public:
 
         tabWidget = new QTabWidget(Widget);
         tabWidget->setObjectName(QStringLiteral("tabWidget"));
+        tabWidget->setTabBarAutoHide(false);
         tab_1 = new QWidget();
         tab_1->setObjectName(QStringLiteral("tab_1"));
         gridLayout_2 = new QGridLayout(tab_1);
@@ -284,13 +288,19 @@ public:
         gridLayout_8->addLayout(gridLayout_7, 0, 0, 1, 1);
 
         tabWidget->addTab(tab_2, QString());
+        tab_3 = new detail();
+        tab_3->setObjectName(QStringLiteral("tab_3"));
+        tabWidget->addTab(tab_3, QString());
+        tab_4 = new detail();
+        tab_4->setObjectName(QStringLiteral("tab_4"));
+        tabWidget->addTab(tab_4, QString());
 
         gridLayout->addWidget(tabWidget, 1, 0, 1, 1);
 
 
         retranslateUi(Widget);
 
-        tabWidget->setCurrentIndex(0);
+        tabWidget->setCurrentIndex(1);
 
 
         QMetaObject::connectSlotsByName(Widget);
@@ -304,17 +314,19 @@ public:
         label->setText(QApplication::translate("Widget", "Entities", nullptr));
         label_2->setText(QApplication::translate("Widget", "Messages", nullptr));
         tabWidget->setTabText(tabWidget->indexOf(tab_1), QApplication::translate("Widget", "Tab 1", nullptr));
-        label_5->setText(QApplication::translate("Widget", "Entities", nullptr));
+        label_5->setText(QApplication::translate("Widget", "Descriptors", nullptr));
         pushButton_5->setText(QApplication::translate("Widget", "\345\210\267\346\226\260", nullptr));
         pushButton_7->setText(QApplication::translate("Widget", "\346\270\205\351\231\244\346\211\200\346\234\211", nullptr));
         pushButton_8->setText(QApplication::translate("Widget", "\345\205\250\351\200\211", nullptr));
         pushButton_6->setText(QApplication::translate("Widget", "PushButton", nullptr));
-        label_4->setText(QApplication::translate("Widget", "Descriptors", nullptr));
+        label_4->setText(QApplication::translate("Widget", "Entities", nullptr));
         pushButton_3->setText(QApplication::translate("Widget", "\345\205\250\351\200\211", nullptr));
         pushButton_2->setText(QApplication::translate("Widget", "\346\270\205\351\231\244\346\211\200\346\234\211", nullptr));
         pushButton->setText(QApplication::translate("Widget", "\350\277\207\346\273\244\345\231\250", nullptr));
         pushButton_4->setText(QApplication::translate("Widget", "\345\210\267\346\226\260", nullptr));
         tabWidget->setTabText(tabWidget->indexOf(tab_2), QApplication::translate("Widget", "Tab 2", nullptr));
+        tabWidget->setTabText(tabWidget->indexOf(tab_3), QApplication::translate("Widget", "Tab3", nullptr));
+        tabWidget->setTabText(tabWidget->indexOf(tab_4), QApplication::translate("Widget", "Tab4", nullptr));
     } // retranslateUi
 
 };

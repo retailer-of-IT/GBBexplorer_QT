@@ -4,17 +4,19 @@
 #include <QTableWidgetItem>
 #include <QStandardItemModel>
 #include <QTableView>
-#include<QAbstractItemView>
-#include<detail.h>
-#include<qdebug.h>
-#include<iostream>
-#include<QPushButton>
-#include<QMessageBox>
-#include<qtreewidget.h>
+#include <QAbstractItemView>
+#include "detail.h"
+#include <qdebug.h>
+#include <iostream>
+#include <QPushButton>
+#include <QMessageBox>
+#include <qtreewidget.h>
 #include <QTreeWidgetItem>
 #include <QStandardItemModel>
 #include <QStandardItem>
 #include "StaticData.h"
+#include "ui_detail.h"
+
 Widget::Widget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Widget)
@@ -145,10 +147,13 @@ void Widget::initForm()
         ui->tabWidget->setTabsClosable(true);
 
         //链接双击相应事件
-        connect(ui->tableView_1,SIGNAL(doubleClicked(const QModelIndex &)),this,SLOT(on_tableViewdoubleClicked(const QModelIndex &)));
-        connect(ui->tableView_2,SIGNAL(doubleClicked(const QModelIndex &)),this,SLOT(on_tableViewdoubleClicked(const QModelIndex &)));
-        connect(ui->tableView_3,SIGNAL(doubleClicked(const QModelIndex &)),this,SLOT(on_tableViewdoubleClicked(const QModelIndex &)));
-        connect(ui->btnclose, &QPushButton::clicked, this, &QWidget::close);
+        connect(ui->tableView_1,SIGNAL(doubleClicked(const QModelIndex &)),this,SLOT(on_tableView_1doubleClicked(const QModelIndex &)));
+
+		//TODO 其他两个窗口
+        //connect(ui->tableView_2,SIGNAL(doubleClicked(const QModelIndex &)),this,SLOT(on_tableView_2doubleClicked(const QModelIndex &)));
+        //connect(ui->tableView_3,SIGNAL(doubleClicked(const QModelIndex &)),this,SLOT(on_tableView_3doubleClicked(const QModelIndex &)));
+        
+		connect(ui->btnclose, &QPushButton::clicked, this, &QWidget::close);
         //关闭窗口
         connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this,&Widget::on_removetabbtn);
         //全选
@@ -161,76 +166,92 @@ void Widget::initForm()
     }
 }
 
+
+
+
 //双击显示详情实现
-void Widget::on_tableViewdoubleClicked(const QModelIndex &index)
+void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 {
-    int curRow=index.row();//选中行
+    int curRow = index.row();//选中行
     QAbstractItemModel *modessl = ui->tableView_1->model();
     QModelIndex indextemp;
     QVariant data;
     QString infor[1];//用于临时存放行的数据
     //获取第二列的实体名称
-    indextemp=modessl->index(curRow,1);
-    data=modessl->data(indextemp);
-    infor[0]=data.toString();
-    QString show=QString(u8"序号："+infor[0]);
+    indextemp = modessl->index(curRow,1);
+    data = modessl->data(indextemp);
+    infor[0] = data.toString();
 
     //创建一个新的tab标签页
-    QWidget *newTab = new QWidget;
-    // 在新的tab页面上添加内容，例如一个标签显示被双击的单元格的文本
-
-    QVBoxLayout *layout = new QVBoxLayout;
-    QLabel *label = new QLabel(this);
-    label->setText(show);
-    layout->addWidget(label);
-    newTab->setLayout(layout);
+    detail *newTab = new detail;
     // 将新的tab页面添加到QTabWidget并跳转
-    ui->tabWidget->addTab(newTab, u8"详情页");
+	QString tabName = "Entity-" + infor[0];
+    ui->tabWidget->addTab(newTab,tabName);
     ui->tabWidget->setCurrentWidget(newTab);
     int openTabsCount = ui->tabWidget->count()+1;
     //qDebug(u8"整数：%d", openTabsCount);
-    ui->tabWidget->setCurrentIndex(openTabsCount);
+	//设置当前tab为当前新创建的tab
+    //ui->tabWidget->setCurrentIndex(openTabsCount);
+	StaticData staticdata;
+	staticdata.InitDescriptors();
+	staticdata.InitEntities();
+	staticdata.InitStructures();
 
-    //TODO 详情页展示
+	//找到所有实体对应的描述符
+	for (int i = 0; i < staticdata.vecEntityInfo[curRow].mapDescriptores.size(); i++) {
+		std::string des = staticdata.vecEntityInfo[curRow].mapDescriptores[i];
+		QString desc = QString::fromStdString(des);
+		//创建根节点
+		newTab->creatNewTopItem(desc);
+		for (auto s : staticdata.vecDescriptorsInfo) {
+			if (s.DescriptorName == des) {
+				//获取描述符的领域
+				std::string StructName = s.StructureName;
+				for (auto ss : staticdata.vecStructuresInfo) {
+					if (ss.StructureName == StructName) {
+						for (int j = 0; j < ss.NumOfFields; j++) {
+							QString field = QString::fromStdString(ss.vecField[j].FieldName);
+							newTab->creatNewItem(field);
+						}
+					}
+				}
+			}
+		}
+	}
+    ////数据显示树状tablewidget_2
+    //QTreeWidgetItem *topItem1 = new QTreeWidgetItem(QStringList()<<infor[0]);
+    //QTreeWidgetItem *topItem2 = new QTreeWidgetItem(QStringList()<<infor[0]);
+    //ui->treeWidget_2->addTopLevelItem(topItem1);
+    //topItem1->setCheckState(0,Qt::Unchecked);
+    //ui->treeWidget_2->addTopLevelItem(topItem2);
+    //topItem2->setCheckState(0,Qt::Unchecked);
+    ////隐藏表头
+    //ui->treeWidget_2->setHeaderHidden(true);
+    ////设置展开
+    ////ui->treeWidget_2->expandAll();
+    //QTreeWidgetItem *item11 = new QTreeWidgetItem(topItem1);
+    //item11->setText(0,u8"研发部");
+    //item11->setCheckState(0,Qt::Unchecked);
+    //QTreeWidgetItem *item21 = new QTreeWidgetItem(topItem2);
+    //item21->setText(0,u8"研究大部");
+    //item21->setCheckState(0,Qt::Unchecked);
+    //QTreeWidgetItem *item12 = new QTreeWidgetItem(topItem1);
+    //item12->setText(0,u8"销售部");
+    //item12->setCheckState(0,Qt::Unchecked);
+    //QTreeWidgetItem *item13 = new QTreeWidgetItem(topItem1);
+    //item13->setText(0,u8"人事部");
+    //item13->setCheckState(0,Qt::Unchecked);
 
-    //创建页面样式todo，在界面样式.md文档里
-
-
-    //数据显示树状tablewidget_2
-    //添加顶层节点，这里仅是自己伪造的数据，还没右从系统中读入
-    QTreeWidgetItem *topItem1 = new QTreeWidgetItem(QStringList()<<infor[0]);
-    QTreeWidgetItem *topItem2 = new QTreeWidgetItem(QStringList()<<infor[0]);
-    ui->treeWidget_2->addTopLevelItem(topItem1);
-    topItem1->setCheckState(0,Qt::Unchecked);
-    ui->treeWidget_2->addTopLevelItem(topItem2);
-    topItem2->setCheckState(0,Qt::Unchecked);
-    //隐藏表头
-    ui->treeWidget_2->setHeaderHidden(true);
-    //设置展开
-    //ui->treeWidget_2->expandAll();
-    QTreeWidgetItem *item11 = new QTreeWidgetItem(topItem1);
-    item11->setText(0,u8"研发部");
-    item11->setCheckState(0,Qt::Unchecked);
-    QTreeWidgetItem *item21 = new QTreeWidgetItem(topItem2);
-    item21->setText(0,u8"研究大部");
-    item21->setCheckState(0,Qt::Unchecked);
-    QTreeWidgetItem *item12 = new QTreeWidgetItem(topItem1);
-    item12->setText(0,u8"销售部");
-    item12->setCheckState(0,Qt::Unchecked);
-    QTreeWidgetItem *item13 = new QTreeWidgetItem(topItem1);
-    item13->setText(0,u8"人事部");
-    item13->setCheckState(0,Qt::Unchecked);
-
-    //tablewidget中加入
-    QTreeWidgetItem *topItem3 = new QTreeWidgetItem(ui->treeWidget);
-    QTreeWidgetItem *topItem4 = new QTreeWidgetItem(ui->treeWidget);
-    //添加顶层节点
-    topItem3->setText(0,"555");
-    ui->treeWidget->addTopLevelItem(topItem3);
-    topItem4->setText(0,"666");
-    ui->treeWidget->addTopLevelItem(topItem4);
-    topItem3->setCheckState(0,Qt::Unchecked);
-    topItem4->setCheckState(0,Qt::Unchecked);
+    ////tablewidget中加入
+    //QTreeWidgetItem *topItem3 = new QTreeWidgetItem(ui->treeWidget);
+    //QTreeWidgetItem *topItem4 = new QTreeWidgetItem(ui->treeWidget);
+    ////添加顶层节点
+    //topItem3->setText(0,"555");
+    //ui->treeWidget->addTopLevelItem(topItem3);
+    //topItem4->setText(0,"666");
+    //ui->treeWidget->addTopLevelItem(topItem4);
+    //topItem3->setCheckState(0,Qt::Unchecked);
+    //topItem4->setCheckState(0,Qt::Unchecked);
 }
 
 //删除标签
@@ -360,7 +381,6 @@ void Widget::on_treeWidget_clicked(QTreeWidgetItem *item)
         }
     }
     ui->tableView->setModel(model);
-    //qDebug()<<"hello";
 }
 
 
