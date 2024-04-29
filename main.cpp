@@ -29,13 +29,6 @@ int main(int argc, char *argv[]) {
 			&&theProcessHelper->waitForBlackboardToStart() == SUCCESS
 			&&theMonitorManager.Init())
 		{
-			//StaticData staticdata;
-			//staticdata.InitDescriptors();
-			//staticdata.InitStructures();
-			//staticdata.InitEntities();
-			//staticdata.InitMessages();
-			//初始化实体
-			//entityfunc.InitEntities();
 			status_t status = SUCCESS;
 			EntityIterator iter(HT_GBB::EntityMission, status);
 			for (iter.begin(); !iter.end(); iter.next()) {
@@ -43,10 +36,6 @@ int main(int argc, char *argv[]) {
 				status = iter.getEntityID(nMetId);
 			}
 			Widget widget;
-			QTabWidget tabWidget;
-			tabWidget.addTab(new QWidget(), "tab_1");
-			tabWidget.addTab(new QWidget(), "tab_2");
-			//detail detailpage;
 			widget.setWindowTitle("GBBExplorer");
 			widget.show();
 			return a.exec();

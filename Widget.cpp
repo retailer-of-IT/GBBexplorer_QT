@@ -153,21 +153,12 @@ void Widget::initForm()
         //connect(ui->tableView_2,SIGNAL(doubleClicked(const QModelIndex &)),this,SLOT(on_tableView_2doubleClicked(const QModelIndex &)));
         //connect(ui->tableView_3,SIGNAL(doubleClicked(const QModelIndex &)),this,SLOT(on_tableView_3doubleClicked(const QModelIndex &)));
         
+		//关闭窗口
 		connect(ui->btnclose, &QPushButton::clicked, this, &QWidget::close);
-        //关闭窗口
+        //关闭标签
         connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this,&Widget::on_removetabbtn);
-        //全选
-        //connect(ui->pushButton_8,&QPushButton::clicked,this,&Widget::on_allselectbtn);
-        //tablewidget_2勾选列显示
-        connect(ui->treeWidget_2,&QTreeWidget::itemChanged,this,&Widget::on_treeWidget_2_clicked);
-        //tablewidget勾选行显示
-        connect(ui->treeWidget,&QTreeWidget::itemChanged,this,&Widget::on_treeWidget_clicked);
-
     }
 }
-
-
-
 
 //双击显示详情实现
 void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
@@ -189,17 +180,16 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
     ui->tabWidget->addTab(newTab,tabName);
     ui->tabWidget->setCurrentWidget(newTab);
     int openTabsCount = ui->tabWidget->count()+1;
-    //qDebug(u8"整数：%d", openTabsCount);
-	//设置当前tab为当前新创建的tab
-    //ui->tabWidget->setCurrentIndex(openTabsCount);
+
 	StaticData staticdata;
 	staticdata.InitDescriptors();
 	staticdata.InitEntities();
 	staticdata.InitStructures();
 
 	//找到所有实体对应的描述符
-	for (int i = 0; i < staticdata.vecEntityInfo[curRow].mapDescriptores.size(); i++) {
-		std::string des = staticdata.vecEntityInfo[curRow].mapDescriptores[i];
+	//取出所有qmap里的值
+	QList<std::string> allValues = staticdata.vecEntityInfo[curRow].mapDescriptores.values();
+	for (const std::string& des : allValues) {
 		QString desc = QString::fromStdString(des);
 		//创建根节点
 		newTab->creatNewTopItem(desc);
@@ -261,74 +251,6 @@ void Widget::on_removetabbtn(int index)
 }
 
 
-//全选树子项目的实现
-void Widget::on_pushButton_8_clicked()
-{
-    for (int i = 0; i < ui->treeWidget_2->topLevelItemCount(); ++i) {
-        QTreeWidgetItem *item = ui->treeWidget_2->topLevelItem(i);
-        if (item == nullptr) {
-            return;
-        }
-        item->setCheckState(0,Qt::Checked);
-        int count = item->childCount();
-        for (int i = 0; i < count; ++i) {
-            QTreeWidgetItem *child = item->child(i);
-            child->setCheckState(0,Qt::Checked);
-        }
-    }
-}
-
-
-//清除按钮功能实现
-void Widget::on_pushButton_7_clicked()
-{
-    for (int i = 0; i < ui->treeWidget_2->topLevelItemCount(); ++i) {
-        QTreeWidgetItem *item = ui->treeWidget_2->topLevelItem(i);
-        if (item == nullptr) {
-            return;
-        }
-        item->setCheckState(0,Qt::Unchecked);
-        int count = item->childCount();
-        for (int i = 0; i < count; ++i) {
-            QTreeWidgetItem *child = item->child(i);
-            child->setCheckState(0,Qt::Unchecked);
-        }
-    }
-}
-
-//treeWidget_2选中/不选中触发事件
-void Widget::on_treeWidget_2_clicked(QTreeWidgetItem *item)
-{
-    QStandardItemModel* model = new QStandardItemModel(this);
-    //QAbstractItemModel *model2 = ui->tableView->model();
-    //不是根节点，才展示
-    if(item->parent() != nullptr){
-        //计算当前列数
-        int columnCount = ui->tableView->horizontalHeader()->count();
-        //int columnnum = model->columnCount();
-        qDebug()<<columnCount;
-        QString s = item->text(0);
-        if (item->checkState(0) == Qt::Checked){
-            //设置列表头名
-            model->setHorizontalHeaderItem(ui->tableView->horizontalHeader()->count(),new QStandardItem(s));
-            ui->tableView->setModel(model);
-            ui->tableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-            ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-        }
-        else{
-            for(int i=0; i<ui->tableView->horizontalHeader()->count(); i++){
-                if(ui->tableView->model()->headerData(i,Qt::Horizontal).toString() == s){
-                    //ui->tableView->horizontalHeader()->setSectionHidden(i,true);
-                    QAbstractItemModel *model = ui->tableView->model();
-                    model->removeColumn(i);
-                }
-            }
-            ui->tableView->setModel(model);
-        }
-    }
-}
-
-
 //treeWidget_2选中/不选中触发事件
 //void Widget::on_treeWidget_2_clicked(QTreeWidgetItem *item)
 //{
@@ -360,28 +282,6 @@ void Widget::on_treeWidget_2_clicked(QTreeWidgetItem *item)
 //    }
 //}
 
-//treewidget选中进行行显示
-void Widget::on_treeWidget_clicked(QTreeWidgetItem *item)
-{
-    QString s = item->text(0);
-    QAbstractItemModel *model = ui->tableView->model();
-    if (item->checkState(0) == Qt::Checked){
-        // 获取行数
-        int rowCount = model->rowCount();
-        model->insertRow(rowCount);
-        model->setData(model->index(rowCount, 0), s);
-    }
-    else{
-        for(int i=0; i<model->rowCount(); i++){
-            QModelIndex index = model->index(i, 0);
-            if(model->data(index) == s){
-                //ui->tableView->horizontalHeader()->setSectionHidden(i,true);
-                model->removeRow(i);
-            }
-        }
-    }
-    ui->tableView->setModel(model);
-}
 
 
 

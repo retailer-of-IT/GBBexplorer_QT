@@ -16,12 +16,18 @@ detail::detail(QWidget *parent) :
     ui(new Ui::detail)
 {
     ui->setupUi(this);
+
+	//tablewidget_2勾选列显示
+	connect(ui->treeWidget_2, &QTreeWidget::itemChanged, this, &detail::on_treeWidget_2_clicked);
+	//tablewidget勾选行显示
+	connect(ui->treeWidget, &QTreeWidget::itemChanged, this, &detail::on_treeWidget_clicked);
 }
 
 detail::~detail()
 {
     delete ui;
 }
+
 
 void detail::creatNewTopItem(QString name)
 {

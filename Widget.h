@@ -29,10 +29,6 @@ private slots:
 	//void on_tableView_2doubleClicked(const QModelIndex &index); //双击主页tableview_2上的名称跳转显示详情
 	//void on_tableView_3doubleClicked(const QModelIndex &index); //双击主页tableview_3上的名称跳转
     void on_removetabbtn(int index); //删除标签
-    void on_pushButton_8_clicked(); //详情页全选子项目按钮的实现
-    void on_pushButton_7_clicked();//清除按钮功能实现
-    void on_treeWidget_2_clicked(QTreeWidgetItem *item);//treeWidget_2选中/不选中触发事件，模拟GBBexplorer中选择与取消
-    void on_treeWidget_clicked(QTreeWidgetItem *item);//treewidget选中进行全部的行显示
 
 };
 
