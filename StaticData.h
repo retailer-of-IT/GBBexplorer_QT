@@ -30,7 +30,7 @@ public:
 		int FieldType;
 		int ArrayMaxSize;
 		std::string FieldName = "";
-		std::string NestedName = "";
+		std::string NestedName = "";// If the field is a structure ¨C the name of it. Empty string if not a structure
 	};
 	struct M_StructuresInfo
 	{
@@ -56,6 +56,7 @@ public:
 		bool m_bWithAck;
 		int MaxMessageNum;
 		std::string MessageName = "";
+		std::string MessageName2 = "";
 		//M_DescriptorsInfo m_cCurrentDescriptor;
 	};
 

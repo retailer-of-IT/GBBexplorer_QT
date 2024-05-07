@@ -185,7 +185,8 @@
     </QtMoc>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="EntityFunc.cpp" />
+    <ClCompile Include="detailMessage.cpp" />
+    <ClCompile Include="DynamicData.cpp" />
     <ClCompile Include="StaticData.cpp" />
     <ClCompile Include="Widget.cpp" />
     <ClCompile Include="detail.cpp" />
@@ -218,12 +219,14 @@
   <ItemGroup>
     <QtUic Include="detail.ui">
     </QtUic>
+    <QtUic Include="detailMessage.ui" />
     <QtUic Include="widget.ui">
     </QtUic>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="StaticData.h" />
-    <QtMoc Include="EntityFunc.h" />
+    <QtMoc Include="detailMessage.h" />
+    <QtMoc Include="DynamicData.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

@@ -15,7 +15,7 @@
 #include <QStandardItemModel>
 #include <QStandardItem>
 #include "StaticData.h"
-#include "ui_detail.h"
+#include "detailMessage.h"
 
 Widget::Widget(QWidget *parent) :
     QWidget(parent),
@@ -150,7 +150,7 @@ void Widget::initForm()
         connect(ui->tableView_1,SIGNAL(doubleClicked(const QModelIndex &)),this,SLOT(on_tableView_1doubleClicked(const QModelIndex &)));
 
 		//TODO 其他两个窗口
-        //connect(ui->tableView_2,SIGNAL(doubleClicked(const QModelIndex &)),this,SLOT(on_tableView_2doubleClicked(const QModelIndex &)));
+        connect(ui->tableView_2,SIGNAL(doubleClicked(const QModelIndex &)),this,SLOT(on_tableView_2doubleClicked(const QModelIndex &)));
         //connect(ui->tableView_3,SIGNAL(doubleClicked(const QModelIndex &)),this,SLOT(on_tableView_3doubleClicked(const QModelIndex &)));
         
 		//关闭窗口
@@ -160,7 +160,7 @@ void Widget::initForm()
     }
 }
 
-//双击显示详情实现
+//双击实体栏显示详情实现
 void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 {
     int curRow = index.row();//选中行
@@ -185,7 +185,7 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 	staticdata.InitDescriptors();
 	staticdata.InitEntities();
 	staticdata.InitStructures();
-
+	staticdata.InitMessages();
 	//找到所有实体对应的描述符
 	//取出所有qmap里的值
 	QList<std::string> allValues = staticdata.vecEntityInfo[curRow].mapDescriptores.values();
@@ -208,40 +208,27 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 			}
 		}
 	}
-    ////数据显示树状tablewidget_2
-    //QTreeWidgetItem *topItem1 = new QTreeWidgetItem(QStringList()<<infor[0]);
-    //QTreeWidgetItem *topItem2 = new QTreeWidgetItem(QStringList()<<infor[0]);
-    //ui->treeWidget_2->addTopLevelItem(topItem1);
-    //topItem1->setCheckState(0,Qt::Unchecked);
-    //ui->treeWidget_2->addTopLevelItem(topItem2);
-    //topItem2->setCheckState(0,Qt::Unchecked);
-    ////隐藏表头
-    //ui->treeWidget_2->setHeaderHidden(true);
-    ////设置展开
-    ////ui->treeWidget_2->expandAll();
-    //QTreeWidgetItem *item11 = new QTreeWidgetItem(topItem1);
-    //item11->setText(0,u8"研发部");
-    //item11->setCheckState(0,Qt::Unchecked);
-    //QTreeWidgetItem *item21 = new QTreeWidgetItem(topItem2);
-    //item21->setText(0,u8"研究大部");
-    //item21->setCheckState(0,Qt::Unchecked);
-    //QTreeWidgetItem *item12 = new QTreeWidgetItem(topItem1);
-    //item12->setText(0,u8"销售部");
-    //item12->setCheckState(0,Qt::Unchecked);
-    //QTreeWidgetItem *item13 = new QTreeWidgetItem(topItem1);
-    //item13->setText(0,u8"人事部");
-    //item13->setCheckState(0,Qt::Unchecked);
+}
 
-    ////tablewidget中加入
-    //QTreeWidgetItem *topItem3 = new QTreeWidgetItem(ui->treeWidget);
-    //QTreeWidgetItem *topItem4 = new QTreeWidgetItem(ui->treeWidget);
-    ////添加顶层节点
-    //topItem3->setText(0,"555");
-    //ui->treeWidget->addTopLevelItem(topItem3);
-    //topItem4->setText(0,"666");
-    //ui->treeWidget->addTopLevelItem(topItem4);
-    //topItem3->setCheckState(0,Qt::Unchecked);
-    //topItem4->setCheckState(0,Qt::Unchecked);
+
+void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
+{
+	int curRow = index.row();//选中行
+	QAbstractItemModel *modessl = ui->tableView_2->model();
+	QModelIndex indextemp;
+	QVariant data;
+	QString infor[1];//用于临时存放行的数据
+					 //获取第二列的实体名称
+	indextemp = modessl->index(curRow, 1);
+	data = modessl->data(indextemp);
+	infor[0] = data.toString();
+	//创建一个新的tab标签页
+	detailMessage *newTab = new detailMessage;
+	// 将新的tab页面添加到QTabWidget并跳转
+	QString tabName = "Message-" + infor[0];
+	ui->tabWidget->addTab(newTab, tabName);
+	ui->tabWidget->setCurrentWidget(newTab);
+	int openTabsCount = ui->tabWidget->count() + 1;
 }
 
 //删除标签

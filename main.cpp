@@ -14,8 +14,8 @@
 #include "GBBMonitorManager\SerializedBuffer.h"
 #include "AgentBase.h"
 #include "Infra_HT_GBB_Defs.h"
-#include "EntityFunc.h"
 #include "StaticData.h"
+#include "DynamicData.h"
 EntityIterator;
 
 
@@ -29,6 +29,10 @@ int main(int argc, char *argv[]) {
 			&&theProcessHelper->waitForBlackboardToStart() == SUCCESS
 			&&theMonitorManager.Init())
 		{
+			//DynamicData dynamicdata;
+			//dynamicdata.GetEntitiesIDs();
+			//dynamicdata.GetEntityEnumType(294);
+			//dynamicdata.GetEntityDynamicData(293);
 			status_t status = SUCCESS;
 			EntityIterator iter(HT_GBB::EntityMission, status);
 			for (iter.begin(); !iter.end(); iter.next()) {

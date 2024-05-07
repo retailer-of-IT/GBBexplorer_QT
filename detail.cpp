@@ -11,6 +11,7 @@
 #include <QTreeWidgetItem>
 #include <QStandardItemModel>
 #include <QStandardItem>
+#include <qheaderview.h>
 detail::detail(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::detail)
@@ -63,8 +64,8 @@ void detail::on_pushButton_7_clicked()
 void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item)
 {
 	QStandardItemModel* model = new QStandardItemModel(this);
-	//QAbstractItemModel *model2 = ui->tableView->model();
-	//不是根节点，才展示
+	//QAbstractItemModel *model = ui->tableView->model();
+	//单个根节点，只展示一个
 	if (item->parent() != nullptr) {
 		//计算当前列数
 		int columnCount = ui->tableView->horizontalHeader()->count();
@@ -73,6 +74,15 @@ void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item)
 		QString s = item->text(0);
 		if (item->checkState(0) == Qt::Checked) {
 			//设置列表头名
+			//QHeaderView* header = ui->tableView->horizontalHeader();
+			//QStringList headerLabels = QStringList();
+			//for (int i = 0; i < header->count(); i++) {
+			//	headerLabels << header->model()->headerData(i, Qt::Horizontal).toString();
+			//}
+			//headerLabels.append(s);
+			//model->insertColumn(model->columnCount());
+			//model->setHeaderData(model->columnCount() - 1, Qt::Horizontal, headerLabels.last());
+			//ui->tableView->setModel(model);
 			model->setHorizontalHeaderItem(ui->tableView->horizontalHeader()->count(), new QStandardItem(s));
 			ui->tableView->setModel(model);
 			ui->tableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
