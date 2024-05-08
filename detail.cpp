@@ -11,22 +11,22 @@
 #include <QTreeWidgetItem>
 #include <QStandardItemModel>
 #include <QStandardItem>
-#include <qheaderview.h>
 detail::detail(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::detail)
+	QWidget(parent),
+	ui(new Ui::detail)
 {
-    ui->setupUi(this);
+	ui->setupUi(this);
 
 	//tablewidget_2勾选列显示
 	connect(ui->treeWidget_2, &QTreeWidget::itemChanged, this, &detail::on_treeWidget_2_clicked);
 	//tablewidget勾选行显示
 	connect(ui->treeWidget, &QTreeWidget::itemChanged, this, &detail::on_treeWidget_clicked);
+	_model = new QStandardItemModel(ui->tableView);
 }
 
 detail::~detail()
 {
-    delete ui;
+	delete ui;
 }
 
 
@@ -63,27 +63,36 @@ void detail::on_pushButton_7_clicked()
 
 void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item)
 {
-	QStandardItemModel* model = new QStandardItemModel(this);
-	//QAbstractItemModel *model = ui->tableView->model();
-	//单个根节点，只展示一个
+	QStandardItemModel* model = (QStandardItemModel*)_model;
+	//不是根节点，才展示
 	if (item->parent() != nullptr) {
 		//计算当前列数
 		int columnCount = ui->tableView->horizontalHeader()->count();
 		//int columnnum = model->columnCount();
 		qDebug() << columnCount;
+		//设置对父节点的影响
+		QTreeWidgetItem *pp = item->parent(), *sp = pp->child(0);
+		auto sst = item->checkState(0);
+		bool flg = 0;
+		for (int i = 1; sp != Q_NULLPTR; i++) {
+			if (sst != sp->checkState(0)) {
+				flg = 1;
+				break;
+			}
+			sp = pp->child(i);
+		}
+		if (flg) {
+			if (pp->checkState(0) != Qt::PartiallyChecked)
+				pp->setCheckState(0, Qt::PartiallyChecked);
+		}
+		else {
+			pp->setCheckState(0, sst);
+		}
+
 		QString s = item->text(0);
 		if (item->checkState(0) == Qt::Checked) {
 			//设置列表头名
-			//QHeaderView* header = ui->tableView->horizontalHeader();
-			//QStringList headerLabels = QStringList();
-			//for (int i = 0; i < header->count(); i++) {
-			//	headerLabels << header->model()->headerData(i, Qt::Horizontal).toString();
-			//}
-			//headerLabels.append(s);
-			//model->insertColumn(model->columnCount());
-			//model->setHeaderData(model->columnCount() - 1, Qt::Horizontal, headerLabels.last());
-			//ui->tableView->setModel(model);
-			model->setHorizontalHeaderItem(ui->tableView->horizontalHeader()->count(), new QStandardItem(s));
+			model->setHorizontalHeaderItem(columnCount, new QStandardItem(s));
 			ui->tableView->setModel(model);
 			ui->tableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
 			ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -97,6 +106,18 @@ void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item)
 				}
 			}
 			ui->tableView->setModel(model);
+		}
+	}
+	else {
+		if (item->checkState(0) == Qt::PartiallyChecked) return;
+		QTreeWidgetItem *sp = item->child(0);
+		auto pst = item->checkState(0);
+		for (int i = 1; sp != Q_NULLPTR; i++) {
+			if (pst != sp->checkState(0)) {
+				sp->setCheckState(0, pst);
+				qDebug() << QString("checkstate set on %1").arg(sp->text(0));
+			}
+			sp = item->child(i);
 		}
 	}
 }
