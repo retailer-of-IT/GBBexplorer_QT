@@ -17,17 +17,16 @@ void StaticData::InitDescriptors()
 		int NumMax = *(int*)(ptr1); ptr1 += sizeof(int);// 结构数据的总个数
 		for (int i = 0; i < NumMax; ++i)
 		{
-			//vecDescriptorsInfo.push_back(M_DescriptorsInfo());
 			M_DescriptorsInfo &cInfo = M_DescriptorsInfo();
-			//M_DescriptorsInfo &cInfo = vecDescriptorsInfo[i];
 			ptr1 += SetStringFromPtr(ptr1, cInfo.DescriptorName);
 			ptr1 += SetStringFromPtr(ptr1, cInfo.StructureName);
 			cInfo.EnumType = *(int*)(ptr1); ptr1 += sizeof(int);
 			cInfo.MaxMessageNum = *(int*)(ptr1); ptr1 += sizeof(int);
 			//调试发现只有maxmessagenum!=0的才会显示在界面上，这里做修改
 			if (cInfo.MaxMessageNum != 0) {
-				vecDescriptorsInfo.push_back(cInfo);
+				vecDescriptorsInfoInGBBEx.push_back(cInfo);
 			}
+			vecDescriptorsInfo.push_back(cInfo);
 		}
 	}
 }
@@ -83,6 +82,11 @@ void StaticData::InitEntities()
 				cInfo.mapDescriptores[EnumType] = st1;
 			}
 		}
+		for (int i = 0; i < NumMax; ++i)
+		{
+			if (vecEntityInfo[i].MaxEntityNum != 0)
+				vecEntityInfoInGBBEx.push_back(vecEntityInfo[i]);
+		}
 	}
 }
 void StaticData::InitMessages()
@@ -102,15 +106,13 @@ void StaticData::InitMessages()
 			cInfo.m_bIsDescAsMessage = *(bool*)(ptr1); ptr1 += sizeof(bool);
 			cInfo.m_bWithAck = *(bool*)(ptr1); ptr1 += sizeof(bool);
 			cInfo.MaxMessageNum = *(int*)(ptr1); ptr1 += sizeof(int);
-			//调试得出后面还有一个重复的messagename,有点奇怪，这里指针再移动一个字符串name的距离
-			ptr1 += SetStringFromPtr(ptr1, cInfo.MessageName2);
-
+			ptr1 += SetStringFromPtr(ptr1, cInfo.DescriptorName);
 		}
-		//char a[10000];
-		//for (int i = 0; i < 10000; i++) {
-		//	a[i] = *ptr1;
-		//	ptr1++;
-		//}
+		for (int i = 0; i < NumMax; ++i)
+		{
+			if (vecMessageInfo[i].MaxMessageNum != 0)
+				vecMessageInfoInGBBEx.push_back(vecMessageInfo[i]);
+		}
 	}
 }
 

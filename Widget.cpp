@@ -5,7 +5,6 @@
 #include <QStandardItemModel>
 #include <QTableView>
 #include <QAbstractItemView>
-#include "detail.h"
 #include <qdebug.h>
 #include <iostream>
 #include <QPushButton>
@@ -14,7 +13,7 @@
 #include <QTreeWidgetItem>
 #include <QStandardItemModel>
 #include <QStandardItem>
-#include "StaticData.h"
+#include "detail.h"
 #include "detailMessage.h"
 
 Widget::Widget(QWidget *parent) :
@@ -23,6 +22,11 @@ Widget::Widget(QWidget *parent) :
 {
     ui->setupUi(this);
     Data = false;
+	//集中初始化,后面直接取即可
+	staticdata.InitDescriptors();
+	staticdata.InitEntities();
+	staticdata.InitStructures();
+	staticdata.InitMessages();
     this->initForm();
 }
 
@@ -49,22 +53,20 @@ void Widget::initForm()
         model->setHorizontalHeaderItem(3,new QStandardItem(u8"最大"));
         model->setHorizontalHeaderItem(4,new QStandardItem("%"));
 
-		//初始化实例
-		StaticData staticdata;
-
-		staticdata.InitStructures();
-
-        //读取静态实体数据显示
-		staticdata.InitEntities();	
-		for (int i = 0; i < staticdata.vecEntityInfo.size(); i++)
+		//读取entity数据显示
+		for (int i = 0; i < staticdata.vecEntityInfoInGBBEx.size(); i++)
 		{
-			QString EnumType = QString::number(staticdata.vecEntityInfo[i].EnumType);
-			QString EntityName = QString::fromStdString(staticdata.vecEntityInfo[i].EntityName);
-			QString MaxEntityNum = QString::number(staticdata.vecEntityInfo[i].MaxEntityNum);
-			model->setItem(i, 0, new QStandardItem(EnumType));
+			int EnumType = staticdata.vecEntityInfoInGBBEx[i].EnumType;
+			QStandardItem *item = new QStandardItem();
+			item->setData(EnumType, Qt::EditRole);
+			QString EntityName = QString::fromStdString(staticdata.vecEntityInfoInGBBEx[i].EntityName);
+			int MaxEntityNum = staticdata.vecEntityInfoInGBBEx[i].MaxEntityNum;
+			QStandardItem *item1 = new QStandardItem();
+			item1->setData(MaxEntityNum, Qt::EditRole);
+			model->setItem(i, 0, item);
 			model->setItem(i, 1, new QStandardItem(EntityName));
 			model->setItem(i, 2, new QStandardItem("0"));
-			model->setItem(i, 3, new QStandardItem(MaxEntityNum));
+			model->setItem(i, 3, item1);
 			//double rate = 0;
 			model->setItem(i, 4, new QStandardItem("0"));
 		}
@@ -73,6 +75,7 @@ void Widget::initForm()
         ui->tableView_1->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
         ui->tableView_1->setEditTriggers(QAbstractItemView::NoEditTriggers);
         ui->tableView_1->setFont(QFont("宋体",15));
+		ui->tableView_1->setSortingEnabled(true);
         ui->tableView_1->show();
 
         QStandardItemModel* model2 = new QStandardItemModel(this);
@@ -83,16 +86,19 @@ void Widget::initForm()
         model2->setHorizontalHeaderItem(4,new QStandardItem("%"));
 
 		//读取message数据显示
-		staticdata.InitMessages();
-		for (int i = 0; i < staticdata.vecMessageInfo.size(); i++)
+		for (int i = 0; i < staticdata.vecMessageInfoInGBBEx.size(); i++)
 		{
-			QString EnumType = QString::number(staticdata.vecMessageInfo[i].EnumType);
-			QString MessageName = QString::fromStdString(staticdata.vecMessageInfo[i].MessageName);
-			QString MaxMessageNum = QString::number(staticdata.vecMessageInfo[i].MaxMessageNum);
-			model2->setItem(i, 0, new QStandardItem(EnumType));
+			int EnumType = staticdata.vecMessageInfoInGBBEx[i].EnumType;
+			QStandardItem *item = new QStandardItem();
+			item->setData(EnumType, Qt::EditRole);
+			QString MessageName = QString::fromStdString(staticdata.vecMessageInfoInGBBEx[i].MessageName);
+			int MaxMessageNum = staticdata.vecMessageInfoInGBBEx[i].MaxMessageNum;
+			QStandardItem *item1 = new QStandardItem();
+			item1->setData(MaxMessageNum, Qt::EditRole);
+			model2->setItem(i, 0, item);
 			model2->setItem(i, 1, new QStandardItem(MessageName));
 			model2->setItem(i, 2, new QStandardItem("0"));
-			model2->setItem(i, 3, new QStandardItem(MaxMessageNum));
+			model2->setItem(i, 3, item1);
 			//double rate = 0;
 			model2->setItem(i, 4, new QStandardItem("0"));
 		}
@@ -101,6 +107,7 @@ void Widget::initForm()
         ui->tableView_2->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
         ui->tableView_2->setEditTriggers(QAbstractItemView::NoEditTriggers);
         ui->tableView_2->setFont(QFont("宋体",15));
+		ui->tableView_2->setSortingEnabled(true);
         ui->tableView_2->show();
 
         QStandardItemModel* model3 = new QStandardItemModel(this);
@@ -111,16 +118,19 @@ void Widget::initForm()
         model3->setHorizontalHeaderItem(4,new QStandardItem("%"));
 
 		//读取descriptors数据显示
-		staticdata.InitDescriptors();
-		for (int i = 0; i < staticdata.vecDescriptorsInfo.size(); i++)
+		for (int i = 0; i < staticdata.vecDescriptorsInfoInGBBEx.size(); i++)
 		{
-			QString EnumType = QString::number(staticdata.vecDescriptorsInfo[i].EnumType);
-			QString DescriptorName = QString::fromStdString(staticdata.vecDescriptorsInfo[i].DescriptorName);
-			QString MaxDescriptorNum = QString::number(staticdata.vecDescriptorsInfo[i].MaxMessageNum);
-			model3->setItem(i, 0, new QStandardItem(EnumType));
+			int EnumType = staticdata.vecDescriptorsInfoInGBBEx[i].EnumType;
+			QStandardItem *item = new QStandardItem();
+			item->setData(EnumType, Qt::EditRole);
+			QString DescriptorName = QString::fromStdString(staticdata.vecDescriptorsInfoInGBBEx[i].DescriptorName);
+			int MaxDescriptorNum = staticdata.vecDescriptorsInfoInGBBEx[i].MaxMessageNum;
+			QStandardItem *item1 = new QStandardItem();
+			item1->setData(MaxDescriptorNum, Qt::EditRole);
+			model3->setItem(i, 0, item);
 			model3->setItem(i, 1, new QStandardItem(DescriptorName));
 			model3->setItem(i, 2, new QStandardItem("0"));
-			model3->setItem(i, 3, new QStandardItem(MaxDescriptorNum));
+			model3->setItem(i, 3, item1);
 			//double rate = 0;
 			model3->setItem(i, 4, new QStandardItem("0"));
 		}
@@ -129,11 +139,11 @@ void Widget::initForm()
         ui->tableView_3->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
         ui->tableView_3->setEditTriggers(QAbstractItemView::NoEditTriggers);
         ui->tableView_3->setFont(QFont("宋体",15));
+		ui->tableView_3->setSortingEnabled(true);
         ui->tableView_3->show();
         Data = true;
 
-        //QPushButton *btnclose = new QPushButton;
-        ui->btnclose->setText(u8"关闭所有窗口");
+        ui->btnclose->setText(u8"全部关闭");
         ui->btnclose->show();
 
 
@@ -167,41 +177,66 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
     QAbstractItemModel *modessl = ui->tableView_1->model();
     QModelIndex indextemp;
     QVariant data;
-    QString infor[1];//用于临时存放行的数据
     //获取第二列的实体名称
     indextemp = modessl->index(curRow,1);
     data = modessl->data(indextemp);
-    infor[0] = data.toString();
+    QString s = data.toString();
 
     //创建一个新的tab标签页
     detail *newTab = new detail;
     // 将新的tab页面添加到QTabWidget并跳转
-	QString tabName = "Entity-" + infor[0];
+	QString tabName = "Entity-" + s;
     ui->tabWidget->addTab(newTab,tabName);
     ui->tabWidget->setCurrentWidget(newTab);
     int openTabsCount = ui->tabWidget->count()+1;
 
-	StaticData staticdata;
-	staticdata.InitDescriptors();
-	staticdata.InitEntities();
-	staticdata.InitStructures();
-	staticdata.InitMessages();
 	//找到所有实体对应的描述符
-	//取出所有qmap里的值
-	QList<std::string> allValues = staticdata.vecEntityInfo[curRow].mapDescriptores.values();
-	for (const std::string& des : allValues) {
-		QString desc = QString::fromStdString(des);
-		//创建根节点
-		newTab->creatNewTopItem(desc);
-		for (auto s : staticdata.vecDescriptorsInfo) {
-			if (s.DescriptorName == des) {
-				//获取描述符的领域
-				std::string StructName = s.StructureName;
-				for (auto ss : staticdata.vecStructuresInfo) {
-					if (ss.StructureName == StructName) {
-						for (int j = 0; j < ss.NumOfFields; j++) {
-							QString field = QString::fromStdString(ss.vecField[j].FieldName);
-							newTab->creatNewItem(field);
+	//QList<std::string> allValues = staticdata.vecEntityInfo[curRow].mapDescriptores.values();
+	QMap<int, std::string> mapDescriptors;
+	for each(StaticData::M_EntityInfo vecInfo in staticdata.vecEntityInfo)
+	{
+		if (QString::fromStdString(vecInfo.EntityName) == s) 
+		{
+			mapDescriptors = vecInfo.mapDescriptores;
+		}
+	}
+	//这里用curRow来选取实体是有问题的，如果顺序重排则不适用
+	//QMap<int, std::string> &mapDescriptors = staticdata.vecEntityInfo[curRow].mapDescriptores;
+	for each(int var in mapDescriptors.keys()) 
+	{
+		newTab->creatNewTopItem(QString::fromStdString(mapDescriptors[var]));
+		for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfo) 
+		{
+			if (desInfo.EnumType == var) 
+			{
+				for each(StaticData::M_StructuresInfo structInfo in staticdata.vecStructuresInfo)
+				{
+					if (structInfo.StructureName == desInfo.StructureName) 
+					{
+						for each(StaticData::M_FieldInfo fieldInfo in structInfo.vecField)
+						{
+							QString field = QString::fromStdString(fieldInfo.FieldName);
+							//如果nestname为空，不是结构体，直接进行展示
+							if (fieldInfo.NestedName.empty())
+							{
+								newTab->creatNewItem(newTab->topItem, field);
+							}
+							//否则，寻找名称对应的结构体,分层展示
+							else
+							{
+								newTab->creatNewItem(newTab->topItem, field);
+								for each(StaticData::M_StructuresInfo structInfo2 in staticdata.vecStructuresInfo)
+								{
+									if (structInfo2.StructureName == fieldInfo.NestedName) {
+										for each(StaticData::M_FieldInfo fieldInfo2 in structInfo2.vecField)
+										{
+											QTreeWidgetItem *item1 = new QTreeWidgetItem(newTab->item);
+											item1->setText(0, QString::fromStdString(fieldInfo2.FieldName));
+											item1->setCheckState(0, Qt::Unchecked);
+										}
+									}
+								}
+							}
 						}
 					}
 				}
@@ -217,19 +252,56 @@ void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
 	QAbstractItemModel *modessl = ui->tableView_2->model();
 	QModelIndex indextemp;
 	QVariant data;
-	QString infor[1];//用于临时存放行的数据
-					 //获取第二列的实体名称
 	indextemp = modessl->index(curRow, 1);
 	data = modessl->data(indextemp);
-	infor[0] = data.toString();
+	//获取第二列消息名称
+	QString s  = data.toString();
 	//创建一个新的tab标签页
 	detailMessage *newTab = new detailMessage;
 	// 将新的tab页面添加到QTabWidget并跳转
-	QString tabName = "Message-" + infor[0];
+	QString tabName = "Message-" + s;
 	ui->tabWidget->addTab(newTab, tabName);
 	ui->tabWidget->setCurrentWidget(newTab);
 	int openTabsCount = ui->tabWidget->count() + 1;
-}
+	//匹配消息描述符名称，找到对应结构struct
+	for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfo) 
+	{
+		if (QString::fromStdString(desInfo.DescriptorName) == s) 
+		{
+			for each(StaticData::M_StructuresInfo structInfo in staticdata.vecStructuresInfo) 
+			{
+				if (structInfo.StructureName == desInfo.StructureName) 
+				{
+					for each(StaticData::M_FieldInfo fieldInfo in structInfo.vecField)
+					{
+						QString field = QString::fromStdString(fieldInfo.FieldName);
+						//如果nestname为空，不是结构体，直接进行展示
+						if (fieldInfo.NestedName.empty())
+						{
+							newTab->creatNewTopItem(field);
+						}
+						//否则，寻找名称对应的结构体,分层展示
+						else
+						{
+							newTab->creatNewTopItem(field); 
+							for each(StaticData::M_StructuresInfo structInfo2 in staticdata.vecStructuresInfo)
+							{
+								if (structInfo2.StructureName == fieldInfo.NestedName) {
+									for each(StaticData::M_FieldInfo fieldInfo2 in structInfo2.vecField)
+									{
+										QTreeWidgetItem *item1 = new QTreeWidgetItem(newTab->topItem);
+										item1->setText(0, QString::fromStdString(fieldInfo2.FieldName));
+										item1->setCheckState(0, Qt::Unchecked);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	}
 
 //删除标签
 void Widget::on_removetabbtn(int index)
@@ -238,36 +310,6 @@ void Widget::on_removetabbtn(int index)
 }
 
 
-//treeWidget_2选中/不选中触发事件
-//void Widget::on_treeWidget_2_clicked(QTreeWidgetItem *item)
-//{
-//    //获取tableview，获取列数
-//    QStandardItemModel *model = qobject_cast<QStandardItemModel*>(ui->tableView->model());
-//    int columnCount = model->columnCount();
-//    //不是根节点，才展示
-//    qDebug()<<"hello";
-//    if(item->parent() != nullptr){
-//        QString s = item->text(0);
-//        if (item->checkState(0) == Qt::Checked){
-//            //设置列表头名
-//            QStandardItem *newHeaderItem = new QStandardItem(s);
-//            model->setHorizontalHeaderItem(columnCount, newHeaderItem);
-//            ui->tableView->setModel(model);
-//            ui->tableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-//            ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-//        }
-//        else{
-//            for(int i=0; i<columnCount; i++){
-//                QStandardItem *headerItem = model->horizontalHeaderItem(i);
-//                if (headerItem && headerItem->text() == s) {
-//                     model->removeColumn(columnCount);
-//                     break; // 如果只想删除第一个匹配的表头，可以注释掉这行
-//                }
-//            }
-//            ui->tableView->setModel(model);
-//        }
-//    }
-//}
 
 
 

@@ -2,7 +2,6 @@
 #include <QWidget>
 #include <QTableView>
 #include <Widget.h>
-#include <detail.h>
 #include "ConfigurationManager/configurationmanager.h"
 #include "TKBSchemaManager/TKBSchemaManager.h"
 #include "processhelper.h"
@@ -16,6 +15,7 @@
 #include "Infra_HT_GBB_Defs.h"
 #include "StaticData.h"
 #include "DynamicData.h"
+#include "detail.h"
 EntityIterator;
 
 
@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 			//dynamicdata.GetEntitiesIDs();
 			//dynamicdata.GetEntityEnumType(294);
 			//char* p;
-			//dynamicdata.GetEntityDynamicData(521,p);
+			//dynamicdata.GetEntityDynamicData(521,p);s
 			status_t status = SUCCESS;
 			EntityIterator iter(HT_GBB::EntityMission, status);
 			for (iter.begin(); !iter.end(); iter.next()) {

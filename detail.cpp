@@ -4,7 +4,6 @@
 #include <QStandardItemModel>
 #include <QTableView>
 #include <QAbstractItemView>
-#include "detail.h"
 #include <qdebug.h>
 #include <iostream>
 #include <QPushButton>
@@ -38,9 +37,9 @@ void detail::creatNewTopItem(QString name)
 	topItem->setCheckState(0, Qt::Unchecked);
 }
 
-void detail::creatNewItem(QString name)
+void detail::creatNewItem(QTreeWidgetItem *parentItem, QString name)
 {
-	QTreeWidgetItem *item = new QTreeWidgetItem(topItem);
+	item = new QTreeWidgetItem(parentItem);
 	item->setText(0, name);
 	item->setCheckState(0, Qt::Unchecked);
 }

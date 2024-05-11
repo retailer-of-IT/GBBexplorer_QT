@@ -13,4 +13,13 @@ public:
 
 private:
 	Ui::detailMessage ui;
+
+public:
+	QTreeWidgetItem *topItem;
+	QTreeWidgetItem *item;
+
+public:
+	void creatNewTopItem(QString name);
+	void creatNewItem(QTreeWidgetItem *parentItem, QString name);
+
 };

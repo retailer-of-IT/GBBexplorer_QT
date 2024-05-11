@@ -11,6 +11,7 @@
 #include <QObject>
 #include <QVector>
 #include <QMap>
+#include <qdebug.h>
 
 
 class StaticData : public QObject
@@ -56,18 +57,23 @@ public:
 		bool m_bWithAck;
 		int MaxMessageNum;
 		std::string MessageName = "";
-		std::string MessageName2 = "";
-		//M_DescriptorsInfo m_cCurrentDescriptor;
+		std::string DescriptorName = "";
 	};
 
+	//获取Structures信息,重要
+	QVector<M_StructuresInfo> vecStructuresInfo;
 	//获取Descriptors信息
 	QVector<M_DescriptorsInfo> vecDescriptorsInfo;
-	//获取Structures信息
-	QVector<M_StructuresInfo> vecStructuresInfo;
+	//实际gbbexplorer界面展示出来的描述符信息,最大数量为0的不展示
+	QVector<M_DescriptorsInfo> vecDescriptorsInfoInGBBEx;
 	//获取Entity信息
 	QVector<M_EntityInfo> vecEntityInfo;
+	//实际gbbexplorer界面展示出来的描述符信息,最大数量为0的不展示
+	QVector<M_EntityInfo> vecEntityInfoInGBBEx;
 	//获取Message信息
 	QVector<M_MessageInfo> vecMessageInfo;
+	//实际gbbexplorer界面展示出来的描述符信息,最大数量为0的不展示
+	QVector<M_MessageInfo> vecMessageInfoInGBBEx;
 
 public:
 	StaticData();
@@ -75,6 +81,6 @@ public:
 	void InitDescriptors();    // Create the Descriptors Static List
 	void InitEntities();       // Create the Entities Static List
 	void InitMessages();      // Create the Messages Static List
-	int SetStringFromPtr(char* CurrentIntPtr, std::string &StringName);
+	int SetStringFromPtr(char* CurrentIntPtr, std::string &StringName); // 用于切割buffer，每到\0截至
 	~StaticData();
 };
