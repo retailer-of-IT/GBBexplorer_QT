@@ -263,6 +263,21 @@ void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
 	ui->tabWidget->addTab(newTab, tabName);
 	ui->tabWidget->setCurrentWidget(newTab);
 	int openTabsCount = ui->tabWidget->count() + 1;
+	//判断是否是描述符消息，用m_bIsDescAsMessage判断
+	bool flag = false;
+	for each(StaticData::M_MessageInfo msgInfo in staticdata.vecMessageInfo)
+	{
+		if (QString::fromStdString(msgInfo.MessageName) == s)
+		{
+			if (msgInfo.m_bIsDescAsMessage)
+				flag = true;
+		}
+	}
+	newTab->creatNewTopItem("Creation Time");
+	if (flag)
+	{
+		newTab->creatNewTopItem("MET_ID");
+	}
 	//匹配消息描述符名称，找到对应结构struct
 	for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfo) 
 	{
@@ -275,7 +290,7 @@ void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
 					for each(StaticData::M_FieldInfo fieldInfo in structInfo.vecField)
 					{
 						QString field = QString::fromStdString(fieldInfo.FieldName);
-						//如果nestname为空，不是结构体，直接进行展示
+						//如果nestedname为空，不是结构体，直接进行展示
 						if (fieldInfo.NestedName.empty())
 						{
 							newTab->creatNewTopItem(field);
