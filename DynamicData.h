@@ -17,6 +17,7 @@
 #include <QDomNode>
 #include <QTextStream>
 #include <QDebug>
+#include "StaticData.h"
 
 class DynamicData : public QObject
 {
@@ -25,9 +26,10 @@ class DynamicData : public QObject
 
 public:
 	QVector<int> EntitiesId;
-	QString configPath = "D:\\CHSim-TKE_GBBExplorer\\Applications\\SSGProduct\\Config\\GBBExplorerConfig.xml";
-	char* m_descriptorBuffer = nullptr;
+	QString configPath = "D:/CHSim-TKE_GBBExplorer/Applications/SSGProduct/Config/GBBExplorerConfig.xml";
+	char* m_descriptorPtr = nullptr;
 	int m_descriptorBufferSize = 0;
+	StaticData staticdata;
 
 public:
 	DynamicData();
@@ -35,7 +37,9 @@ public:
 	int GetEntityCount(int eEntityType);//每个周期，动态获取某个实体数量
 	void GetEntitiesIDs(int eEntityType);//每个周期，获取实体的所有metid
 	int GetEntityEnumType(long pEntityMet_ID);//每个周期，根据metid获取属于哪个实体enum
-	void GetEntityDynamicData(long pEntityMet_ID); //根据id获取动态数据
-	void GetEntityDynamicData(long pEntityMet_ID, char* m_descriptorBuffer);
+	int GetMessageCount(int eMessageType); //每个周期获取某个消息的数量
+	int GetDescriptorCount(int eDescriptorType); //每个周期获取某个描述符的数量
+	void GetEntityDynamicData(int nEntityID); //根据id获取动态数据
+	void GetEntityDynamicData();//获取全部动态数据
 	~DynamicData();
 };
