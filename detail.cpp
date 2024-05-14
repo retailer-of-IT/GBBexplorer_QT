@@ -21,21 +21,18 @@ detail::detail(QWidget *parent) :
 	//tablewidget勾选行显示
 	connect(ui->treeWidget, &QTreeWidget::itemChanged, this, &detail::on_treeWidget_clicked);
 }
-
 detail::~detail()
 {
 	delete ui;
 }
-
 
 void detail::creatNewTopItem(QString name)
 {
 	topItem = new QTreeWidgetItem(QStringList() << name);
 	//当前tab界面的treewidget_2建立根节点
 	ui->treeWidget_2->addTopLevelItem(topItem);
-	topItem->setCheckState(0, Qt::Unchecked);
+//	topItem->setCheckState(0, Qt::Unchecked);
 }
-
 void detail::creatNewItem(QTreeWidgetItem *parentItem, QString name)
 {
 	item = new QTreeWidgetItem(parentItem);
@@ -43,25 +40,8 @@ void detail::creatNewItem(QTreeWidgetItem *parentItem, QString name)
 	item->setCheckState(0, Qt::Unchecked);
 }
 
-void detail::on_pushButton_7_clicked()
-{
-	for (int i = 0; i < ui->treeWidget_2->topLevelItemCount(); ++i) {
-		QTreeWidgetItem *item = ui->treeWidget_2->topLevelItem(i);
-		if (item == nullptr) {
-			return;
-		}
-		item->setCheckState(0, Qt::Unchecked);
-		int count = item->childCount();
-		for (int i = 0; i < count; ++i) {
-			QTreeWidgetItem *child = item->child(i);
-			child->setCheckState(0, Qt::Unchecked);
-		}
-	}
-}
-
 void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item)
 {
-//	QString s = (item->data(0, 0)).toString(), _s = s;
 	QString s = item->text(0), _s = s;
 	if (item->parent() != Q_NULLPTR)
 		_s = ((item->parent()->parent()!= Q_NULLPTR)?(item->parent()->parent()->text(0)):(item->parent()->text(0)))+"\n"+_s;
@@ -90,7 +70,7 @@ void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item)
 	if (item->checkState(0) == Qt::PartiallyChecked){ //子到父导致，继续向上
 		if (item->parent() != Q_NULLPTR && item->parent()->checkState(0) != Qt::PartiallyChecked) {
 			item->parent()->setCheckState(0, Qt::PartiallyChecked);
-			qDebug() << QString("\tcheckstate set on %1").arg(item->parent()->text(0));
+//			qDebug() << QString("\tcheckstate set on %1").arg(item->parent()->text(0));
 		}
 		return ; 
 	}
@@ -107,11 +87,11 @@ void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item)
 		if (flg) {
 			if (pp->checkState(0) != Qt::PartiallyChecked)
 				pp->setCheckState(0, Qt::PartiallyChecked);
-				qDebug() << QString("\tcheckstate set on %1").arg(pp->text(0));
+//				qDebug() << QString("\tcheckstate set on %1").arg(pp->text(0));
 		}
 		else {
 			pp->setCheckState(0,ist);
-			qDebug() << QString("\tcheckstate set on %1").arg(pp->text(0));
+//			qDebug() << QString("\tcheckstate set on %1").arg(pp->text(0));
 		}
 	}
 	// 更新子节点
@@ -119,12 +99,11 @@ void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item)
 	for (int i = 1; sp != Q_NULLPTR; i++) {
 		if (ist != sp->checkState(0)) {
 			sp->setCheckState(0, ist);
-			qDebug() << QString("\tcheckstate set on %1").arg(sp->text(0));
+//			qDebug() << QString("\tcheckstate set on %1").arg(sp->text(0));
 		}
 		sp = item->child(i);
 	}
 }
-
 void detail::on_treeWidget_clicked(QTreeWidgetItem * item)
 {
 	QString s = item->text(0);
@@ -147,6 +126,21 @@ void detail::on_treeWidget_clicked(QTreeWidgetItem * item)
 //	ui->tableWidget->setModel(model);
 }
 
+void detail::on_pushButton_7_clicked()
+{
+	for (int i = 0; i < ui->treeWidget_2->topLevelItemCount(); ++i) {
+		QTreeWidgetItem *item = ui->treeWidget_2->topLevelItem(i);
+		if (item == nullptr) {
+			return;
+		}
+		item->setCheckState(0, Qt::Unchecked);
+		int count = item->childCount();
+		for (int i = 0; i < count; ++i) {
+			QTreeWidgetItem *child = item->child(i);
+			child->setCheckState(0, Qt::Unchecked);
+		}
+	}
+}
 void detail::on_pushButton_8_clicked()
 {
 	for (int i = 0; i < ui->treeWidget_2->topLevelItemCount(); ++i) {

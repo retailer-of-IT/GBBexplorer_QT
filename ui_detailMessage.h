@@ -18,6 +18,7 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QTableView>
+#include <QtWidgets/QTableWidget>
 #include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
@@ -29,7 +30,7 @@ class Ui_detailMessage
 public:
     QGridLayout *gridLayout;
     QGridLayout *gridLayout_7;
-    QTableView *tableWidget;
+    QTableWidget  *tableWidget;
     QWidget *widget_3;
     QGridLayout *gridLayout_3;
     QVBoxLayout *verticalLayout_2;
@@ -51,7 +52,7 @@ public:
         gridLayout_7 = new QGridLayout();
         gridLayout_7->setSpacing(6);
         gridLayout_7->setObjectName(QStringLiteral("gridLayout_7"));
-        tableWidget = new QTableView(detailMessage);
+        tableWidget = new QTableWidget(detailMessage);
         tableWidget->setObjectName(QStringLiteral("tableWidget"));
 
         gridLayout_7->addWidget(tableWidget, 0, 1, 2, 1);
