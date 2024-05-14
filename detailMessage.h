@@ -8,7 +8,7 @@ class detailMessage : public QWidget
 	Q_OBJECT
 
 public:
-	detailMessage(QWidget *parent = Q_NULLPTR);
+	detailMessage(QWidget *parent = Q_NULLPTR) ;
 	~detailMessage();
 
 private:
@@ -19,7 +19,12 @@ public:
 	QTreeWidgetItem *item;
 
 public:
-	void creatNewTopItem(QString name);
+	void creatNewTopItem(QString name) ;
 	void creatNewItem(QTreeWidgetItem *parentItem, QString name);
+
+	private slots:
+	void on_pushButton_7_clicked();//清除按钮功能实现
+	void on_pushButton_8_clicked(); //实体详情页全选子项目按钮的实现
+	void on_treeWidget_2_clicked(QTreeWidgetItem *item);//treeWidget_2选中/不选中触发事件，模拟GBBexplorer中选择与取消
 
 };
