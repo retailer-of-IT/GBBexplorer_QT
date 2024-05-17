@@ -29,6 +29,7 @@ public:
 	QString configPath = "D:/CHSim-TKE_GBBExplorer/Applications/SSGProduct/Config/GBBExplorerConfig.xml";
 	char* m_descriptorPtr = nullptr;
 	int m_descriptorBufferSize = 0;
+	int m_nCurrentPos = 0;
 	StaticData staticdata;
 
 public:
@@ -39,7 +40,8 @@ public:
 	int GetEntityEnumType(long pEntityMet_ID);//每个周期，根据metid获取属于哪个实体enum
 	int GetMessageCount(int eMessageType); //每个周期获取某个消息的数量
 	int GetDescriptorCount(int eDescriptorType); //每个周期获取某个描述符的数量
-	void GetEntityDynamicData(int nEntityID); //根据id获取动态数据
-	void GetEntityDynamicData();//获取全部动态数据
+	//void GetEntityDynamicData(int nEntityID); //根据id获取动态数据
+	void GetEntityDynamicData(int eEntityType);//获取某个实体的全部动态数据
+	bool ReadFieldFromPtr(char* fieldPtr, StaticData::M_FieldInfo currentField, int bufferLength);//从字符流中切割某个出某个field
 	~DynamicData();
 };

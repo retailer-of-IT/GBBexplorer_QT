@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
 			//dynamicdata.GetEntityEnumType(294);
 			//char* p;
 			//dynamicdata.GetEntityDynamicData(521,p);
-			//dynamicdata.GetEntityDynamicData();
+			//dynamicdata.GetEntityDynamicData(100);
 			status_t status = SUCCESS;
 			EntityIterator iter(HT_GBB::EntityMission, status);
 			for (iter.begin(); !iter.end(); iter.next()) {

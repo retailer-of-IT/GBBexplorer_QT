@@ -50,7 +50,7 @@ void StaticData::InitStructures()
 				cInfo.vecField.push_back(M_FieldInfo());
 				M_FieldInfo &cInfo2 = cInfo.vecField[j];
 				ptr1 += SetStringFromPtr(ptr1, cInfo2.FieldName);
-				cInfo2.FieldType = *(int*)(ptr1); ptr1 += sizeof(int);
+				cInfo2.FieldType = *(FieldType*)(ptr1); ptr1 += sizeof(int);
 				ptr1 += SetStringFromPtr(ptr1, cInfo2.NestedName);
 				cInfo2.ArrayMaxSize = *(int*)(ptr1); ptr1 += sizeof(int);
 			}

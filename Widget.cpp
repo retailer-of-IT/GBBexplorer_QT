@@ -306,7 +306,7 @@ void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
 									{
 										QTreeWidgetItem *item1 = new QTreeWidgetItem(newTab->topItem);
 										item1->setText(0, QString::fromStdString(fieldInfo2.FieldName));
-										item1->setCheckState(0, Qt::Unchecked);
+										item1->setCheckState(0, Qt::Checked);
 									}
 								}
 							}
@@ -316,7 +316,7 @@ void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
 			}
 		}
 	}
-	}
+}
 
 //删除标签
 void Widget::on_removetabbtn(int index)

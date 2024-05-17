@@ -19,6 +19,30 @@ class StaticData : public QObject
 	Q_OBJECT
 
 public:
+	//定义field的枚举类型
+	enum FieldType {
+		Default = -1,
+		Integer = 0,
+		Double = 1,
+		Time = 2,
+		MET_ID = 3,
+		Latitude = 4,
+		Longitude = 5,
+		LongLong = 6,
+		Alt = 7,
+		Azimuth = 8,
+		Speed = 9,
+		Short = 10,
+		Char = 11,
+		Boolean = 12,
+		String = 13,
+		Reference = 14,
+		Enum2String = 15,
+		Long = 16,
+		Range = 17,
+		Array = 18,
+		IndexColumn = 19
+	};
 	struct M_DescriptorsInfo
 	{
 		int EnumType;
@@ -28,7 +52,7 @@ public:
 	};
 	struct M_FieldInfo
 	{
-		int FieldType;
+		FieldType FieldType;
 		int ArrayMaxSize;
 		std::string FieldName = "";
 		std::string NestedName = "";// If the field is a structure – the name of it. Empty string if not a structure
