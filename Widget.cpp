@@ -163,8 +163,8 @@ void Widget::initForm()
         connect(ui->tableView_2,SIGNAL(doubleClicked(const QModelIndex &)),this,SLOT(on_tableView_2doubleClicked(const QModelIndex &)));
         //connect(ui->tableView_3,SIGNAL(doubleClicked(const QModelIndex &)),this,SLOT(on_tableView_3doubleClicked(const QModelIndex &)));
         
-		//关闭窗口
-		connect(ui->btnclose, &QPushButton::clicked, this, &QWidget::close);
+		//关闭全部打开标签tab
+		connect(ui->btnclose, &QPushButton::clicked, this, &Widget::on_closealltabbtn);
         //关闭标签
         connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this,&Widget::on_removetabbtn);
     }
@@ -205,7 +205,7 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 	for each(int var in mapDescriptors.keys()) 
 	{
 		newTab->creatNewTopItem(QString::fromStdString(mapDescriptors[var]));
-		for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfo) 
+		for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfoInGBBEx) 
 		{
 			if (desInfo.EnumType == var) 
 			{
@@ -220,6 +220,7 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 							if (fieldInfo.NestedName.empty())
 							{
 								newTab->creatNewItem(newTab->topItem, field);
+								qDebug() << "hello";
 							}
 							//否则，寻找名称对应的结构体,分层展示
 							else
@@ -279,7 +280,7 @@ void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
 		newTab->creatNewTopItem("MET_ID");
 	}
 	//匹配消息描述符名称，找到对应结构struct
-	for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfo) 
+	for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfo)
 	{
 		if (QString::fromStdString(desInfo.DescriptorName) == s) 
 		{
@@ -317,6 +318,16 @@ void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
 		}
 	}
 }
+
+//关闭全部打开的标签(主页除外)
+void Widget::on_closealltabbtn()
+{
+	for (int i = ui->tabWidget->count() - 1; i > 0; i--) 
+	{
+		ui->tabWidget->removeTab(i);
+	}
+}
+
 
 //删除标签
 void Widget::on_removetabbtn(int index)
