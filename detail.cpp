@@ -10,20 +10,28 @@
 #include <QTreeWidgetItem>
 #include <QStandardItemModel>
 #include <QStandardItem>
-detail::detail(QWidget *parent) :
-	QWidget(parent),
-	ui(new Ui::detail)
-{
+detail::detail(StaticData::M_EntityInfo ei, QWidget *parent) : QWidget(parent), ui(new Ui::detail){
 	ui->setupUi(this);
 
 	//tablewidget_2勾选列显示
 	connect(ui->treeWidget_2, &QTreeWidget::itemChanged, this, &detail::on_treeWidget_2_clicked);
 	//tablewidget勾选行显示
 	connect(ui->treeWidget, &QTreeWidget::itemChanged, this, &detail::on_treeWidget_clicked);
+	//确定当前detail页所属实体类型
+	
+	//维护实体列表
+	entityRp = new EntityRetriever(ei, ui->treeWidget, &thread);
+	connect(this, &detail::EntityRetrieve, entityRp, &EntityRetriever::doWork);
+	connect(this, &detail::end_EntityRetrieve, entityRp, &EntityRetriever::endWork);
+	entityRp->moveToThread(&thread);
+	thread.start();
+	emit EntityRetrieve(); //参数为当前detail页所属实体类型。
 }
-detail::~detail()
-{
+detail::~detail(){
 	delete ui;
+	emit end_EntityRetrieve(); 
+	delete entityRp;
+	entityRp->thread->quit();  //未测试
 }
 
 void detail::creatNewTopItem(QString name)
@@ -47,7 +55,7 @@ void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item)
 		_s = ((item->parent()->parent()!= Q_NULLPTR)?(item->parent()->parent()->text(0)):(item->parent()->text(0)))+"\n"+_s;
 	Qt::CheckState ist = item->checkState(0);
 	int columnCount = ui->tableWidget->columnCount();
-	qDebug() << QString("reach %1 when %2 columns").arg(s,QString(columnCount));
+//	qDebug() << QString("reach %1 when %2 columns").arg(s,QString(columnCount));
 	if (item->child(0) == Q_NULLPTR) {	//最后一层节点，才展示
 		if (ist == Qt::Checked) { //增加列表头
 			ui->tableWidget->setColumnCount(columnCount + 1);
@@ -155,4 +163,58 @@ void detail::on_pushButton_8_clicked()
 			child->setCheckState(0, Qt::Checked);
 		}
 	}
+}
+
+EntityRetriever::EntityRetriever(StaticData::M_EntityInfo ei, QTreeWidget *qtw, QThread *tp){
+	entity_info = ei;
+	tWidget = qtw;
+	thread = tp;
+}
+void EntityRetriever::doWork(){  //开始工作
+	flg = 1;
+	qDebug() << QString("This function is in Thread : ") << QThread::currentThreadId() << QString(" for type : ") << entity_info.EnumType;
+	QSet<int> rec;
+	while (flg) {
+		dD.EntitiesId.clear();
+		dD.GetEntitiesIDs(entity_info.EnumType);
+		qDebug() << entity_info.EnumType;
+		if (dD.EntitiesId.size() == 1 && *(dD.EntitiesId.begin()) == -1) {
+			qDebug() << "This Type has no enitiy.";
+			thread->sleep(1);  //间隔不少于1S
+			continue;
+		}
+		qDebug() << "This Type has " << dD.EntitiesId.size() <<" enities.";
+		for (int id : dD.EntitiesId) {  //检查是否增加了实体
+			if (!rec.contains(id)) {  //若该id不存在于tWidget则插入
+				rec.insert(id);
+				QTreeWidgetItem *p = new QTreeWidgetItem(QStringList() << QString::number(id));
+				p->setCheckState(0, Qt::Unchecked);
+				tWidget->addTopLevelItem(p);
+			}
+		}
+		for (int _id : rec)	{ //检查是否减少了实体
+			bool _flg = 0;
+			for (int id : dD.EntitiesId) {
+				if (id != _id) continue;
+				_flg = 1;
+				break;
+			}
+			if (!_flg) { //没找到该实体
+				rec.remove(_id);
+				for (int i = 0;; i++) {
+					QTreeWidgetItem *p = tWidget->topLevelItem(i);
+					if (p == Q_NULLPTR) break;
+					if (p->text(0) == QString::number(_id)) {
+						delete p; //删除节点，未测试正确性
+						break;
+					}
+				}
+			}
+		}
+		thread->sleep(1);  //间隔不少于1S
+	}
+}
+
+void EntityRetriever::endWork() { //结束工作
+	flg = 0;
 }

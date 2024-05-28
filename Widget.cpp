@@ -182,29 +182,29 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
     data = modessl->data(indextemp);
     QString s = data.toString();
 
+	//找到所有实体对应的描述符
+	//QList<std::string> allValues = staticdata.vecEntityInfo[curRow].mapDescriptores.values();
+	StaticData::M_EntityInfo _vecInfo;
+	for each(StaticData::M_EntityInfo vecInfo in staticdata.vecEntityInfo){
+		if (QString::fromStdString(vecInfo.EntityName) == s){
+			_vecInfo = vecInfo;
+			break;
+		}
+	}
     //创建一个新的tab标签页
-    detail *newTab = new detail;
+    detail *newTab = new detail(_vecInfo);
     // 将新的tab页面添加到QTabWidget并跳转
 	QString tabName = "Entity-" + s;
     ui->tabWidget->addTab(newTab,tabName);
     ui->tabWidget->setCurrentWidget(newTab);
     int openTabsCount = ui->tabWidget->count()+1;
 
-	//找到所有实体对应的描述符
-	//QList<std::string> allValues = staticdata.vecEntityInfo[curRow].mapDescriptores.values();
-	QMap<int, std::string> mapDescriptors;
-	for each(StaticData::M_EntityInfo vecInfo in staticdata.vecEntityInfo)
-	{
-		if (QString::fromStdString(vecInfo.EntityName) == s) 
-		{
-			mapDescriptors = vecInfo.mapDescriptores;
-		}
-	}
+
 	//这里用curRow来选取实体是有问题的，如果顺序重排则不适用
 	//QMap<int, std::string> &mapDescriptors = staticdata.vecEntityInfo[curRow].mapDescriptores;
-	for each(int var in mapDescriptors.keys()) 
+	for each(int var in _vecInfo.mapDescriptores.keys())
 	{
-		newTab->creatNewTopItem(QString::fromStdString(mapDescriptors[var]));
+		newTab->creatNewTopItem(QString::fromStdString(_vecInfo.mapDescriptores[var]));
 		for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfoInGBBEx) 
 		{
 			if (desInfo.EnumType == var) 
