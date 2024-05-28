@@ -163,8 +163,8 @@ void Widget::initForm()
         connect(ui->tableView_2,SIGNAL(doubleClicked(const QModelIndex &)),this,SLOT(on_tableView_2doubleClicked(const QModelIndex &)));
         //connect(ui->tableView_3,SIGNAL(doubleClicked(const QModelIndex &)),this,SLOT(on_tableView_3doubleClicked(const QModelIndex &)));
         
-		//关闭窗口
-		connect(ui->btnclose, &QPushButton::clicked, this, &QWidget::close);
+		//关闭全部打开标签tab
+		connect(ui->btnclose, &QPushButton::clicked, this, &Widget::on_closealltabbtn);
         //关闭标签
         connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this,&Widget::on_removetabbtn);
     }
@@ -182,30 +182,30 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
     data = modessl->data(indextemp);
     QString s = data.toString();
 
+	//找到所有实体对应的描述符
+	//QList<std::string> allValues = staticdata.vecEntityInfo[curRow].mapDescriptores.values();
+	StaticData::M_EntityInfo _vecInfo;
+	for each(StaticData::M_EntityInfo vecInfo in staticdata.vecEntityInfo){
+		if (QString::fromStdString(vecInfo.EntityName) == s){
+			_vecInfo = vecInfo;
+			break;
+		}
+	}
     //创建一个新的tab标签页
-    detail *newTab = new detail;
+    detail *newTab = new detail(_vecInfo);
     // 将新的tab页面添加到QTabWidget并跳转
 	QString tabName = "Entity-" + s;
     ui->tabWidget->addTab(newTab,tabName);
     ui->tabWidget->setCurrentWidget(newTab);
     int openTabsCount = ui->tabWidget->count()+1;
 
-	//找到所有实体对应的描述符
-	//QList<std::string> allValues = staticdata.vecEntityInfo[curRow].mapDescriptores.values();
-	QMap<int, std::string> mapDescriptors;
-	for each(StaticData::M_EntityInfo vecInfo in staticdata.vecEntityInfo)
-	{
-		if (QString::fromStdString(vecInfo.EntityName) == s) 
-		{
-			mapDescriptors = vecInfo.mapDescriptores;
-		}
-	}
+
 	//这里用curRow来选取实体是有问题的，如果顺序重排则不适用
 	//QMap<int, std::string> &mapDescriptors = staticdata.vecEntityInfo[curRow].mapDescriptores;
-	for each(int var in mapDescriptors.keys()) 
+	for each(int var in _vecInfo.mapDescriptores.keys())
 	{
-		newTab->creatNewTopItem(QString::fromStdString(mapDescriptors[var]));
-		for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfo) 
+		newTab->creatNewTopItem(QString::fromStdString(_vecInfo.mapDescriptores[var]));
+		for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfoInGBBEx) 
 		{
 			if (desInfo.EnumType == var) 
 			{
@@ -220,6 +220,7 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 							if (fieldInfo.NestedName.empty())
 							{
 								newTab->creatNewItem(newTab->topItem, field);
+								qDebug() << "hello";
 							}
 							//否则，寻找名称对应的结构体,分层展示
 							else
@@ -279,7 +280,7 @@ void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
 		newTab->creatNewTopItem("MET_ID");
 	}
 	//匹配消息描述符名称，找到对应结构struct
-	for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfo) 
+	for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfo)
 	{
 		if (QString::fromStdString(desInfo.DescriptorName) == s) 
 		{
@@ -306,7 +307,7 @@ void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
 									{
 										QTreeWidgetItem *item1 = new QTreeWidgetItem(newTab->topItem);
 										item1->setText(0, QString::fromStdString(fieldInfo2.FieldName));
-										item1->setCheckState(0, Qt::Unchecked);
+										item1->setCheckState(0, Qt::Checked);
 									}
 								}
 							}
@@ -316,7 +317,17 @@ void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
 			}
 		}
 	}
+}
+
+//关闭全部打开的标签(主页除外)
+void Widget::on_closealltabbtn()
+{
+	for (int i = ui->tabWidget->count() - 1; i > 0; i--) 
+	{
+		ui->tabWidget->removeTab(i);
 	}
+}
+
 
 //删除标签
 void Widget::on_removetabbtn(int index)

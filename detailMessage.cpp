@@ -16,7 +16,7 @@ void detailMessage::creatNewTopItem(QString name)
 	topItem = new QTreeWidgetItem(QStringList() << name);
 	//当前tab界面的treewidget_2建立根节点
 	ui.treeWidget_2->addTopLevelItem(topItem);
-	topItem->setCheckState(0, Qt::Unchecked);
+	topItem->setCheckState(0, Qt::Checked);
 }
 void detailMessage::creatNewItem(QTreeWidgetItem *parentItem, QString name)
 {

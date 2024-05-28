@@ -20,7 +20,7 @@ EntityIterator;
 
 
 int main(int argc, char *argv[]) {
-    QApplication a(argc, argv);
+	QApplication a(argc, argv);
 	LoggerUtil::Init();
 	if (theConfigManager.Load("UI"))
 	{
@@ -30,10 +30,13 @@ int main(int argc, char *argv[]) {
 			&&theMonitorManager.Init())
 		{
 			//DynamicData dynamicdata;
+			//int n = dynamicdata.GetMessageCount(142);
+			//int m = dynamicdata.GetDescriptorCount(266);
 			//dynamicdata.GetEntitiesIDs();
 			//dynamicdata.GetEntityEnumType(294);
 			//char* p;
-			//dynamicdata.GetEntityDynamicData(521,p);s
+			//dynamicdata.GetEntityDynamicData(521,p);
+			//dynamicdata.GetEntityDynamicData(81);
 			status_t status = SUCCESS;
 			EntityIterator iter(HT_GBB::EntityMission, status);
 			for (iter.begin(); !iter.end(); iter.next()) {
