@@ -193,6 +193,7 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 	}
     //创建一个新的tab标签页
     detail *newTab = new detail(_vecInfo);
+	qDebug() << "new detail is : " << newTab;
     // 将新的tab页面添加到QTabWidget并跳转
 	QString tabName = "Entity-" + s;
     ui->tabWidget->addTab(newTab,tabName);
@@ -220,7 +221,7 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 							if (fieldInfo.NestedName.empty())
 							{
 								newTab->creatNewItem(newTab->topItem, field);
-								qDebug() << "hello";
+	//							qDebug() << "hello";
 							}
 							//否则，寻找名称对应的结构体,分层展示
 							else
@@ -332,7 +333,11 @@ void Widget::on_closealltabbtn()
 //删除标签
 void Widget::on_removetabbtn(int index)
 {
+	detail *p = (detail*)(ui->tabWidget->widget(index));
     ui->tabWidget->removeTab(index);
+	qDebug() << "widget(index) is : " << p;
+	delete p;
+	delete p->entityRp;
 }
 
 

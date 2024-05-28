@@ -52,7 +52,7 @@ void DynamicData::GetEntitiesIDs(int eEntityType)
 			EntitiesId.push_back(*(int*)(ptr1));
 			ptr1 += sizeof(int);
 		}
-		qDebug() << "hello";
+//		qDebug() << "hello";
 	}
 }
 
