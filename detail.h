@@ -18,13 +18,12 @@ public:
 	EntityRetriever(StaticData::M_EntityInfo ei, QTreeWidget *qtw, QThread *tp);
 	StaticData::M_EntityInfo entity_info;
 	QThread  *thread;
+	bool flg;
 private:
 	QTreeWidget *tWidget;
 	DynamicData dD;
-	bool flg;
 public slots:
 	void doWork(); //以1秒为周期读取特定类型的列表并写入treeWidget
-	void endWork(); //停止
 };
 
 class detail : public QWidget
@@ -36,7 +35,7 @@ public:
 
 private:
 	Ui::detail *ui;
-	QThread  thread;
+	QThread  *thread;
 
 public:
 	QTreeWidgetItem *topItem;
@@ -49,7 +48,6 @@ public:
 
 signals:
 	void EntityRetrieve();
-	void end_EntityRetrieve();
 private slots:
 	void on_pushButton_7_clicked();//清除按钮功能实现
 	void on_pushButton_8_clicked(); //实体详情页全选子项目按钮的实现

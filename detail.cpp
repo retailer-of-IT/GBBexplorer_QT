@@ -20,18 +20,18 @@ detail::detail(StaticData::M_EntityInfo ei, QWidget *parent) : QWidget(parent), 
 	//确定当前detail页所属实体类型
 	
 	//维护实体列表
-	entityRp = new EntityRetriever(ei, ui->treeWidget, &thread);
+	thread = new QThread();
+	entityRp = new EntityRetriever(ei, ui->treeWidget, thread);
 	connect(this, &detail::EntityRetrieve, entityRp, &EntityRetriever::doWork);
-	connect(this, &detail::end_EntityRetrieve, entityRp, &EntityRetriever::endWork);
-	entityRp->moveToThread(&thread);
-	thread.start();
+	entityRp->moveToThread(thread);
+	thread->start();
 	emit EntityRetrieve(); //参数为当前detail页所属实体类型。
 }
 detail::~detail(){
 	delete ui;
-//	emit end_EntityRetrieve();  
-	entityRp->thread->quit();  //未测试
-	delete entityRp;
+	entityRp->flg = 0;
+//	delete entityRp;
+//	entityRp->thread->quit();  //未测试
 }
 
 void detail::creatNewTopItem(QString name)
@@ -179,7 +179,7 @@ void EntityRetriever::doWork(){  //开始工作
 		dD.GetEntitiesIDs(entity_info.EnumType);
 		qDebug() << entity_info.EnumType;
 		if (dD.EntitiesId.size() == 1 && *(dD.EntitiesId.begin()) == -1) {
-			qDebug() << "This Type has no enitiy.";
+//			qDebug() << "This Type has no enitiy.";
 			thread->sleep(1);  //间隔不少于1S
 			continue;
 		}
@@ -211,10 +211,8 @@ void EntityRetriever::doWork(){  //开始工作
 				}
 			}
 		}
-		thread->sleep(1);  //间隔不少于1S
+		thread->wait(1000);  //间隔不少于1S
 	}
+	thread->quit();
 }
 
-void EntityRetriever::endWork() { //结束工作
-	flg = 0;
-}

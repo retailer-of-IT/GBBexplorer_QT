@@ -27,8 +27,8 @@ class DynamicData : public QObject
 public:
 	QVector<int> EntitiesId;
 	QVector<StaticData::M_FieldInfo> FieldsList;
-//	QString configPath = "D:/CHSim-TKE_GBBExplorer/Applications/SSGProduct/Config/GBBExplorerConfig.xml";
-	QString configPath = "E:/EDU/CT/GJGZ/CHSim-TKE_GBBExplorer/Applications/SSGProduct/Config/GBBExplorerConfig.xml";
+
+	QString configPath = "D:/CHSim-TKE_GBBExplorer/Applications/SSGProduct/Config/GBBExplorerConfig.xml";
 	char* m_descriptorPtr = nullptr;
 	int m_descriptorBufferSize = 0;
 	int m_nCurrentPos = 0;
