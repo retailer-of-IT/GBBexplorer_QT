@@ -23,7 +23,6 @@ class DynamicData : public QObject
 {
 	Q_OBJECT
 
-
 public:
 	QVector<int> EntitiesId;
 	QVector<StaticData::M_FieldInfo> FieldsList;

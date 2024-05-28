@@ -25,7 +25,14 @@ detail::detail(StaticData::M_EntityInfo ei, QWidget *parent) : QWidget(parent), 
 	connect(this, &detail::EntityRetrieve, entityRp, &EntityRetriever::doWork);
 	entityRp->moveToThread(thread);
 	thread->start();
-	emit EntityRetrieve(); //参数为当前detail页所属实体类型。
+	emit EntityRetrieve(); 
+
+	//MET_ID
+	ui->tableWidget->verticalHeader()->setVisible(false);
+	ui->tableWidget->setColumnCount(1);
+	ui->tableWidget->setHorizontalHeaderItem(0, new QTableWidgetItem("MET_ID"));
+	ui->tableWidget->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+	ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
 }
 detail::~detail(){
 	delete ui;
@@ -64,7 +71,7 @@ void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item)
 			ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
 		}
 		else { //删除列表头
-			for (int i = 0; i< columnCount; i++) {
+			for (int i = 1; i< columnCount; i++) {
 				QString name = ui->tableWidget->model()->headerData(i, Qt::Horizontal).toString();
 				name.remove(0, name.lastIndexOf("\n")+1);
 				if (name == s) {
@@ -117,8 +124,7 @@ void detail::on_treeWidget_clicked(QTreeWidgetItem * item)
 	QString s = item->text(0);
 	QAbstractItemModel *model = ui->tableWidget->model();
 	if (item->checkState(0) == Qt::Checked) {
-		// 获取行数
-		int rowCount = model->rowCount();
+		int rowCount = model->rowCount();// 获取行数
 		model->insertRow(rowCount);
 		model->setData(model->index(rowCount, 0), s);
 	}
@@ -162,6 +168,20 @@ void detail::on_pushButton_8_clicked()
 			QTreeWidgetItem *child = item->child(i);
 			child->setCheckState(0, Qt::Checked);
 		}
+	}
+}
+void detail::on_pushButton_3_clicked() { //全选实体
+	for (int i = 0;; i++) {
+		QTreeWidgetItem *p = ui->treeWidget->topLevelItem(i);
+		if (p == Q_NULLPTR) break;
+		if (p->checkState(0) != Qt::Checked) p->setCheckState(0, Qt::Checked);
+	}
+}
+void detail::on_pushButton_2_clicked() { //清除实体
+	for (int i = 0;; i++) {
+		QTreeWidgetItem *p = ui->treeWidget->topLevelItem(i);
+		if (p == Q_NULLPTR) break;
+		if (p->checkState(0) != Qt::Unchecked) p->setCheckState(0, Qt::Unchecked);
 	}
 }
 
@@ -211,7 +231,7 @@ void EntityRetriever::doWork(){  //开始工作
 				}
 			}
 		}
-		thread->wait(1000);  //间隔不少于1S
+		thread->sleep(1);  //间隔不少于1S
 	}
 	thread->quit();
 }

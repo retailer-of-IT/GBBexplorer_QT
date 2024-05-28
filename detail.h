@@ -49,6 +49,8 @@ public:
 signals:
 	void EntityRetrieve();
 private slots:
+	void on_pushButton_3_clicked();//实体全选
+	void on_pushButton_2_clicked();//实体清除
 	void on_pushButton_7_clicked();//清除按钮功能实现
 	void on_pushButton_8_clicked(); //实体详情页全选子项目按钮的实现
 	void on_treeWidget_2_clicked(QTreeWidgetItem *item);//treeWidget_2选中/不选中触发事件，模拟GBBexplorer中选择与取消

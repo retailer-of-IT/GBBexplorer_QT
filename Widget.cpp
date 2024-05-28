@@ -336,8 +336,8 @@ void Widget::on_removetabbtn(int index)
 	detail *p = (detail*)(ui->tabWidget->widget(index));
     ui->tabWidget->removeTab(index);
 	qDebug() << "widget(index) is : " << p;
-	delete p;
 	delete p->entityRp;
+	delete p;
 }
 
 
