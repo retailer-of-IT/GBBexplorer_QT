@@ -27,6 +27,10 @@ Widget::Widget(QWidget *parent) :
 	staticdata.InitEntities();
 	staticdata.InitStructures();
 	staticdata.InitMessages();
+	//timer = new QTimer(this);
+	//connect(timer, &QTimer::timeout, this, &Widget::upDateMainTabEntity);
+	//timer->setInterval(1000); // 1秒
+	timer->start();
     this->initForm();
 }
 
@@ -46,6 +50,8 @@ void Widget::initForm()
     else
     {
 		qDebug() << u8"GBB启动成功";
+
+
         QStandardItemModel* model = new QStandardItemModel(this);
         model->setHorizontalHeaderItem(0,new QStandardItem("GBB"));
         model->setHorizontalHeaderItem(1,new QStandardItem("Entities"));
@@ -65,10 +71,13 @@ void Widget::initForm()
 			item1->setData(MaxEntityNum, Qt::EditRole);
 			model->setItem(i, 0, item);
 			model->setItem(i, 1, new QStandardItem(EntityName));
-			model->setItem(i, 2, new QStandardItem("0"));
+			int n = dD.GetEntityCount(EnumType);
+			//int n = entityNum[i];
+			model->setItem(i, 2, new QStandardItem(QString::number(n)));
 			model->setItem(i, 3, item1);
-			//double rate = 0;
-			model->setItem(i, 4, new QStandardItem("0"));
+			double rate = static_cast<double>(n)/MaxEntityNum*100;//强转
+			QString formattedRate = QString::number(rate, 'f', 2);//保留两位小数
+			model->setItem(i, 4, new QStandardItem(formattedRate));
 		}
 
         ui->tableView_1->setModel(model);
@@ -97,10 +106,12 @@ void Widget::initForm()
 			item1->setData(MaxMessageNum, Qt::EditRole);
 			model2->setItem(i, 0, item);
 			model2->setItem(i, 1, new QStandardItem(MessageName));
-			model2->setItem(i, 2, new QStandardItem("0"));
+			int n = dD.GetMessageCount(EnumType);
+			model2->setItem(i, 2, new QStandardItem(QString::number(n)));
 			model2->setItem(i, 3, item1);
-			//double rate = 0;
-			model2->setItem(i, 4, new QStandardItem("0"));
+			double rate = static_cast<double>(n) / MaxMessageNum * 100;//强转
+			QString formattedRate = QString::number(rate, 'f', 2);//保留两位小数
+			model2->setItem(i, 4, new QStandardItem(formattedRate));
 		}
 
         ui->tableView_2->setModel(model2);
@@ -129,10 +140,12 @@ void Widget::initForm()
 			item1->setData(MaxDescriptorNum, Qt::EditRole);
 			model3->setItem(i, 0, item);
 			model3->setItem(i, 1, new QStandardItem(DescriptorName));
-			model3->setItem(i, 2, new QStandardItem("0"));
+			int n = dD.GetDescriptorCount(EnumType);
+			model3->setItem(i, 2, new QStandardItem(QString::number(n)));
 			model3->setItem(i, 3, item1);
-			//double rate = 0;
-			model3->setItem(i, 4, new QStandardItem("0"));
+			double rate = static_cast<double>(n) / MaxDescriptorNum * 100;//强转
+			QString formattedRate = QString::number(rate, 'f', 2);//保留两位小数
+			model3->setItem(i, 4, new QStandardItem(formattedRate));
 		}
 
         ui->tableView_3->setModel(model3);
@@ -159,15 +172,33 @@ void Widget::initForm()
         //链接双击相应事件
         connect(ui->tableView_1,SIGNAL(doubleClicked(const QModelIndex &)),this,SLOT(on_tableView_1doubleClicked(const QModelIndex &)));
 
-		//TODO 其他两个窗口
         connect(ui->tableView_2,SIGNAL(doubleClicked(const QModelIndex &)),this,SLOT(on_tableView_2doubleClicked(const QModelIndex &)));
-        //connect(ui->tableView_3,SIGNAL(doubleClicked(const QModelIndex &)),this,SLOT(on_tableView_3doubleClicked(const QModelIndex &)));
         
 		//关闭全部打开标签tab
 		connect(ui->btnclose, &QPushButton::clicked, this, &Widget::on_closealltabbtn);
         //关闭标签
         connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this,&Widget::on_removetabbtn);
     }
+}
+
+void Widget::upDateMainTabEntity()
+{
+	int n = staticdata.vecEntityInfoInGBBEx.size();
+	for (int i = 0; i < n; i++)
+	{
+		int numOfEntity = dD.GetEntityCount(staticdata.vecEntityInfoInGBBEx[i].EnumType);
+		if (entityNum.size() != n)
+		{
+			entityNum.push_back(numOfEntity);
+		}
+		else
+		{
+			entityNum[i] = numOfEntity;
+		}
+		//entityNum.push_back(numOfEntity);
+	}
+	qDebug() << "first is"<<entityNum[14];
+	//return numOfEntity;
 }
 
 //双击实体栏显示详情实现
