@@ -188,7 +188,7 @@ public:
         pushButton_6->setText(QApplication::translate("detail", "PushButton", nullptr));
         label_4->setText(QApplication::translate("detail", "Entities", nullptr));
         QTreeWidgetItem *___qtreewidgetitem1 = treeWidget->headerItem();
-        ___qtreewidgetitem1->setText(0, QApplication::translate("detail", "\345\256\236\344\275\223\345\220\215\347\247\260", nullptr));
+        ___qtreewidgetitem1->setText(0, QApplication::translate("detail", "\345\256\236\344\275\223ID", nullptr));
         pushButton_3->setText(QApplication::translate("detail", "\345\205\250\351\200\211", nullptr));
         pushButton_2->setText(QApplication::translate("detail", "\346\270\205\351\231\244\346\211\200\346\234\211", nullptr));
         pushButton->setText(QApplication::translate("detail", "\350\277\207\346\273\244\345\231\250", nullptr));

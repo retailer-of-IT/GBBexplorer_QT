@@ -325,7 +325,10 @@ void Widget::on_closealltabbtn()
 {
 	for (int i = ui->tabWidget->count() - 1; i > 0; i--) 
 	{
+		detail *p = (detail*)(ui->tabWidget->widget(i));
 		ui->tabWidget->removeTab(i);
+		delete p->entityRp;
+		delete p;
 	}
 }
 
@@ -336,8 +339,8 @@ void Widget::on_removetabbtn(int index)
 	detail *p = (detail*)(ui->tabWidget->widget(index));
     ui->tabWidget->removeTab(index);
 	qDebug() << "widget(index) is : " << p;
-	delete p;
 	delete p->entityRp;
+	delete p;
 }
 
 

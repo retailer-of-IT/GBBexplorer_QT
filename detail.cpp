@@ -29,13 +29,7 @@ detail::detail(StaticData::M_EntityInfo ei, QWidget *parent) : QWidget(parent), 
 }
 detail::~detail(){
 	delete ui;
-<<<<<<< HEAD
-	emit end_EntityRetrieve(); 
-	delete entityRp;
-	entityRp->thread->quit();  //未测试
 	entityRp->flg = 0;
-//	delete entityRp;
-//	entityRp->thread->quit();  //未测试
 }
 
 void detail::creatNewTopItem(QString name)
@@ -215,7 +209,7 @@ void EntityRetriever::doWork(){  //开始工作
 				}
 			}
 		}
-		thread->wait(1000);  //间隔不少于1S
+		thread->sleep(1);  //间隔不少于1S
 	}
 	thread->quit();
 }
