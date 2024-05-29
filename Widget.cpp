@@ -51,7 +51,7 @@ Widget::~Widget()
 
 void Widget::initForm()
 {
-	qDebug() << u8"GBB启动成功";
+	qDebug() << u8"GBB主页面线程启动";
     QStandardItemModel* model = new QStandardItemModel(this);
     model->setHorizontalHeaderItem(0,new QStandardItem("GBB"));
     model->setHorizontalHeaderItem(1,new QStandardItem("Entities"));
@@ -200,10 +200,16 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
     ui->tabWidget->addTab(newTab,tabName);
     ui->tabWidget->setCurrentWidget(newTab);
     int openTabsCount = ui->tabWidget->count()+1;
+	//设置详情页的描述符和实体个数信息
+	QLabel* label = qobject_cast<QLabel*>(newTab->findChild<QLabel*>("label_4"));
+	int numOfEntities = dD.GetEntityCount(_vecInfo.EnumType);
+	QString labelText = "Entities(" + QString::number(numOfEntities) + ")";
+	label->setText(labelText);
+	QLabel* label2 = qobject_cast<QLabel*>(newTab->findChild<QLabel*>("label_5"));
+	int numOfDes = _vecInfo.mapDescriptores.size();
+	QString labelText2 = "Descriptors(" + QString::number(numOfDes) + ")";
+	label2->setText(labelText2);
 
-
-	//这里用curRow来选取实体是有问题的，如果顺序重排则不适用
-	//QMap<int, std::string> &mapDescriptors = staticdata.vecEntityInfo[curRow].mapDescriptores;
 	for each(int var in _vecInfo.mapDescriptores.keys())
 	{
 		newTab->creatNewTopItem(QString::fromStdString(_vecInfo.mapDescriptores[var]));
