@@ -14,32 +14,6 @@
    <string>Widget</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
-    <widget class="QWidget" name="widget" native="true">
-     <layout class="QFormLayout" name="formLayout">
-      <item row="0" column="0">
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>820</width>
-          <height>25</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="0" column="1">
-       <widget class="QPushButton" name="btnclose">
-        <property name="text">
-         <string>PushButton</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
    <item row="1" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
@@ -67,18 +41,19 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="0" colspan="3">
-        <layout class="QHBoxLayout" name="horizontalLayout">
-         <item>
-          <widget class="QTableView" name="tableView_1"/>
-         </item>
-         <item>
-          <widget class="QTableView" name="tableView_2"/>
-         </item>
-         <item>
-          <widget class="QTableView" name="tableView_3"/>
-         </item>
-        </layout>
+       <item row="0" column="1">
+        <widget class="QLabel" name="label_2">
+         <property name="font">
+          <font>
+           <pointsize>20</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Messages</string>
+         </property>
+        </widget>
        </item>
        <item row="0" column="0">
         <widget class="QLabel" name="label">
@@ -94,22 +69,47 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="1">
-        <widget class="QLabel" name="label_2">
-         <property name="font">
-          <font>
-           <pointsize>20</pointsize>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Messages</string>
-         </property>
-        </widget>
+       <item row="1" column="0" colspan="3">
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QTableView" name="tableView_1"/>
+         </item>
+         <item>
+          <widget class="QTableView" name="tableView_2"/>
+         </item>
+         <item>
+          <widget class="QTableView" name="tableView_3"/>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QWidget" name="widget" native="true">
+     <layout class="QHBoxLayout" name="horizontalLayout_5">
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>820</width>
+          <height>25</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnclose">
+        <property name="text">
+         <string>PushButton</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
   </layout>

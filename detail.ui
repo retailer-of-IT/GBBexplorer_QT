@@ -104,7 +104,7 @@
            <widget class="QTreeWidget" name="treeWidget">
             <column>
              <property name="text">
-              <string>实体名称</string>
+              <string>实体ID</string>
              </property>
             </column>
            </widget>

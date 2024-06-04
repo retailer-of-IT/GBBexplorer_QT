@@ -17,7 +17,6 @@
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
-#include <QtWidgets/QTableView>
 #include <QtWidgets/QTableWidget>
 #include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QVBoxLayout>
@@ -30,7 +29,6 @@ class Ui_detailMessage
 public:
     QGridLayout *gridLayout;
     QGridLayout *gridLayout_7;
-    QTableWidget  *tableWidget;
     QWidget *widget_3;
     QGridLayout *gridLayout_3;
     QVBoxLayout *verticalLayout_2;
@@ -39,6 +37,7 @@ public:
     QGridLayout *gridLayout_5;
     QPushButton *pushButton_7;
     QPushButton *pushButton_8;
+    QTableWidget *tableWidget;
 
     void setupUi(QWidget *detailMessage)
     {
@@ -52,11 +51,6 @@ public:
         gridLayout_7 = new QGridLayout();
         gridLayout_7->setSpacing(6);
         gridLayout_7->setObjectName(QStringLiteral("gridLayout_7"));
-        tableWidget = new QTableWidget(detailMessage);
-        tableWidget->setObjectName(QStringLiteral("tableWidget"));
-
-        gridLayout_7->addWidget(tableWidget, 0, 1, 2, 1);
-
         widget_3 = new QWidget(detailMessage);
         widget_3->setObjectName(QStringLiteral("widget_3"));
         gridLayout_3 = new QGridLayout(widget_3);
@@ -102,6 +96,11 @@ public:
 
 
         gridLayout_7->addWidget(widget_3, 0, 0, 1, 1);
+
+        tableWidget = new QTableWidget(detailMessage);
+        tableWidget->setObjectName(QStringLiteral("tableWidget"));
+
+        gridLayout_7->addWidget(tableWidget, 0, 1, 2, 1);
 
         gridLayout_7->setColumnStretch(0, 1);
         gridLayout_7->setColumnStretch(1, 3);

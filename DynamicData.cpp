@@ -15,6 +15,7 @@ DynamicData::DynamicData()
 		configFile.close();
 		return;
 	}
+	configFile.close();
 	QDomElement gbbExplorerElement = configDoc.documentElement();
 	QDomElement dataElement = gbbExplorerElement.firstChildElement("Data");
 	QString descriptorBufferSizeStr = dataElement.firstChildElement("DescriptorBufferSize").text();

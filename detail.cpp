@@ -10,6 +10,7 @@
 #include <QTreeWidgetItem>
 #include <QStandardItemModel>
 #include <QStandardItem>
+
 detail::detail(StaticData::M_EntityInfo ei, QWidget *parent) : QWidget(parent), ui(new Ui::detail){
 	ui->setupUi(this);
 
@@ -21,11 +22,16 @@ detail::detail(StaticData::M_EntityInfo ei, QWidget *parent) : QWidget(parent), 
 	
 	//维护实体列表
 	thread = new QThread();
-	entityRp = new EntityRetriever(ei, ui->treeWidget, thread);
+	mutex1.lock();
+	entityRp = new EntityRetriever(ei, ui->treeWidget, thread, &mutex1);
+	mutex1.unlock();
 	connect(this, &detail::EntityRetrieve, entityRp, &EntityRetriever::doWork);
 	entityRp->moveToThread(thread);
 	thread->start();
 	emit EntityRetrieve(); 
+	//test 
+	mT = new myTest;
+	mT->test();
 
 	//MET_ID
 	ui->tableWidget->verticalHeader()->setVisible(false);
@@ -36,9 +42,7 @@ detail::detail(StaticData::M_EntityInfo ei, QWidget *parent) : QWidget(parent), 
 }
 detail::~detail(){
 	delete ui;
-	entityRp->flg = 0;
-//	delete entityRp;
-//	entityRp->thread->quit();  //未测试
+	delete mT;
 }
 
 void detail::creatNewTopItem(QString name)
@@ -171,11 +175,13 @@ void detail::on_pushButton_8_clicked()
 	}
 }
 void detail::on_pushButton_3_clicked() { //全选实体
+	mutex1.lock();
 	for (int i = 0;; i++) {
 		QTreeWidgetItem *p = ui->treeWidget->topLevelItem(i);
 		if (p == Q_NULLPTR) break;
 		if (p->checkState(0) != Qt::Checked) p->setCheckState(0, Qt::Checked);
 	}
+	mutex1.unlock();
 }
 void detail::on_pushButton_2_clicked() { //清除实体
 	for (int i = 0;; i++) {
@@ -185,16 +191,18 @@ void detail::on_pushButton_2_clicked() { //清除实体
 	}
 }
 
-EntityRetriever::EntityRetriever(StaticData::M_EntityInfo ei, QTreeWidget *qtw, QThread *tp){
+EntityRetriever::EntityRetriever(StaticData::M_EntityInfo ei, QTreeWidget *qtw, QThread *tp, QMutex *mp){
 	entity_info = ei;
 	tWidget = qtw;
 	thread = tp;
+	mutex1_p = mp;
 }
 void EntityRetriever::doWork(){  //开始工作
 	flg = 1;
 	qDebug() << QString("This function is in Thread : ") << QThread::currentThreadId() << QString(" for type : ") << entity_info.EnumType;
 	QSet<int> rec;
 	while (flg) {
+		mutex1_p->lock();
 		dD.EntitiesId.clear();
 		dD.GetEntitiesIDs(entity_info.EnumType);
 		qDebug() << entity_info.EnumType;
@@ -231,8 +239,46 @@ void EntityRetriever::doWork(){  //开始工作
 				}
 			}
 		}
+		mutex1_p->unlock();
 		thread->sleep(1);  //间隔不少于1S
 	}
 	thread->quit();
 }
 
+myTest::~myTest() { delete qtt; }
+void *myTest::test_func(void *p = Q_NULLPTR) {
+	qDebug() << "This function runs in thread " << QThread::currentThreadId();
+	int *xp = (int *)p;
+	(*xp)++;
+	qDebug() << "x is " << *xp;
+	return p;
+}
+void myTest::test() {
+	int *px = new int(10);
+	qtt = new QTimerThread(&myTest::test_func, (void *)px);
+	qtt->start(1000);
+}
+QTTWorker::QTTWorker(comFunc func, void *p = Q_NULLPTR) {
+	work = func;
+	in_date = p;
+}
+void QTTWorker::do_work() { work(in_date); }
+QTimerThread::QTimerThread(comFunc func, void *p = Q_NULLPTR) {
+	qtm_p = new QTimer();
+	qth_p = new QThread();
+	qw_p = new QTTWorker(func, p);
+}
+QTimerThread::~QTimerThread() {
+	qth_p->quit();
+	qth_p->wait();
+	qtm_p->deleteLater();
+	qw_p->deleteLater();
+	qth_p->deleteLater();
+}
+void QTimerThread::start(int interval) {
+	qtm_p->start(interval);
+	qtm_p->moveToThread(qth_p);
+	qw_p->moveToThread(qth_p);
+	QObject::connect(qtm_p, SIGNAL(timeout()), qw_p, SLOT(do_work())); //, Qt::QueuedConnection
+	qth_p->start();
+}
