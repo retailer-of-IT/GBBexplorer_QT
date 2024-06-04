@@ -17,7 +17,12 @@
 #include <QDomNode>
 #include <QTextStream>
 #include <QDebug>
+#include <cmath>
+#include<qtablewidget.h>
 #include "StaticData.h"
+#include "Utils.h"
+
+class detail;
 
 class DynamicData : public QObject
 {
@@ -32,6 +37,8 @@ public:
 	int m_descriptorBufferSize = 0;
 	int m_nCurrentPos = 0;
 	StaticData staticdata;
+	detail* GridView;
+	double m_dDoubleValue = 0.0;
 
 public:
 	DynamicData();
@@ -43,11 +50,17 @@ public:
 	int GetDescriptorCount(int eDescriptorType); //每个周期获取某个描述符的数量
 	//void GetEntityDynamicData(int nEntityID); //根据id获取动态数据
 	void GetEntityDynamicData(int eEntityType);//获取某个实体的全部动态数据
-	bool ReadRowFromIntPtr(char* ptr, QVector<StaticData::M_FieldInfo> FieldsList, bool isThisEntity, int bufferLength);
-	bool ReadFieldFromPtr(char* fieldPtr, StaticData::M_FieldInfo currentField, int bufferLength);//从字符流中切割某个出某个field
+	bool ReadRowFromIntPtr(char * ptr, QTableWidget* tableWidget, int ElementIndex, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, bool isThisEntity, int bufferLength);
+	bool ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData::M_FieldInfo currentField, int bufferLength);//从字符流中切割某个出某个field,传入的是一个单元格
+	void FinishReadRow(QTableWidgetItem* item, QVector<StaticData::M_FieldInfo> FieldsList,int LoopIndex, int ColumnIndex, int RowIndex, bool IsThisCompareTab, bool AlsoLoop);
+	void IncreaseLoopIndex(bool AlsoLoopIndex, bool IsVertical, int& RowIndex, int& ColumnIndex, int& LoopIndex);
 	//bool ShowArrayField(char* ptr)
+	double GetAltData(double Data, int DisplayState);
+	double GetAzimuth(double Data, int DisplayState);
+	QString GetBoolean(std::string Data, int DisplatState);
 	std::string GetString(char* CurrentPtr);//读取字符串
 	void getAfterString(char* currentPtr, int bufferLength); //跳过，不读取字符串
 	int SetStringFromPtr(char* CurrentIntPtr, std::string &StringName);
+	double Mathround(double Data, int DecimalPlaces);//用于保留DecimalPlaces位小数
 	~DynamicData();
 };

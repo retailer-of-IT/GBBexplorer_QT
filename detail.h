@@ -31,6 +31,7 @@ class detail : public QWidget
 	Q_OBJECT
 public:
 	explicit detail(StaticData::M_EntityInfo ei, QWidget *parent = 0);
+	detail();
 	~detail();
 
 private:

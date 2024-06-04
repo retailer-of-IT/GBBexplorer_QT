@@ -1,4 +1,5 @@
 #include "DynamicData.h"
+#include "detail.h"
 #include "qdebug.h"
 
 //DynamicData::DynamicData()
@@ -174,17 +175,20 @@ void DynamicData::GetEntityDynamicData(int eEntityType)
 			//std::string network_obj;
 			//ptr1 += SetStringFromPtr(ptr1, network_obj);
 			//TODO dynamicdata.cs中 GetEntityTableData等函数使用到的 ReadRowFromIntPtr函数功能
+			GridView = new detail();
+			QTableWidget* table = qobject_cast<QTableWidget*>(GridView->findChild<QTableWidget*>("tableWidget"));
 			//用于读取对应id的所有field的值（一行）并进行切分，非数组array结构
-			bool flag = ReadRowFromIntPtr(ptr1, FieldsList, true, bufferLength);
+			//传入表格视图,iscomparetab先预设为true
+			bool flag = ReadRowFromIntPtr(ptr1, table, i, FieldsList, true, true, bufferLength);
 		}
 	}
 	m_nCurrentPos = 0;
 	qDebug() << "hello";
 }
 
-bool DynamicData::ReadRowFromIntPtr(char * ptr, QVector<StaticData::M_FieldInfo> FieldsList, bool isThisEntity, int bufferLength)
+bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget* tableWidget, int ElementIndex, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, bool isThisEntity, int bufferLength)
 {
-	int LoopIndex = 0;
+	int RowIndex = 0, ColumnIndex = 0, LoopIndex = 0;
 	bool DescriptorInitialized = false;
 	for (LoopIndex = 0; LoopIndex < FieldsList.size(); ++LoopIndex)
 	{
@@ -199,8 +203,12 @@ bool DynamicData::ReadRowFromIntPtr(char * ptr, QVector<StaticData::M_FieldInfo>
 			//普通的field(非数组array)
 			if (FieldsList[LoopIndex].FieldType != StaticData::FieldType::Array)
 			{
-				if (!ReadFieldFromPtr(ptr, FieldsList[LoopIndex], bufferLength))
+				int currentRow = tableWidget->currentRow();
+				int currentColumn = tableWidget->currentColumn();
+				QTableWidgetItem* item = tableWidget->item(currentRow, currentColumn);//获取单元格
+				if (!ReadFieldFromPtr(ptr, item, FieldsList[LoopIndex], bufferLength))
 				{
+					FinishReadRow(item, FieldsList, LoopIndex, ColumnIndex, RowIndex, IsThisCompareTab, false);
 					return false;
 				}
 			}
@@ -219,18 +227,21 @@ bool DynamicData::ReadRowFromIntPtr(char * ptr, QVector<StaticData::M_FieldInfo>
 }
 
 
-bool DynamicData::ReadFieldFromPtr(char * fieldPtr, StaticData::M_FieldInfo currentField,int bufferLength)
+bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData::M_FieldInfo currentField,int bufferLength)
 {
+	char* fieldPtr = ptr;
+	const int Tag = Qt::UserRole + 1;//单元格tag
 	switch (currentField.FieldType)
 	{
 	case StaticData::FieldType::Alt:
 		if (m_nCurrentPos + 8 <= bufferLength)
 		{
-			char a[8];
-			for (int i = 0; i < 8; i++) {
-				a[i] = *(fieldPtr + m_nCurrentPos);
-				m_nCurrentPos++;
-			}
+			m_dDoubleValue = *(double*)fieldPtr;
+			item->setData(Tag, m_dDoubleValue);
+			//源代码是从GBBExplorerConfig.xml读出小数点后保留的位数,这里先把值写死
+			double val = Mathround(GetAltData(m_dDoubleValue, 0), 2);
+			item->setData(Qt::UserRole, val);
+			fieldPtr += 8;
 		}
 		else
 		{
@@ -240,11 +251,12 @@ bool DynamicData::ReadFieldFromPtr(char * fieldPtr, StaticData::M_FieldInfo curr
 	case StaticData::FieldType::Azimuth:
 		if (m_nCurrentPos + 8 <= bufferLength)
 		{
-			char a[8];
-			for (int i = 0; i < 8; i++) {
-				a[i] = *(fieldPtr + m_nCurrentPos);
-				m_nCurrentPos++;
-			}
+			m_dDoubleValue = *(double*)fieldPtr;
+			item->setData(Tag, m_dDoubleValue);
+			//源代码是从GBBExplorerConfig.xml读出小数点后保留的位数
+			double val = Mathround(GetAzimuth(m_dDoubleValue, 0), 5);
+			item->setData(Qt::UserRole, val);
+			fieldPtr += 8;
 		}
 		else
 		{
@@ -254,8 +266,12 @@ bool DynamicData::ReadFieldFromPtr(char * fieldPtr, StaticData::M_FieldInfo curr
 	case StaticData::FieldType::Boolean:
 		if (m_nCurrentPos + 1 <= bufferLength)
 		{
-			bool a = *(bool*)(fieldPtr + m_nCurrentPos);
-			m_nCurrentPos += 1;
+			//bool a = *(bool*)(fieldPtr + m_nCurrentPos);
+			//m_nCurrentPos += 1;
+			bool value = *(bool*)fieldPtr;
+			QString val = GetBoolean(std::to_string(value), 1);//to_string会转换成“0”/“1”
+			item->setData(Qt::UserRole, val);
+			fieldPtr += 1;
 		}
 		else
 		{
@@ -265,8 +281,9 @@ bool DynamicData::ReadFieldFromPtr(char * fieldPtr, StaticData::M_FieldInfo curr
 	case StaticData::FieldType::Char:
 		if (m_nCurrentPos + 1 <= bufferLength)
 		{
-			bool a = *(fieldPtr + m_nCurrentPos);
-			m_nCurrentPos += 1;
+			char val = *(char*)fieldPtr;
+			item->setData(Qt::UserRole, val);
+			fieldPtr += 1;
 		}
 		else
 		{
@@ -276,11 +293,9 @@ bool DynamicData::ReadFieldFromPtr(char * fieldPtr, StaticData::M_FieldInfo curr
 	case StaticData::FieldType::Double:
 		if (m_nCurrentPos + 8 <= bufferLength)
 		{
-			char a[8];
-			for (int i = 0; i < 8; i++) {
-				a[i] = *(fieldPtr + m_nCurrentPos);
-				m_nCurrentPos++;
-			}
+			m_dDoubleValue = *(double*)fieldPtr;
+			double val = Mathround(m_dDoubleValue, 3);
+			item->setData(Qt::UserRole, val);
 		}
 		else
 		{
@@ -473,6 +488,59 @@ bool DynamicData::ReadFieldFromPtr(char * fieldPtr, StaticData::M_FieldInfo curr
 	return true;
 }
 
+void DynamicData::FinishReadRow(QTableWidgetItem * item, QVector<StaticData::M_FieldInfo> FieldsList, int LoopIndex, int ColumnIndex, int RowIndex, bool IsThisCompareTab, bool AlsoLoop)
+{
+	for (int j = LoopIndex; j < FieldsList.size(); ++j)
+	{
+		item[ColumnIndex, RowIndex].setBackground(QColor(255, 0, 0));//设置为红色
+		IncreaseLoopIndex(AlsoLoop, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
+	}
+}
+
+void DynamicData::IncreaseLoopIndex(bool AlsoLoopIndex, bool IsVertical, int & RowIndex, int & ColumnIndex, int & LoopIndex)
+{
+	if (IsVertical)
+	{
+		++RowIndex;
+	}
+	else
+	{
+		++ColumnIndex;
+	}
+
+	if (AlsoLoopIndex)
+	{
+		++LoopIndex;
+	}
+}
+
+double DynamicData::GetAltData(double Data, int DisplayState) {
+	if (DisplayState == 0) 
+	{
+		return Data;
+	}
+	return Utils::ConvertFromMeterToFt(Data);
+}
+double DynamicData::GetAzimuth(double Data, int DisplayState)
+{
+	if (DisplayState == 0)
+	{
+		return Data;
+	}
+	return Utils::ConvertFromRadToDeg(Data);
+}
+
+QString DynamicData::GetBoolean(std::string Data, int DisplatState)
+{
+	if (DisplatState != 0)
+	{
+		// Change from 0\1 to False\True
+		return Utils::ConvertFromBooleanValue(Data, DisplatState);
+	}
+	return QString::fromStdString(Data);
+}
+
+
 std::string DynamicData::GetString(char* currentPtr)
 {
 	std::string StringName = std::string(currentPtr + m_nCurrentPos);
@@ -499,6 +567,11 @@ int DynamicData::SetStringFromPtr(char* CurrentIntPtr, std::string &StringName)
 {
 	StringName = std::string(CurrentIntPtr);
 	return StringName.length() + 1;
+}
+
+double DynamicData::Mathround(double Data, int DecimalPlaces)
+{
+	return std::round(Data * pow(10, DecimalPlaces)) / pow(10, DecimalPlaces);
 }
 
 DynamicData::~DynamicData()

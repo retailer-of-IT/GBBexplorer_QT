@@ -10,6 +10,11 @@
 #include <QTreeWidgetItem>
 #include <QStandardItemModel>
 #include <QStandardItem>
+
+detail::detail() 
+{
+}
+
 detail::detail(StaticData::M_EntityInfo ei, QWidget *parent) : QWidget(parent), ui(new Ui::detail){
 	ui->setupUi(this);
 

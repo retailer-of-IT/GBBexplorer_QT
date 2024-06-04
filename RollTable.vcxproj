@@ -188,6 +188,7 @@
     <ClCompile Include="detailMessage.cpp" />
     <ClCompile Include="DynamicData.cpp" />
     <ClCompile Include="StaticData.cpp" />
+    <ClCompile Include="Utils.cpp" />
     <ClCompile Include="Widget.cpp" />
     <ClCompile Include="detail.cpp" />
     <ClCompile Include="main.cpp" />
@@ -224,6 +225,7 @@
     </QtUic>
   </ItemGroup>
   <ItemGroup>
+    <QtMoc Include="Utils.h" />
     <QtMoc Include="StaticData.h" />
     <QtMoc Include="detailMessage.h" />
     <QtMoc Include="DynamicData.h" />
