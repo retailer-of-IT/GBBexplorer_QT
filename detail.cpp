@@ -11,6 +11,45 @@
 #include <QStandardItemModel>
 #include <QStandardItem>
 
+
+#pragma region QTimerThread
+QTTWorker::QTTWorker(comFunc func, QVector<void *> p) {
+	work = func;
+	in_date = p;
+	interval = -1;
+}
+void QTTWorker::do_work() {
+	work(in_date);
+	if (interval != -1) {
+		qt_p->setInterval(interval);
+		interval = -1;
+	}
+}
+QTimerThread::QTimerThread(comFunc func, QVector<void *> p) {
+	qtm_p = new QTimer();
+	qth_p = new QThread();
+	qw_p = new QTTWorker(func, p);
+	qw_p->qt_p = qtm_p;
+}
+QTimerThread::~QTimerThread() {
+	qth_p->quit();
+	qth_p->wait();
+	qtm_p->deleteLater();
+	qw_p->deleteLater();
+	qth_p->deleteLater();
+}
+void QTimerThread::start(int interval1, int interval2 = -1) {
+	qtm_p->start(interval1);
+	qw_p->interval = interval2;
+	qtm_p->moveToThread(qth_p);
+	qw_p->moveToThread(qth_p);
+	QObject::connect(qtm_p, SIGNAL(timeout()), qw_p, SLOT(do_work()));
+	qth_p->start();
+} //第一个参数是第一次启动的延时，第二个参数是第一次启动后的周期；若只写一个参数就是第一次启动也在相应延迟后才开始执行
+#pragma endregion
+
+
+detail::detail() {}
 detail::detail(StaticData::M_EntityInfo ei, QWidget *parent) : QWidget(parent), ui(new Ui::detail){
 	ui->setupUi(this);
 
@@ -21,17 +60,18 @@ detail::detail(StaticData::M_EntityInfo ei, QWidget *parent) : QWidget(parent), 
 	//确定当前detail页所属实体类型
 	
 	//维护实体列表
-	thread = new QThread();
-	mutex1.lock();
-	entityRp = new EntityRetriever(ei, ui->treeWidget, thread, &mutex1);
-	mutex1.unlock();
-	connect(this, &detail::EntityRetrieve, entityRp, &EntityRetriever::doWork);
-	entityRp->moveToThread(thread);
-	thread->start();
-	emit EntityRetrieve(); 
-	//test 
-	mT = new myTest;
-	mT->test();
+	qmt_p = new QMutex;
+	qmt_p->lock();
+	QVector<void *> d_argv; //参数依次:QMutex，QTreeWidget，M_EntityInfo，QSet<int>; 本向量无需维持生命周期
+	ei_p = new StaticData::M_EntityInfo(ei);
+	qsi_p = new QSet<int>;
+	d_argv.push_back((void *)(qmt_p));
+	d_argv.push_back((void *)(ui->treeWidget));
+	d_argv.push_back((void *)(ei_p));
+	d_argv.push_back((void *)(qsi_p));
+	qmt_p->unlock();
+	qtt_p = new QTimerThread(&detail::keep_Entities, d_argv);
+	qtt_p->start(100,1000);
 
 	//MET_ID
 	ui->tableWidget->verticalHeader()->setVisible(false);
@@ -42,25 +82,23 @@ detail::detail(StaticData::M_EntityInfo ei, QWidget *parent) : QWidget(parent), 
 }
 detail::~detail(){
 	delete ui;
-	delete mT;
+	delete qtt_p;
+	delete qmt_p;
+	delete ei_p;
+	delete qsi_p;
 }
 
-void detail::creatNewTopItem(QString name)
-{
-	topItem = new QTreeWidgetItem(QStringList() << name);
-	//当前tab界面的treewidget_2建立根节点
-	ui->treeWidget_2->addTopLevelItem(topItem);
-//	topItem->setCheckState(0, Qt::Unchecked);
+void detail::creatNewTopItem(QString name){
+	topItem = new QTreeWidgetItem(QStringList() << name); //当前tab界面的treewidget_2建立根节点
+	ui->treeWidget_2->addTopLevelItem(topItem); //topItem->setCheckState(0, Qt::Unchecked);
 }
-void detail::creatNewItem(QTreeWidgetItem *parentItem, QString name)
-{
+void detail::creatNewItem(QTreeWidgetItem *parentItem, QString name){
 	item = new QTreeWidgetItem(parentItem);
 	item->setText(0, name);
 	item->setCheckState(0, Qt::Unchecked);
 }
 
-void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item)
-{
+void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item){
 	QString s = item->text(0), _s = s;
 	if (item->parent() != Q_NULLPTR)
 		_s = ((item->parent()->parent()!= Q_NULLPTR)?(item->parent()->parent()->text(0)):(item->parent()->text(0)))+"\n"+_s;
@@ -123,8 +161,7 @@ void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item)
 		sp = item->child(i);
 	}
 }
-void detail::on_treeWidget_clicked(QTreeWidgetItem * item)
-{
+void detail::on_treeWidget_clicked(QTreeWidgetItem * item){
 	QString s = item->text(0);
 	QAbstractItemModel *model = ui->tableWidget->model();
 	if (item->checkState(0) == Qt::Checked) {
@@ -144,8 +181,7 @@ void detail::on_treeWidget_clicked(QTreeWidgetItem * item)
 //	ui->tableWidget->setModel(model);
 }
 
-void detail::on_pushButton_7_clicked()
-{
+void detail::on_pushButton_7_clicked(){
 	for (int i = 0; i < ui->treeWidget_2->topLevelItemCount(); ++i) {
 		QTreeWidgetItem *item = ui->treeWidget_2->topLevelItem(i);
 		if (item == nullptr) {
@@ -159,8 +195,7 @@ void detail::on_pushButton_7_clicked()
 		}
 	}
 }
-void detail::on_pushButton_8_clicked()
-{
+void detail::on_pushButton_8_clicked(){
 	for (int i = 0; i < ui->treeWidget_2->topLevelItemCount(); ++i) {
 		QTreeWidgetItem *item = ui->treeWidget_2->topLevelItem(i);
 		if (item == nullptr) {
@@ -175,13 +210,13 @@ void detail::on_pushButton_8_clicked()
 	}
 }
 void detail::on_pushButton_3_clicked() { //全选实体
-	mutex1.lock();
+	qmt_p->lock();
 	for (int i = 0;; i++) {
 		QTreeWidgetItem *p = ui->treeWidget->topLevelItem(i);
 		if (p == Q_NULLPTR) break;
 		if (p->checkState(0) != Qt::Checked) p->setCheckState(0, Qt::Checked);
 	}
-	mutex1.unlock();
+	qmt_p->unlock();
 }
 void detail::on_pushButton_2_clicked() { //清除实体
 	for (int i = 0;; i++) {
@@ -190,37 +225,34 @@ void detail::on_pushButton_2_clicked() { //清除实体
 		if (p->checkState(0) != Qt::Unchecked) p->setCheckState(0, Qt::Unchecked);
 	}
 }
-
-EntityRetriever::EntityRetriever(StaticData::M_EntityInfo ei, QTreeWidget *qtw, QThread *tp, QMutex *mp){
-	entity_info = ei;
-	tWidget = qtw;
-	thread = tp;
-	mutex1_p = mp;
-}
-void EntityRetriever::doWork(){  //开始工作
-	flg = 1;
-	qDebug() << QString("This function is in Thread : ") << QThread::currentThreadId() << QString(" for type : ") << entity_info.EnumType;
-	QSet<int> rec;
-	while (flg) {
-		mutex1_p->lock();
-		dD.EntitiesId.clear();
-		dD.GetEntitiesIDs(entity_info.EnumType);
-		qDebug() << entity_info.EnumType;
-		if (dD.EntitiesId.size() == 1 && *(dD.EntitiesId.begin()) == -1) {
-//			qDebug() << "This Type has no enitiy.";
-			thread->sleep(1);  //间隔不少于1S
-			continue;
-		}
-		qDebug() << "This Type has " << dD.EntitiesId.size() <<" enities.";
+void detail::keep_Entities(QVector<void *> in_date) { //QMutex，QTreeWidget，M_EntityInfo，QSet<int>
+	if (in_date.size() != 4) {
+		qDebug() << "keep_Entities ERROR: wrong count of in_date!";
+		return;
+	}
+	//从输入的向量中获取所需数据的地址
+	QMutex *mtp = (QMutex *)(in_date[0]);
+	QTreeWidget *twp = (QTreeWidget *)(in_date[1]);
+	StaticData::M_EntityInfo *eip = (StaticData::M_EntityInfo *)(in_date[2]);
+	QSet<int> *recp = (QSet<int> *)(in_date[3]);
+	//以下为原处理函数
+	DynamicData dD;
+	mtp->lock();
+	dD.GetEntitiesIDs(eip->EnumType);
+	if (dD.EntitiesId.size() == 1 && *(dD.EntitiesId.begin()) == -1) {
+		qDebug() << "This Type has no enitiy. from " << QThread::currentThreadId();
+	}
+	else {
+		qDebug() << "This Type has " << dD.EntitiesId.size() << " enities. from " << QThread::currentThreadId();
 		for (int id : dD.EntitiesId) {  //检查是否增加了实体
-			if (!rec.contains(id)) {  //若该id不存在于tWidget则插入
-				rec.insert(id);
+			if (!recp->contains(id)) {  //若该id不存在于tWidget则插入
+				recp->insert(id);
 				QTreeWidgetItem *p = new QTreeWidgetItem(QStringList() << QString::number(id));
 				p->setCheckState(0, Qt::Unchecked);
-				tWidget->addTopLevelItem(p);
+				twp->addTopLevelItem(p);
 			}
 		}
-		for (int _id : rec)	{ //检查是否减少了实体
+		for (int _id : (*recp) ) { //检查是否减少了实体
 			bool _flg = 0;
 			for (int id : dD.EntitiesId) {
 				if (id != _id) continue;
@@ -228,9 +260,9 @@ void EntityRetriever::doWork(){  //开始工作
 				break;
 			}
 			if (!_flg) { //没找到该实体
-				rec.remove(_id);
+				recp->remove(_id);
 				for (int i = 0;; i++) {
-					QTreeWidgetItem *p = tWidget->topLevelItem(i);
+					QTreeWidgetItem *p = twp->topLevelItem(i);
 					if (p == Q_NULLPTR) break;
 					if (p->text(0) == QString::number(_id)) {
 						delete p; //删除节点，未测试正确性
@@ -239,46 +271,7 @@ void EntityRetriever::doWork(){  //开始工作
 				}
 			}
 		}
-		mutex1_p->unlock();
-		thread->sleep(1);  //间隔不少于1S
 	}
-	thread->quit();
+	mtp->unlock();
 }
 
-myTest::~myTest() { delete qtt; }
-void *myTest::test_func(void *p = Q_NULLPTR) {
-	qDebug() << "This function runs in thread " << QThread::currentThreadId();
-	int *xp = (int *)p;
-	(*xp)++;
-	qDebug() << "x is " << *xp;
-	return p;
-}
-void myTest::test() {
-	int *px = new int(10);
-	qtt = new QTimerThread(&myTest::test_func, (void *)px);
-	qtt->start(1000);
-}
-QTTWorker::QTTWorker(comFunc func, void *p = Q_NULLPTR) {
-	work = func;
-	in_date = p;
-}
-void QTTWorker::do_work() { work(in_date); }
-QTimerThread::QTimerThread(comFunc func, void *p = Q_NULLPTR) {
-	qtm_p = new QTimer();
-	qth_p = new QThread();
-	qw_p = new QTTWorker(func, p);
-}
-QTimerThread::~QTimerThread() {
-	qth_p->quit();
-	qth_p->wait();
-	qtm_p->deleteLater();
-	qw_p->deleteLater();
-	qth_p->deleteLater();
-}
-void QTimerThread::start(int interval) {
-	qtm_p->start(interval);
-	qtm_p->moveToThread(qth_p);
-	qw_p->moveToThread(qth_p);
-	QObject::connect(qtm_p, SIGNAL(timeout()), qw_p, SLOT(do_work())); //, Qt::QueuedConnection
-	qth_p->start();
-}
