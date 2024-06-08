@@ -29,13 +29,13 @@ int main(int argc, char *argv[]) {
 			&&theProcessHelper->waitForBlackboardToStart() == SUCCESS
 			&&theMonitorManager.Init())
 		{
-			//DynamicData dynamicdata;
+			DynamicData dynamicdata;
 			//int n = dynamicdata.GetMessageCount(142);
 			//int m = dynamicdata.GetDescriptorCount(266);
 			//dynamicdata.GetEntitiesIDs();
 			//dynamicdata.GetEntityEnumType(294);
 			//char* p;
-			//dynamicdata.GetEntityDynamicData(521,p);
+			dynamicdata.GetEntityDynamicData(81);
 			//dynamicdata.GetEntityDynamicData(81);
 			status_t status = SUCCESS;
 			EntityIterator iter(HT_GBB::EntityMission, status);

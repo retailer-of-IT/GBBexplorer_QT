@@ -99,6 +99,8 @@ public:
 	//实际gbbexplorer界面展示出来的描述符信息,最大数量为0的不展示
 	QVector<M_MessageInfo> vecMessageInfoInGBBEx;
 
+	std::map<std::string, std::map<int, std::string>> ValueToEnumToStringIS;// Dictionary of Dictionary to EnumToString values
+
 public:
 	StaticData();
 	void InitStructures();     // Create the Structures Static List
