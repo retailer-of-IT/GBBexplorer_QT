@@ -189,6 +189,17 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 			break;
 		}
 	}
+
+	//排序_vecInfo中的map的values，按照字典序比较，保持与GBBExplorer相同，以便后续动态数据的视图读取顺序
+	QVector<std::pair<int, std::string>> items;
+	for (auto it = _vecInfo.mapDescriptores.constBegin(); it != _vecInfo.mapDescriptores.constEnd(); ++it) 
+	{
+		items.append(std::pair<int, std::string>(it.key(), it.value()));
+	}
+	std::sort(items.begin(), items.end(), [](const std::pair<int, std::string>& a, const std::pair<int, std::string>& b) {
+		return a.second < b.second; 
+	});
+
 	//创建一个新的tab标签页
 	detail *newTab = new detail(_vecInfo);
 	qDebug() << "new detail is : " << newTab << " | " << QThread::currentThreadId();
@@ -206,13 +217,13 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 	int numOfDes = _vecInfo.mapDescriptores.size();
 	QString labelText2 = "Descriptors(" + QString::number(numOfDes) + ")";
 	label2->setText(labelText2);
-
-	for each(int var in _vecInfo.mapDescriptores.keys())
+	//QTableWidget* table = qobject_cast<QTableWidget*>(newTab->findChild<QTableWidget*>("tableWidget"));
+	for each(auto var in items)
 	{
-		newTab->creatNewTopItem(QString::fromStdString(_vecInfo.mapDescriptores[var]));
+		newTab->creatNewTopItem(QString::fromStdString(var.second));
 		for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfoInGBBEx)
 		{
-			if (desInfo.EnumType == var)
+			if (desInfo.EnumType == var.first)
 			{
 				for each(StaticData::M_StructuresInfo structInfo in staticdata.vecStructuresInfo)
 				{
@@ -249,6 +260,8 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 			}
 		}
 	}
+
+	dD.GetEntityDynamicData(_vecInfo.EnumType, newTab);
 }
 
 

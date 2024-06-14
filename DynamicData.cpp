@@ -22,7 +22,7 @@ DynamicData::DynamicData()
 	QDomElement dataElement = gbbExplorerElement.firstChildElement("Data");
 	QString descriptorBufferSizeStr = dataElement.firstChildElement("DescriptorBufferSize").text();
 	m_descriptorBufferSize = descriptorBufferSizeStr.toInt();
-
+	 
 	// 分配内存
 	m_descriptorPtr = static_cast<char*>(malloc(m_descriptorBufferSize));
 	qDebug() << m_descriptorBufferSize;
@@ -96,7 +96,7 @@ int DynamicData::GetDescriptorCount(int eDescriptorType)
 }
 
 
-void DynamicData::GetEntityDynamicData(int eEntityType)
+void DynamicData::GetEntityDynamicData(int eEntityType, detail*& GridView)
 {
 	staticdata.InitEntities();
 	staticdata.InitDescriptors();
@@ -144,6 +144,12 @@ void DynamicData::GetEntityDynamicData(int eEntityType)
 
 	GetEntitiesIDs(eEntityType);//每个周期，获取对应id实体的所有metid
 	int num2 = EntitiesId.size();
+	QTableWidget* table = qobject_cast<QTableWidget*>(GridView->findChild<QTableWidget*>("tableWidget"));
+	if (table)
+		qDebug() << "get table";
+	//设置tablewiget中的单元格个数，行列
+	//table->setRowCount(100);
+	//table->setColumnCount(200);
 	for (int i = 0; i < num2; i++) {
 		if (theMonitorManager.GetEntityDynamicData(EntitiesId[i], m_descriptorPtr)) {
 			GBBMonitor::SerializedBuffer* p = theMonitorManager.GetSerializedBuffer();
@@ -159,24 +165,24 @@ void DynamicData::GetEntityDynamicData(int eEntityType)
 			//ptr1 += SetStringFromPtr(ptr1, network_name);
 			//std::string network_obj;
 			//ptr1 += SetStringFromPtr(ptr1, network_obj);
-			//TODO dynamicdata.cs中 GetEntityTableData等函数使用到的 ReadRowFromIntPtr函数功能
-			GridView = new detail();
-			QTableWidget* table = qobject_cast<QTableWidget*>(GridView->findChild<QTableWidget*>("tableWidget"));
+			////TODO dynamicdata.cs中 GetEntityTableData等函数使用到的 ReadRowFromIntPtr函数功能
+			//GridView = new detail();
 			//QTableWidget* table;
-			//用于读取对应id的所有field的值（一行）并进行切分，非数组array结构
-			//传入表格视图,iscomparetab先预设为true
+			////用于读取对应id的所有field的值（一行）并进行切分，非数组array结构
+			////传入表格视图,iscomparetab先预设为true
 			bool flag = ReadRowFromIntPtr(ptr1, table, i, FieldsList, false, true, bufferLength);
-			qDebug() << "hello";
+			//qDebug() << "hello";
 		}
 	}
+	table->show();
 	m_nCurrentPos = 0;
 	//每次获取后清空vector
 	FieldsList.clear();
 	EntitiesId.clear();
-	qDebug() << "hello";
+	//qDebug() << "hello";
 }
 
-bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget* tableWidget, int ElementIndex, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, bool isThisEntity, int bufferLength)
+bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, int ElementIndex, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, bool isThisEntity, int bufferLength)
 {
 	int RowIndex = 0, ColumnIndex = 0, LoopIndex = 0;
 	bool DescriptorInitialized = false;
@@ -185,6 +191,9 @@ bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget* tableWidget, int E
 	{
 		++ColumnIndex;
 	}
+	//都加1，第一行和第一列都不是数据
+	RowIndex;
+	++ColumnIndex;
 	//循环，读取一整行field的数据
 	for (LoopIndex = 0; LoopIndex < FieldsList.size(); ++LoopIndex)
 	{
@@ -199,11 +208,24 @@ bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget* tableWidget, int E
 			//普通的field(非数组array)
 			if (FieldsList[LoopIndex].FieldType != StaticData::FieldType::Array)
 			{
-				QTableWidgetItem* item = tableWidget->item(RowIndex, ColumnIndex);//获取单元格
-				if (!ReadFieldFromPtr(ptr, item, FieldsList[LoopIndex], bufferLength))
+				int rowCount = tableWidget->rowCount();
+				int columnCount = tableWidget->columnCount();
+				//QTableWidgetItem* item = tableWidget->item(RowIndex, ColumnIndex);//获取单元格
+				QTableWidgetItem* item = new QTableWidgetItem();
+				if (item)//不为空
 				{
-					FinishReadRow(item, FieldsList, LoopIndex, ColumnIndex, RowIndex, IsThisCompareTab, false);
-					return false;
+					tableWidget->setItem(RowIndex, ColumnIndex, item);
+					if (!ReadFieldFromPtr(ptr, item, FieldsList[LoopIndex], bufferLength))
+					{
+						FinishReadRow(item, FieldsList, LoopIndex, ColumnIndex, RowIndex, IsThisCompareTab, false);
+						//tableWidget->update();
+						return false;
+						//tableWidget->setItem(RowIndex, ColumnIndex, item);
+					}
+				}
+				else
+				{
+					qDebug() << "invalid item";
 				}
 			}
 			//array类型，单独展示
@@ -218,14 +240,15 @@ bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget* tableWidget, int E
 		}
 		IncreaseLoopIndex(false, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
 	}
+	tableWidget->update();
 	return true;
 }
 
 
-bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData::M_FieldInfo currentField,int bufferLength)
+bool DynamicData::ReadFieldFromPtr(char*& fieldPtr, QTableWidgetItem*& item, StaticData::M_FieldInfo currentField,int bufferLength)
 {
-	char* fieldPtr = ptr;
-	const int Tag = Qt::UserRole + 1;//单元格tag
+	//char* fieldPtr = ptr;
+	const int Tag = Qt::DisplayRole + 1;//单元格tag
 	switch (currentField.FieldType)
 	{
 	case StaticData::FieldType::Alt:
@@ -235,7 +258,7 @@ bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData
 			item->setData(Tag, m_dDoubleValue);
 			//源代码是从GBBExplorerConfig.xml读出小数点后保留的位数,这里先把值写死
 			double val = Mathround(GetAltData(m_dDoubleValue, 0), 2);
-			item->setData(Qt::UserRole, val);
+			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 8;
 			m_nCurrentPos += 8;
 		}
@@ -251,7 +274,7 @@ bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData
 			item->setData(Tag, m_dDoubleValue);
 			//源代码是从GBBExplorerConfig.xml读出小数点后保留的位数
 			double val = Mathround(GetAzimuth(m_dDoubleValue, 0), 5);
-			item->setData(Qt::UserRole, val);
+			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 8;
 			m_nCurrentPos += 8;
 		}
@@ -267,7 +290,7 @@ bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData
 			//m_nCurrentPos += 1;
 			bool value = *(bool*)fieldPtr;
 			QString val = GetBoolean(std::to_string(value), 1);//to_string会转换成“0”/“1”
-			item->setData(Qt::UserRole, val);
+			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 1;
 			m_nCurrentPos += 1;
 		}
@@ -280,7 +303,7 @@ bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData
 		if (m_nCurrentPos + 1 <= bufferLength)
 		{
 			char val = *(char*)fieldPtr;
-			item->setData(Qt::UserRole, val);
+			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 1;
 			m_nCurrentPos += 1;
 		}
@@ -294,7 +317,7 @@ bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData
 		{
 			m_dDoubleValue = *(double*)fieldPtr;
 			double val = Mathround(m_dDoubleValue, 3);
-			item->setData(Qt::UserRole, val);
+			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 8;
 			m_nCurrentPos += 8;
 		}
@@ -308,8 +331,8 @@ bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData
 		{
 			int value = *(int*)fieldPtr;
 			item->setData(Tag, value);
-			QString val = GetEnum2String(value, 1, currentField.NestedName);
-			item->setData(Qt::UserRole, val);
+			QString val = GetEnum2String(value, 0, currentField.NestedName);
+			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 4;
 			m_nCurrentPos += 4;
 		}
@@ -322,7 +345,7 @@ bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData
 		if (m_nCurrentPos + 4 <= bufferLength)
 		{
 			int val = *(int*)(fieldPtr);
-			item->setData(Qt::UserRole, val);
+			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 4;
 			m_nCurrentPos += 4;
 		}
@@ -337,7 +360,7 @@ bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData
 			m_dDoubleValue = *(double*)fieldPtr;
 			item->setData(Tag, m_dDoubleValue);
 			QVariant val = GetLatLong(m_dDoubleValue, 1, Utils::Latitude);
-			item->setData(Qt::UserRole, val);
+			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 8;
 			m_nCurrentPos += 8;
 		}
@@ -352,7 +375,7 @@ bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData
 			m_dDoubleValue = *(double*)fieldPtr;
 			item->setData(Tag, m_dDoubleValue);
 			QVariant val = GetLatLong(m_dDoubleValue, 1, Utils::Longitude);
-			item->setData(Qt::UserRole, val);
+			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 8;
 			m_nCurrentPos += 8;
 		}
@@ -365,7 +388,7 @@ bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData
 		if (m_nCurrentPos + 4 <= bufferLength)
 		{
 			long val = *(long*)(fieldPtr);
-			item->setData(Qt::UserRole, val);
+			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 4;
 			m_nCurrentPos += 4;
 		}
@@ -378,7 +401,7 @@ bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData
 		if (m_nCurrentPos + 8 <= bufferLength)
 		{
 			long long val = *(long long*)(fieldPtr);
-			item->setData(Qt::UserRole, val);
+			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 8;
 			m_nCurrentPos += 8;
 		}
@@ -391,7 +414,7 @@ bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData
 		if (m_nCurrentPos + 4 <= bufferLength)
 		{
 			int val = *(int*)(fieldPtr);
-			item->setData(Qt::UserRole, val);
+			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 4;
 			m_nCurrentPos += 4;
 		}
@@ -404,7 +427,7 @@ bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData
 		if (m_nCurrentPos + 4 <= bufferLength)
 		{
 			int val = *(int*)(fieldPtr);
-			item->setData(Qt::UserRole, val);
+			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 4;
 			m_nCurrentPos += 4;
 		}
@@ -417,7 +440,7 @@ bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData
 		if (m_nCurrentPos + 2 <= bufferLength)
 		{
 			short val = *(short*)(fieldPtr);
-			item->setData(Qt::UserRole, val);
+			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 2;
 			m_nCurrentPos += 2;
 		}
@@ -432,7 +455,7 @@ bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData
 			m_dSpeedValue = *(double*)fieldPtr;
 			item->setData(Tag, m_dSpeedValue);
 			QVariant val = GetSpeed(m_dSpeedValue, 1);
-			item->setData(Qt::UserRole, val);
+			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 8;
 			m_nCurrentPos += 8;
 		}
@@ -444,8 +467,12 @@ bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData
 	case StaticData::FieldType::String:
 		if (m_nCurrentPos + 1 <= bufferLength)
 		{
-			QString s = QString::fromStdString(GetString(fieldPtr));
-			item->setData(Qt::UserRole, s);
+			std::string s;
+			int n = SetStringFromPtr(fieldPtr, s);
+			fieldPtr += n;
+			m_nCurrentPos += n;
+			QString val = QString::fromStdString(s);
+			item->setData(Qt::DisplayRole, val);
 		}
 		else
 		{
@@ -458,7 +485,7 @@ bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData
 			long long value = *(long long*)(fieldPtr);
 			item->setData(Tag, value);
 			QVariant val = GetTime(value, 1);
-			item->setData(Qt::UserRole, val);
+			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 8;
 			m_nCurrentPos += 8;
 		}
@@ -473,7 +500,7 @@ bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData
 			m_dDoubleValue = *(double*)fieldPtr;
 			item->setData(Tag, m_dDoubleValue);
 			double val = GetRange(m_dDoubleValue, 1, 3);
-			item->setData(Qt::UserRole, val);
+			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 8;
 			m_nCurrentPos += 8;
 		}
@@ -490,11 +517,11 @@ bool DynamicData::ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData
 	return true;
 }
 
-void DynamicData::FinishReadRow(QTableWidgetItem * item, QVector<StaticData::M_FieldInfo> FieldsList, int LoopIndex, int ColumnIndex, int RowIndex, bool IsThisCompareTab, bool AlsoLoop)
+void DynamicData::FinishReadRow(QTableWidgetItem *& item, QVector<StaticData::M_FieldInfo> FieldsList, int LoopIndex, int ColumnIndex, int RowIndex, bool IsThisCompareTab, bool AlsoLoop)
 {
 	for (int j = LoopIndex; j < FieldsList.size(); ++j)
 	{
-		item[ColumnIndex, RowIndex].setBackground(QColor(255, 0, 0));//设置为红色
+		//item[ColumnIndex, RowIndex].setBackground(QColor(255, 0, 0));//设置为红色
 		IncreaseLoopIndex(AlsoLoop, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
 	}
 }
@@ -587,6 +614,7 @@ double DynamicData::GetRange(double Data, int DisplayState, int DecimalPlaces)
 std::string DynamicData::GetString(char* currentPtr)
 {
 	std::string StringName = std::string(currentPtr);
+	qDebug() << StringName.length();
 	currentPtr += StringName.length() + 1;
 	m_nCurrentPos += StringName.length() + 1;
 	return StringName;

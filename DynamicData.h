@@ -50,10 +50,10 @@ public:
 	int GetMessageCount(int eMessageType); //每个周期获取某个消息的数量
 	int GetDescriptorCount(int eDescriptorType); //每个周期获取某个描述符的数量
 	//void GetEntityDynamicData(int nEntityID); //根据id获取动态数据
-	void GetEntityDynamicData(int eEntityType);//获取某个实体的全部动态数据
-	bool ReadRowFromIntPtr(char * ptr, QTableWidget* tableWidget, int ElementIndex, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, bool isThisEntity, int bufferLength);
-	bool ReadFieldFromPtr(char* ptr, QTableWidgetItem* item, StaticData::M_FieldInfo currentField, int bufferLength);//从字符流中切割某个出某个field,传入的是一个单元格
-	void FinishReadRow(QTableWidgetItem* item, QVector<StaticData::M_FieldInfo> FieldsList,int LoopIndex, int ColumnIndex, int RowIndex, bool IsThisCompareTab, bool AlsoLoop);
+	void GetEntityDynamicData(int eEntityType, detail*& GridView);//获取某个实体的全部动态数据
+	bool ReadRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, int ElementIndex, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, bool isThisEntity, int bufferLength);
+	bool ReadFieldFromPtr(char*& fieldPtr, QTableWidgetItem*& item, StaticData::M_FieldInfo currentField, int bufferLength);//从字符流中切割某个出某个field,传入的是一个单元格
+	void FinishReadRow(QTableWidgetItem*& item, QVector<StaticData::M_FieldInfo> FieldsList,int LoopIndex, int ColumnIndex, int RowIndex, bool IsThisCompareTab, bool AlsoLoop);
 	void SetElementIndex(bool IsThisCompareTab, int ElementIndex, int& RowIndex, int& ColumnIndex, int& LoopIndex);
 	void IncreaseLoopIndex(bool AlsoLoopIndex, bool IsVertical, int& RowIndex, int& ColumnIndex, int& LoopIndex);
 	//bool ShowArrayField(char* ptr)
