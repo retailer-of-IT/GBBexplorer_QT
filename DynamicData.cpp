@@ -8,6 +8,11 @@
 
 DynamicData::DynamicData()
 {
+	staticdata.InitEntities();
+	staticdata.InitDescriptors();
+	staticdata.InitStructures();
+	staticdata.InitMessages();
+
 	QFile configFile(configPath);
 	configFile.open(QIODevice::ReadOnly | QIODevice::Text);
 	QDomDocument configDoc;
@@ -96,25 +101,21 @@ int DynamicData::GetDescriptorCount(int eDescriptorType)
 }
 
 
-void DynamicData::GetEntityDynamicData(int eEntityType, detail*& GridView)
+void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, std::string>> items, detail*& EntityGridView)
 {
-	staticdata.InitEntities();
-	staticdata.InitDescriptors();
-	staticdata.InitStructures();
-	staticdata.InitMessages();
 	m_nCurrentPos = 0;
 	for each(StaticData::M_EntityInfo vecInfo in staticdata.vecEntityInfo)
 	{
 		if (vecInfo.EnumType == eEntityType)
 		{
 			//为每个描述符在分配的空间中占位，以enumtype作为标志，-1作为结束
-			for (const auto& key : vecInfo.mapDescriptores.keys()) {
+			for each(auto var in items){
 				//*(int*)(m_descriptorPtr + m_nCurrentPos) = staticdata.vecDescriptorsInfo[i].EnumType;
-				*(int*)(m_descriptorPtr + m_nCurrentPos) = key;
+				*(int*)(m_descriptorPtr + m_nCurrentPos) = var.first;
 				m_nCurrentPos += sizeof(int);
 				for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfoInGBBEx)
 				{
-					if (desInfo.EnumType == key)
+					if (desInfo.EnumType == var.first)
 					{
 						for each(StaticData::M_StructuresInfo structInfo in staticdata.vecStructuresInfo)
 						{
@@ -123,6 +124,22 @@ void DynamicData::GetEntityDynamicData(int eEntityType, detail*& GridView)
 								for each(StaticData::M_FieldInfo fieldInfo in structInfo.vecField)
 								{
 									FieldsList.push_back(fieldInfo);
+									//if (fieldInfo.NestedName.empty())
+									//{
+									//	FieldsList.push_back(fieldInfo);
+									//}
+									//else
+									//{
+									//	for each(StaticData::M_StructuresInfo structInfo2 in staticdata.vecStructuresInfo)
+									//	{
+									//		if (structInfo2.StructureName == fieldInfo.NestedName) {
+									//			for each(StaticData::M_FieldInfo fieldInfo2 in structInfo2.vecField)
+									//			{
+									//				FieldsList.push_back(fieldInfo2);
+									//			}
+									//		}
+									//	}
+									//}
 								}
 							}
 						}
@@ -144,12 +161,14 @@ void DynamicData::GetEntityDynamicData(int eEntityType, detail*& GridView)
 
 	GetEntitiesIDs(eEntityType);//每个周期，获取对应id实体的所有metid
 	int num2 = EntitiesId.size();
-	QTableWidget* table = qobject_cast<QTableWidget*>(GridView->findChild<QTableWidget*>("tableWidget"));
+	QTableWidget* table = qobject_cast<QTableWidget*>(EntityGridView->findChild<QTableWidget*>("tableWidget"));
 	if (table)
 		qDebug() << "get table";
 	//设置tablewiget中的单元格个数，行列
-	//table->setRowCount(100);
-	//table->setColumnCount(200);
+	table->setRowCount(100);
+	table->setColumnCount(200);
+	//table->clear();
+
 	for (int i = 0; i < num2; i++) {
 		if (theMonitorManager.GetEntityDynamicData(EntitiesId[i], m_descriptorPtr)) {
 			GBBMonitor::SerializedBuffer* p = theMonitorManager.GetSerializedBuffer();
@@ -166,11 +185,11 @@ void DynamicData::GetEntityDynamicData(int eEntityType, detail*& GridView)
 			//std::string network_obj;
 			//ptr1 += SetStringFromPtr(ptr1, network_obj);
 			////TODO dynamicdata.cs中 GetEntityTableData等函数使用到的 ReadRowFromIntPtr函数功能
-			//GridView = new detail();
+			//EntityGridView = new detail();
 			//QTableWidget* table;
 			////用于读取对应id的所有field的值（一行）并进行切分，非数组array结构
 			////传入表格视图,iscomparetab先预设为true
-			bool flag = ReadRowFromIntPtr(ptr1, table, i, FieldsList, false, true, bufferLength);
+			bool flag = ReadRowFromIntPtr(ptr1, table, i, FieldsList, false, true, false, bufferLength);
 			//qDebug() << "hello";
 		}
 	}
@@ -182,7 +201,156 @@ void DynamicData::GetEntityDynamicData(int eEntityType, detail*& GridView)
 	//qDebug() << "hello";
 }
 
-bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, int ElementIndex, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, bool isThisEntity, int bufferLength)
+void DynamicData::GetMessageWithAckTableData(enum_t eMessageType, detailMessage * MessageGridView, QVector<StaticData::M_FieldInfo> FieldsList, HT::HT_TIME & requireTime)
+{
+	m_nCurrentPos = 0;
+	QTableWidget* table = qobject_cast<QTableWidget*>(MessageGridView->findChild<QTableWidget*>("tableWidget"));
+	StaticData::M_MessageInfo m_cCurrentMessage;//获取当前的消息对象
+	for each(StaticData::M_MessageInfo msgInfo in staticdata.vecMessageInfoInGBBEx)
+	{
+		if (msgInfo.EnumType == eMessageType)
+		{
+			m_cCurrentMessage = msgInfo;
+		}
+	}
+	if (theMonitorManager.GetMessageDynamicData(eMessageType, requireTime)) {
+		GBBMonitor::SerializedBuffer* p = theMonitorManager.GetSerializedBuffer();
+		char* ptr = (char*)p->GetBuffer();
+		//对应的DataBufferPtr
+		char* ptr1 = ptr;
+		int bufferLength = *(int*)(ptr1); ptr1 += sizeof(int);//buffer长度
+		//if (bufferLength == 0)
+		//{
+		//	return;
+		//}
+		// (2)
+		int NumberOfNewMessage = *(int*)(ptr1); ptr1 += sizeof(int);//Message数量，和n应该是相等的
+		if (NumberOfNewMessage > 0)
+		{
+			table->setRowCount = NumberOfNewMessage;
+			for (int i = 0; i < NumberOfNewMessage; ++i)
+			{
+				if (ReadAckRowFromIntPtr(ptr1, table, FieldsList, i, bufferLength))
+				{
+				}
+			}
+		}
+	}
+}
+
+void DynamicData::GetMessageDynamicData(enum_t eMessageType, detailMessage * MessageGridView, QVector<StaticData::M_FieldInfo> FieldsList, HT::HT_TIME & requireTime, QVector<CreationTime> lst_LastCreationTime, int& NextCreationTimeIndex, bool WithAck)
+{
+	m_nCurrentPos = 0;
+	QTableWidget* table = qobject_cast<QTableWidget*>(MessageGridView->findChild<QTableWidget*>("tableWidget"));
+	table->setRowCount(100);
+	table->setColumnCount(200);
+	int n = GetMessageCount(eMessageType);
+	StaticData::M_MessageInfo m_cCurrentMessage;//获取当前的消息对象
+	for each(StaticData::M_MessageInfo msgInfo in staticdata.vecMessageInfoInGBBEx)
+	{
+		if (msgInfo.EnumType == eMessageType)
+		{
+			m_cCurrentMessage = msgInfo;
+		}
+	}
+	// (1)
+	if (theMonitorManager.GetMessageDynamicData(eMessageType, requireTime)) {
+		GBBMonitor::SerializedBuffer* p = theMonitorManager.GetSerializedBuffer();
+		char* ptr = (char*)p->GetBuffer();
+		//对应的DataBufferPtr
+		char* ptr1 = ptr;
+		int bufferLength = *(int*)(ptr1); ptr1 += sizeof(int);//buffer长度
+
+		// (2)
+		int NumberOfNewMessage = *(int*)(ptr1); ptr1 += sizeof(int);//Message数量，和n应该是相等的
+		if (NumberOfNewMessage > 0)
+		{
+			// Change all the previous messages BackColor to be "control" color 
+			for (int j = 0; j < table->rowCount(); ++j)
+			{
+				QTableWidgetItem* item = table->item(j, 0);
+				item->setBackground(QColor(255, 255, 255));
+			}
+
+			// Read the message fields
+			for (int i = 0; i < NumberOfNewMessage; ++i)
+			{
+				if (table->rowCount() < m_cCurrentMessage.MaxMessageNum)
+				{
+					int rowPosition = table->rowCount();
+					// Create new row
+					table->insertRow(rowPosition);//插入一个新行
+					CreationTime timeRow(rowPosition);
+					lst_LastCreationTime.push_back(timeRow);
+
+					// Create all the ArrayDialogs for the new row TODO
+					//CurrentMessageView.CreateNewArrayDialog();
+
+					bool flag = ReadRowFromIntPtr(ptr1, table, table->rowCount() - 1, FieldsList, false, false, WithAck, bufferLength);
+					if (flag)
+					{
+						lst_LastCreationTime[table->rowCount() - 1].TheCreationTime = table->item(table->rowCount() - 1, 0)->data(Tag).toLongLong();//注意qt中的table获取单元格是[row,column],c#中是先列后行
+						table->item(table->rowCount() - 1, 0)->setBackground(QColor(82, 82, 82));
+						if (m_cCurrentMessage.m_bWithAck)
+						{
+							if ((table->item(table->rowCount() - 1, table->columnCount() - 1)->data(Tag).isNull)
+								&& ((table->item(table->rowCount() - 1, table->columnCount() - 1)->data(Tag)).toInt == 1000))
+							{
+								QString sUUID = (table->item(table->rowCount() - 1, table->columnCount() - 2)->data(Qt::DisplayRole)).toString();
+								//判断这uuid是否存在
+								if (!m_disAllAckWaitingRows.contains(sUUID))
+								{
+									m_disAllAckWaitingRows.insert(sUUID, table->item(table->rowCount() - 1, 0));//改写
+								}
+							}
+						}
+					}
+				}
+				else
+				{
+					bool flag2 = ReadRowFromIntPtr(ptr1, table, lst_LastCreationTime[NextCreationTimeIndex].IndexInTable, FieldsList, false, false, false, bufferLength);
+					if (flag2)
+					{
+						lst_LastCreationTime[NextCreationTimeIndex].TheCreationTime = table->item(lst_LastCreationTime[NextCreationTimeIndex].IndexInTable, 0)->data(Tag).toLongLong();//注意qt中的table获取单元格是[row,column],c#中是先列后行
+						table->item(lst_LastCreationTime[NextCreationTimeIndex].IndexInTable, 0)->setBackground(QColor(82, 82, 82));
+						table->setRowHidden(lst_LastCreationTime[NextCreationTimeIndex].IndexInTable, false);//设置行可见
+						if (m_cCurrentMessage.m_bWithAck)
+						{
+							if ((table->item(lst_LastCreationTime[NextCreationTimeIndex].IndexInTable, table->columnCount() - 1)->data(Tag).isNull)
+								&& ((table->item(lst_LastCreationTime[NextCreationTimeIndex].IndexInTable, table->columnCount() - 1)->data(Tag)).toInt == 1000))
+							{
+								m_disAllAckWaitingRows.insert(table->item(lst_LastCreationTime[NextCreationTimeIndex].IndexInTable, table->columnCount() - 2)->data(Qt::DisplayRole).toString(), table->item(lst_LastCreationTime[NextCreationTimeIndex].IndexInTable, 0));//改写
+							}
+						}
+						if (NextCreationTimeIndex < (m_cCurrentMessage.MaxMessageNum - 1))
+						{
+							++NextCreationTimeIndex;
+						}
+						else
+						{
+							NextCreationTimeIndex = 0;
+						}
+					}
+				}
+			}
+			// (2.2) Set new requireTime for the next update cycle
+			if ((NextCreationTimeIndex - 1) >= 0) // if this is not the first message
+			{
+				requireTime = lst_LastCreationTime[NextCreationTimeIndex - 1].TheCreationTime;
+			}
+			else
+			{
+				requireTime = lst_LastCreationTime[lst_LastCreationTime.size() - 1].TheCreationTime;
+			}
+			requireTime += 1;
+		}
+		m_nCurrentPos = 0;
+	}
+}
+
+
+
+bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, int ElementIndex, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, bool isThisEntity, bool WithAckMessage, int bufferLength)
 {
 	int RowIndex = 0, ColumnIndex = 0, LoopIndex = 0;
 	bool DescriptorInitialized = false;
@@ -244,11 +412,34 @@ bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, int 
 	return true;
 }
 
+bool DynamicData::ReadAckRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, QVector<StaticData::M_FieldInfo> FieldsList, int nRowIndex, int bufferLength)
+{
+	for (int nColumnIndex = 0; nColumnIndex < FieldsList.size(); ++nColumnIndex)
+	{
+		// Regular field
+		if (FieldsList[nColumnIndex].FieldType != StaticData::FieldType::Array)
+		{
+			QTableWidgetItem* item = tableWidget->item(nRowIndex, nColumnIndex);
+			if (!ReadFieldFromPtr(ptr, item, FieldsList[nColumnIndex], bufferLength))
+			{
+				// In case trying to read from the buffer out of bound of the pointer
+				return false;
+			}
+		}
+		// Array Field
+		else
+		{
+			// TODO
+		}
+	}
+	return true;
+}
+
 
 bool DynamicData::ReadFieldFromPtr(char*& fieldPtr, QTableWidgetItem*& item, StaticData::M_FieldInfo currentField,int bufferLength)
 {
 	//char* fieldPtr = ptr;
-	const int Tag = Qt::DisplayRole + 1;//单元格tag
+	//const int Tag = Qt::DisplayRole + 1;//单元格tag
 	switch (currentField.FieldType)
 	{
 	case StaticData::FieldType::Alt:

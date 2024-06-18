@@ -95,7 +95,7 @@ void detail::creatNewTopItem(QString name) {
 void detail::creatNewItem(QTreeWidgetItem *parentItem, QString name) {
 	item = new QTreeWidgetItem(parentItem);
 	item->setText(0, name);
-	item->setCheckState(0, Qt::Unchecked);
+	item->setCheckState(0, Qt::Checked);
 }
 
 void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item) {

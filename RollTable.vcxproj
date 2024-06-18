@@ -185,6 +185,7 @@
     </QtMoc>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CreationTime.cpp" />
     <ClCompile Include="detailMessage.cpp" />
     <ClCompile Include="DynamicData.cpp" />
     <ClCompile Include="StaticData.cpp" />
@@ -229,6 +230,7 @@
     <QtMoc Include="StaticData.h" />
     <QtMoc Include="detailMessage.h" />
     <QtMoc Include="DynamicData.h" />
+    <QtMoc Include="CreationTime.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

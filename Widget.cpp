@@ -249,7 +249,7 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 										{
 											QTreeWidgetItem *item1 = new QTreeWidgetItem(newTab->item);
 											item1->setText(0, QString::fromStdString(fieldInfo2.FieldName));
-											item1->setCheckState(0, Qt::Unchecked);
+											item1->setCheckState(0, Qt::Checked);
 										}
 									}
 								}
@@ -261,7 +261,7 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 		}
 	}
 
-	dD.GetEntityDynamicData(_vecInfo.EnumType, newTab);
+	dD.GetEntityDynamicData(_vecInfo.EnumType, items, newTab);
 }
 
 
