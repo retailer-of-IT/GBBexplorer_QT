@@ -205,8 +205,8 @@ void DynamicData::GetMessageWithAckTableData(enum_t eMessageType, detailMessage*
 {
 	m_nCurrentPos = 0;
 	QTableWidget* table = qobject_cast<QTableWidget*>(MessageGridView->findChild<QTableWidget*>("tableWidget"));
-	table->setRowCount(100);
-	table->setColumnCount(200);
+	//table->setRowCount(100);
+	//table->setColumnCount(200);
 	StaticData::M_MessageInfo m_cCurrentMessage;//获取当前的消息对象
 	for each(StaticData::M_MessageInfo msgInfo in staticdata.vecMessageInfoInGBBEx)
 	{
@@ -244,9 +244,9 @@ void DynamicData::GetMessageWithAckTableData(enum_t eMessageType, detailMessage*
 		if (NumberOfNewMessage > 0)
 		{
 			//设置行列
-			//table->setRowCount(NumberOfNewMessage);
+			table->setRowCount(NumberOfNewMessage);
 			int columnCount = m_cCurrentMessage.m_bIsDescAsMessage ? FieldsList.size() + 2 : FieldsList.size() + 1;//列数，如果是描述符消息，会多2列MET_ID和creation time；如果不是，只增加一列creation time
-			//table->setColumnCount(columnCount);
+			table->setColumnCount(columnCount);
 
 			for (int i = 0; i < NumberOfNewMessage; ++i)
 			{
