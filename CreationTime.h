@@ -11,7 +11,7 @@ class CreationTime : public QObject
 	Q_OBJECT
 
 public:
-	explicit CreationTime(int indexInTable, QObject *parent = nullptr);
+	explicit CreationTime(int indexInTable);
 	~CreationTime();
 
 	int indexInTable() const;

@@ -284,10 +284,12 @@ void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
 	int openTabsCount = ui->tabWidget->count() + 1;
 	//判断是否是描述符消息，用m_bIsDescAsMessage判断
 	bool flag = false;
+	StaticData::M_MessageInfo cur_MsgInfo;
 	for each(StaticData::M_MessageInfo msgInfo in staticdata.vecMessageInfo)
 	{
 		if (QString::fromStdString(msgInfo.MessageName) == s)
 		{
+			cur_MsgInfo = msgInfo;
 			if (msgInfo.m_bIsDescAsMessage)
 				flag = true;
 		}
@@ -335,6 +337,8 @@ void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
 			}
 		}
 	}
+	long long tmp = 1000;
+	dD.GetMessageWithAckTableData(cur_MsgInfo.EnumType, newTab, tmp);
 }
 
 //关闭全部打开的标签(主页除外)

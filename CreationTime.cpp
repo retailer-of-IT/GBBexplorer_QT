@@ -1,7 +1,7 @@
 #include "CreationTime.h"
 
-CreationTime::CreationTime(int indexInTable, QObject *parent)
-	: QObject(parent), IndexInTable(indexInTable)
+CreationTime::CreationTime(int indexInTable)
+	:IndexInTable(indexInTable)
 {
 }
 
