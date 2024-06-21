@@ -8,6 +8,8 @@ detailMessage::detailMessage(QWidget *parent)
 
 	//tablewidget_2勾选列显示
 	connect(ui.treeWidget_2, &QTreeWidget::itemChanged, this, &detailMessage::on_treeWidget_2_clicked);
+	//将自定义信号与全选槽函数连接起来，用于在双击tableview1的同时触发触发一次treewidget_2的全选
+	connect(this, &detailMessage::FirstAllSelect, this, &detailMessage::on_pushButton_8_clicked);
 }
 detailMessage::~detailMessage(){}
 
@@ -16,7 +18,7 @@ void detailMessage::creatNewTopItem(QString name)
 	topItem = new QTreeWidgetItem(QStringList() << name);
 	//当前tab界面的treewidget_2建立根节点
 	ui.treeWidget_2->addTopLevelItem(topItem);
-	topItem->setCheckState(0, Qt::Checked);
+	topItem->setCheckState(0, Qt::Unchecked);
 }
 void detailMessage::creatNewItem(QTreeWidgetItem *parentItem, QString name)
 {
@@ -34,20 +36,45 @@ void detailMessage::on_treeWidget_2_clicked(QTreeWidgetItem * item)
 	int columnCount = ui.tableWidget->columnCount();
 	qDebug() << QString("reach %1 when %2 columns").arg(s, QString(columnCount));
 	if (item->child(0) == Q_NULLPTR) {	//最后一层节点，才展示
-		if (ist == Qt::Checked) { //增加列表头
-			ui.tableWidget->setColumnCount(columnCount + 1);
-			ui.tableWidget->setHorizontalHeaderItem(columnCount, new QTableWidgetItem(_s));
-			ui.tableWidget->horizontalHeader()->setSectionResizeMode(columnCount, QHeaderView::ResizeToContents);
-			ui.tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+		if (count == 0) {//还未进行一次性全选，此时是进行插入操作
+			if (ist == Qt::Checked) { //增加列表头
+				ui.tableWidget->setColumnCount(columnCount + 1);
+				ui.tableWidget->setHorizontalHeaderItem(columnCount, new QTableWidgetItem(_s));
+				ui.tableWidget->horizontalHeader()->setSectionResizeMode(columnCount, QHeaderView::ResizeToContents);
+				ui.tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+			}
+			else { //隐藏列表头
+				for (int i = 0; i < columnCount; i++) {
+					QString name = ui.tableWidget->model()->headerData(i, Qt::Horizontal).toString();
+					name.remove(0, name.lastIndexOf("\n") + 1);
+					if (name == s) {
+						ui.tableWidget->setColumnHidden(i, true);
+						break;
+					}
+				}
+			}
 		}
-		else { //删除列表头
-			for (int i = 0; i< columnCount; i++) {
-				QString name = ui.tableWidget->model()->headerData(i, Qt::Horizontal).toString();
-				name.remove(0, name.lastIndexOf("\n") + 1);
-				if (name == s) {
-					QAbstractItemModel *model = ui.tableWidget->model();
-					model->removeColumn(i);
-					break;
+		else {//count已经>=1，执行显示/隐藏操作
+			if (ist == Qt::Checked) {
+				for (int i = 0; i < columnCount; i++) {
+					QString name = ui.tableWidget->model()->headerData(i, Qt::Horizontal).toString();
+					name.remove(0, name.lastIndexOf("\n") + 1);
+					if (name == s) {
+						//QAbstractItemModel *model = ui->tableWidget->model();
+						//model->removeColumn(i);
+						ui.tableWidget->setColumnHidden(i, false);
+						break;
+					}
+				}
+			}
+			else { //隐藏列表头
+				for (int i = 0; i < columnCount; i++) {
+					QString name = ui.tableWidget->model()->headerData(i, Qt::Horizontal).toString();
+					name.remove(0, name.lastIndexOf("\n") + 1);
+					if (name == s) {
+						ui.tableWidget->setColumnHidden(i, true);
+						break;
+					}
 				}
 			}
 		}
@@ -118,4 +145,5 @@ void detailMessage::on_pushButton_8_clicked()
 			child->setCheckState(0, Qt::Checked);
 		}
 	}
+	count += 1;
 }

@@ -5,6 +5,7 @@
 #include<qtreewidget.h>
 #include "StaticData.h"
 #include "DynamicData.h"
+#include "detail.h"
 #include <qtimer.h>
 
 namespace Ui {
@@ -24,10 +25,6 @@ public:
 	//类的实例化声明
 	StaticData staticdata;
 	DynamicData dD;
-
-
-//private:
-//    void initForm(); //初始化主窗口
 
 private slots:
 	void initForm(); //初始化主窗口

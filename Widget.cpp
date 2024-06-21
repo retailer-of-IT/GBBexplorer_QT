@@ -249,7 +249,7 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 										{
 											QTreeWidgetItem *item1 = new QTreeWidgetItem(newTab->item);
 											item1->setText(0, QString::fromStdString(fieldInfo2.FieldName));
-											item1->setCheckState(0, Qt::Checked);
+											item1->setCheckState(0, Qt::Unchecked);
 										}
 									}
 								}
@@ -260,7 +260,7 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 			}
 		}
 	}
-
+	emit newTab->FirstAllSelect();//发射信号，触发一次全选操作，执行插入列表头操作，count+1
 	dD.GetEntityDynamicData(_vecInfo.EnumType, items, newTab);
 }
 
@@ -327,7 +327,7 @@ void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
 									{
 										QTreeWidgetItem *item1 = new QTreeWidgetItem(newTab->topItem);
 										item1->setText(0, QString::fromStdString(fieldInfo2.FieldName));
-										item1->setCheckState(0, Qt::Checked);
+										item1->setCheckState(0, Qt::Unchecked);
 									}
 								}
 							}
@@ -337,6 +337,7 @@ void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
 			}
 		}
 	}
+	emit newTab->FirstAllSelect();//发射信号，触发一次全选操作，执行插入列表头操作，count+1
 	long long tmp = 1000;
 	dD.GetMessageWithAckTableData(cur_MsgInfo.EnumType, newTab, tmp);
 }

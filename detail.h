@@ -63,6 +63,7 @@ public:
 	QMutex *qmt_p;
 	StaticData::M_EntityInfo *ei_p;
 	QSet<int> *qsi_p;
+	int count = 0; //判断是否已经一次性插入所有表头，初始化为0，全选执行一次后+1，之后只做隐藏/显示
 
 public:
 	static void keep_Entities(QVector<void *> in_date);
@@ -71,7 +72,9 @@ public:
 
 signals:
 	void EntityRetrieve();
-	private slots:
+	void FirstAllSelect();
+
+private slots:
 	void on_pushButton_3_clicked();//实体全选
 	void on_pushButton_2_clicked();//实体清除
 	void on_pushButton_7_clicked();//清除按钮功能实现

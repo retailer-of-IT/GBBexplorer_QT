@@ -165,9 +165,17 @@ void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, 
 	if (table)
 		qDebug() << "get table";
 	//设置tablewiget中的单元格个数，行列
-	table->setRowCount(100);
-	table->setColumnCount(200);
-	//table->clear();
+	int rowCount = EntitiesId.size();
+	int columnCount = FieldsList.size() + 1;
+	table->setRowCount(rowCount);
+	table->setColumnCount(columnCount);
+	//先用Met_id填充行
+	for (int i = 0; i < rowCount; i++)
+	{
+		QTableWidgetItem* item = new QTableWidgetItem();
+		item->setData(Qt::DisplayRole, EntitiesId[i]);
+		table->setItem(i, 0, item);
+	}
 
 	for (int i = 0; i < num2; i++) {
 		if (theMonitorManager.GetEntityDynamicData(EntitiesId[i], m_descriptorPtr)) {
