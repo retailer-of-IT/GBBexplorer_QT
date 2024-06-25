@@ -21,11 +21,6 @@ Widget::Widget(QWidget *parent) :
 	ui(new Ui::Widget)
 {
 	ui->setupUi(this);
-	//集中初始化,后面直接取即可
-	staticdata.InitDescriptors();
-	staticdata.InitEntities();
-	staticdata.InitStructures();
-	staticdata.InitMessages();
 
 	//链接双击相应事件
 	connect(ui->tableView_1, SIGNAL(doubleClicked(const QModelIndex &)), this, SLOT(on_tableView_1doubleClicked(const QModelIndex &)));

@@ -8,12 +8,8 @@
 
 DynamicData::DynamicData()
 {
-	staticdata.InitEntities();
-	staticdata.InitDescriptors();
-	staticdata.InitStructures();
-	staticdata.InitMessages();
 
-	QFile configFile(configPath);
+	QFile configFile(ConfigPath);
 	configFile.open(QIODevice::ReadOnly | QIODevice::Text);
 	QDomDocument configDoc;
 	if (!configDoc.setContent(&configFile)) {
@@ -27,7 +23,7 @@ DynamicData::DynamicData()
 	QDomElement dataElement = gbbExplorerElement.firstChildElement("Data");
 	QString descriptorBufferSizeStr = dataElement.firstChildElement("DescriptorBufferSize").text();
 	m_descriptorBufferSize = descriptorBufferSizeStr.toInt();
-	 
+
 	// ∑÷≈‰ƒ⁄¥Ê
 	m_descriptorPtr = static_cast<char*>(malloc(m_descriptorBufferSize));
 	qDebug() << m_descriptorBufferSize;
@@ -599,7 +595,7 @@ bool DynamicData::ReadFieldFromPtr(char*& fieldPtr, QTableWidgetItem*& item, Sta
 		{
 			int value = *(int*)fieldPtr;
 			item->setData(Tag, value);
-			QString val = GetEnum2String(value, 0, currentField.NestedName);
+			QString val = GetEnum2String(value, 1, currentField.NestedName);
 			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 4;
 			m_nCurrentPos += 4;
@@ -853,7 +849,7 @@ QString DynamicData::GetEnum2String(int Data, int DislayState, std::string Neste
 {
 	if (DislayState != 0)
 	{
-		return QString::fromStdString(ConvertIntToEnum2String(Data, NestedName));
+		return ConvertIntToEnum2String(Data, NestedName);
 	}
 	return QString::number(Data);
 }
@@ -903,14 +899,14 @@ void DynamicData::getAfterString(char* currentPtr ,int bufferLength)
 	}
 }
 
-std::string DynamicData::ConvertIntToEnum2String(int Data, std::string NestedName)
+QString DynamicData::ConvertIntToEnum2String(int Data, std::string NestedName)
 {
-	auto it = staticdata.ValueToEnumToStringIS.find(NestedName);
-	if (it != staticdata.ValueToEnumToStringIS.end()) {
-		auto innerMap = it->second;
+	auto it = staticdata.mapValueToEnumToStringIS.find(QString::fromStdString(NestedName));
+	if (it != staticdata.mapValueToEnumToStringIS.end()) {
+		auto innerMap = it.value();
 		auto innerIt = innerMap.find(Data);
 		if (innerIt != innerMap.end()) {
-			return innerIt->second;
+			return innerIt.value();
 		}
 	}
 	return "N/A";

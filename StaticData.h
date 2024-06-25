@@ -11,6 +11,9 @@
 #include <QObject>
 #include <QVector>
 #include <QMap>
+#include <QDir>
+#include <QFile>
+#include <QDomDocument>
 #include <qdebug.h>
 
 
@@ -53,9 +56,10 @@ public:
 	struct M_FieldInfo
 	{
 		FieldType FieldType;
-		int ArrayMaxSize;
+		int ArrayMaxSize = -1;
 		std::string FieldName = "";
 		std::string NestedName = "";// If the field is a structure – the name of it. Empty string if not a structure
+
 	};
 	struct M_StructuresInfo
 	{
@@ -98,15 +102,25 @@ public:
 	QVector<M_MessageInfo> vecMessageInfo;
 	//实际gbbexplorer界面展示出来的描述符信息,最大数量为0的不展示
 	QVector<M_MessageInfo> vecMessageInfoInGBBEx;
+	//保存EnumToString值的字典
+	QMap<QString, QMap<int, QString>> mapValueToEnumToStringIS;
 
-	std::map<std::string, std::map<int, std::string>> ValueToEnumToStringIS;// Dictionary of Dictionary to EnumToString values
+	//config配置路径，根据需要修改
+	QString ConfigPath = "D:/CHSim-TKE_GBBExplorer/Applications/SSGProduct/Config";
+	//使用的语言
+	QString AttributeLanguage;
 
 public:
 	StaticData();
+	void InitLanguage();       // Set require language 
+	void InitEnumToString();   // Set the EnumToString variable
 	void InitStructures();     // Create the Structures Static List
 	void InitDescriptors();    // Create the Descriptors Static List
 	void InitEntities();       // Create the Entities Static List
 	void InitMessages();      // Create the Messages Static List
-	int SetStringFromPtr(char* CurrentIntPtr, std::string &StringName); // 用于切割buffer，每到\0截至
 	~StaticData();
+
+private:
+	int SetStringFromPtr(char* CurrentIntPtr, std::string &StringName); // 用于切割buffer，每到\0截至
+	void SetEnumFromFile(QMap<QString, QMap<int, QString>>& ValueToEnumTypesIS, QString& FilePath);//用于读取EnumtoString
 };

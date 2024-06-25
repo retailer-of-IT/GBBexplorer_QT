@@ -34,7 +34,7 @@ public:
 	QVector<int> EntitiesId;
 	QVector<StaticData::M_FieldInfo> FieldsList;
 
-	QString configPath = "D:/CHSim-TKE_GBBExplorer/Applications/SSGProduct/Config/GBBExplorerConfig.xml";
+	QString ConfigPath = "D:/CHSim-TKE_GBBExplorer/Applications/SSGProduct/Config/GBBExplorerConfig.xml";
 	char* m_descriptorPtr = nullptr;
 	int m_descriptorBufferSize = 0;
 	int m_nCurrentPos = 0;
@@ -75,7 +75,7 @@ public:
 	double GetRange(double Data, int DisplayState, int DecimalPlaces);
 	std::string GetString(char* CurrentPtr);//读取字符串
 	void getAfterString(char* currentPtr, int bufferLength); //跳过，不读取字符串
-	std::string ConvertIntToEnum2String(int Data, std::string NestedName);
+	QString ConvertIntToEnum2String(int Data, std::string NestedName);
 	int SetStringFromPtr(char* CurrentIntPtr, std::string &StringName);
 	double Mathround(double Data, int DecimalPlaces);//用于保留DecimalPlaces位小数
 	~DynamicData();
