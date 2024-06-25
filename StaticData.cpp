@@ -91,14 +91,34 @@ void StaticData::InitStructures()
 			M_StructuresInfo &cInfo = vecStructuresInfo[i];
 			ptr1 += SetStringFromPtr(ptr1, cInfo.StructureName);
 			cInfo.NumOfFields = *(int*)(ptr1); ptr1 += sizeof(int);
+			int NumberOfArrays = 0;
 			for (int j = 0; j < cInfo.NumOfFields; ++j)
 			{
 				cInfo.vecField.push_back(M_FieldInfo());
-				M_FieldInfo &cInfo2 = cInfo.vecField[j];
+				M_FieldInfo &cInfo2 = cInfo.vecField[j + NumberOfArrays];
 				ptr1 += SetStringFromPtr(ptr1, cInfo2.FieldName);
 				cInfo2.FieldType = *(FieldType*)(ptr1); ptr1 += sizeof(int);
 				ptr1 += SetStringFromPtr(ptr1, cInfo2.NestedName);
 				cInfo2.ArrayMaxSize = *(int*)(ptr1); ptr1 += sizeof(int);
+				cInfo2.ShowField = true;
+				// Is this array field?
+				if (cInfo2.ArrayMaxSize > 0)
+				{
+					if (cInfo2.FieldType != Reference)
+					{
+						cInfo.vecField.push_back(M_FieldInfo());
+						M_FieldInfo &cInfo3 = cInfo.vecField[j + 1 + NumberOfArrays];
+						cInfo2.FieldType = Array;
+						cInfo2.ShowField = true;
+						cInfo3.FieldName = cInfo2.FieldName;
+						cInfo3.NestedName = cInfo2.NestedName;
+						++NumberOfArrays;
+					}
+					else
+					{
+						cInfo2.FieldType = Array;
+					}
+				}
 			}
 		}
 	}

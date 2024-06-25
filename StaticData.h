@@ -55,11 +55,16 @@ public:
 	};
 	struct M_FieldInfo
 	{
-		FieldType FieldType;
+		FieldType FieldType = Default;//源代码中默认为default
 		int ArrayMaxSize = -1;
 		std::string FieldName = "";
 		std::string NestedName = "";// If the field is a structure – the name of it. Empty string if not a structure
-
+		int DisplayState = 0;       // Define the display state for the current field
+		std::string DescriptorName = ""; // The descriptor the field belong to
+		bool ShowField = true;
+		bool mDiscriptorShow = true;
+		bool IsThisFirstInDes = false;
+		std::string ReferenceStructureName = "";// In case the field is from type "Array of struct" this field holds the struct name
 	};
 	struct M_StructuresInfo
 	{
