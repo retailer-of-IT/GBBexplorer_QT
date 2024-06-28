@@ -748,7 +748,7 @@ bool DynamicData::ReadFieldFromPtr(char*& fieldPtr, QTableWidgetItem*& item, Sta
 		{
 			long long value = *(long long*)(fieldPtr);
 			item->setData(Tag, value);
-			QVariant val = GetTime(value, 1);
+			QVariant val = GetTime(value, 2);
 			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 8;
 			m_nCurrentPos += 8;
@@ -901,12 +901,11 @@ void DynamicData::getAfterString(char* currentPtr ,int bufferLength)
 
 QString DynamicData::ConvertIntToEnum2String(int Data, std::string NestedName)
 {
-	auto it = staticdata.mapValueToEnumToStringIS.find(QString::fromStdString(NestedName));
-	if (it != staticdata.mapValueToEnumToStringIS.end()) {
-		auto innerMap = it.value();
-		auto innerIt = innerMap.find(Data);
-		if (innerIt != innerMap.end()) {
-			return innerIt.value();
+	QString nestedNameQStr = QString::fromStdString(NestedName);
+	if (staticdata.mapValueToEnumToStringIS.contains(nestedNameQStr)) {
+		const auto& innerMap = staticdata.mapValueToEnumToStringIS[nestedNameQStr];
+		if (innerMap.contains(Data)) {
+			return innerMap[Data];
 		}
 	}
 	return "N/A";

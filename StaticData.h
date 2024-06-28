@@ -114,6 +114,8 @@ public:
 	QString ConfigPath = "D:/CHSim-TKE_GBBExplorer/Applications/SSGProduct/Config";
 	// π”√µƒ”Ô—‘
 	QString AttributeLanguage;
+	//AckMessage∫≈
+	int AckMessageEnum;
 
 public:
 	StaticData();
@@ -123,6 +125,7 @@ public:
 	void InitDescriptors();    // Create the Descriptors Static List
 	void InitEntities();       // Create the Entities Static List
 	void InitMessages();      // Create the Messages Static List
+	void GetAckMessageEnum();
 	~StaticData();
 
 private:

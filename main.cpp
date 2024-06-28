@@ -29,20 +29,6 @@ int main(int argc, char *argv[]) {
 			&&theProcessHelper->waitForBlackboardToStart() == SUCCESS
 			&&theMonitorManager.Init())
 		{
-			//DynamicData dynamicdata;
-			//int n = dynamicdata.GetMessageCount(142);
-			//int m = dynamicdata.GetDescriptorCount(266);
-			//dynamicdata.GetEntitiesIDs();
-			//dynamicdata.GetEntityEnumType(294);
-			//char* p;
-			//dynamicdata.GetEntityDynamicData(81);
-			//dynamicdata.GetEntityDynamicData(81);
-			status_t status = SUCCESS;
-			EntityIterator iter(HT_GBB::EntityMission, status);
-			for (iter.begin(); !iter.end(); iter.next()) {
-				id_t nMetId = INVALID_MET_ID;
-				status = iter.getEntityID(nMetId);
-			}
 			Widget widget;
 			widget.setWindowTitle("GBBExplorer");
 			widget.show();

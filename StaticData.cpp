@@ -9,7 +9,8 @@ StaticData::StaticData()
 	InitStructures();     
 	InitDescriptors();    
 	InitEntities();       
-	InitMessages();      
+	InitMessages();  
+	GetAckMessageEnum();
 }
 
 void StaticData::InitLanguage()
@@ -48,7 +49,6 @@ void StaticData::InitEnumToString()
 			qDebug() << "Error opening file:" << filePath;
 		}
 	}
-	qDebug() << "hello";
 }
 
 
@@ -104,16 +104,20 @@ void StaticData::InitStructures()
 				// Is this array field?
 				if (cInfo2.ArrayMaxSize > 0)
 				{
+					//这个reference类型的作用是在array类型时，再赋复制一列，复制的那一列field类型为reference类型
 					if (cInfo2.FieldType != Reference)
 					{
-						cInfo.vecField.push_back(M_FieldInfo());
-						M_FieldInfo &cInfo3 = cInfo.vecField[j + 1 + NumberOfArrays];
+						M_FieldInfo info;
+						info.FieldType = cInfo2.FieldType;
+						info.ShowField = true;
+						cInfo.vecField.push_back(info);
 						cInfo2.FieldType = Array;
-						cInfo2.ShowField = true;
+						M_FieldInfo &cInfo3 = cInfo.vecField[j + 1 + NumberOfArrays];
 						cInfo3.FieldName = cInfo2.FieldName;
 						cInfo3.NestedName = cInfo2.NestedName;
 						++NumberOfArrays;
 					}
+					// In case the array is reference type then the table don't display the array data, only if opening the "Array Dialog"
 					else
 					{
 						cInfo2.FieldType = Array;
@@ -179,6 +183,17 @@ void StaticData::InitMessages()
 			if (vecMessageInfo[i].MaxMessageNum != 0)
 				vecMessageInfoInGBBEx.push_back(vecMessageInfo[i]);
 		}
+	}
+}
+
+void StaticData::GetAckMessageEnum()
+{
+	if (theMonitorManager.GetAckMessageEnum()) {
+		GBBMonitor::SerializedBuffer* p = theMonitorManager.GetSerializedBuffer();
+		char* ptr = (char*)p->GetBuffer();
+		char* ptr1 = ptr;
+		ptr1 += sizeof(int);// Get after buffer size
+		AckMessageEnum = *(int*)(ptr1); ptr1 += sizeof(int);
 	}
 }
 
