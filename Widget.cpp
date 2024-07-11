@@ -227,23 +227,26 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 						for each(StaticData::M_FieldInfo fieldInfo in structInfo.vecField)
 						{
 							QString field = QString::fromStdString(fieldInfo.FieldName);
+							QString s = fieldInfo.FieldType == StaticData::FieldType::Array ? "(#)" + field : field;
 							//如果nestname为空，不是结构体，直接进行展示
 							if (fieldInfo.NestedName.empty())
 							{
-								newTab->creatNewItem(newTab->topItem, field);
+								newTab->creatNewItem(newTab->topItem, s);
 								//							qDebug() << "hello";
 							}
 							//否则，寻找名称对应的结构体,分层展示
 							else
 							{
-								newTab->creatNewItem(newTab->topItem, field);
+								newTab->creatNewItem(newTab->topItem, s);
 								for each(StaticData::M_StructuresInfo structInfo2 in staticdata.vecStructuresInfo)
 								{
 									if (structInfo2.StructureName == fieldInfo.NestedName) {
 										for each(StaticData::M_FieldInfo fieldInfo2 in structInfo2.vecField)
 										{
 											QTreeWidgetItem *item1 = new QTreeWidgetItem(newTab->item);
-											item1->setText(0, QString::fromStdString(fieldInfo2.FieldName));
+											QString field = QString::fromStdString(fieldInfo2.FieldName);
+											QString s = fieldInfo2.FieldType == StaticData::FieldType::Array ? "(#)" + field : field;
+											item1->setText(0, s);
 											item1->setCheckState(0, Qt::Unchecked);
 										}
 									}
@@ -333,8 +336,13 @@ void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
 		}
 	}
 	emit newTab->FirstAllSelect();//发射信号，触发一次全选操作，执行插入列表头操作，count+1
-	long long tmp = 1000;
-	dD.GetMessageWithAckTableData(cur_MsgInfo.EnumType, newTab, tmp);
+	// 创建 QTimer 对象并启动
+	newTab->m_timer = new QTimer(newTab);
+	connect(newTab->m_timer, &QTimer::timeout, [=]() {
+		long long tmp = 1000;
+		dD.GetMessageWithAckTableData(cur_MsgInfo.EnumType, newTab, tmp);
+	});
+	newTab->m_timer->start(1000); // 每 1 秒钟触发一次
 }
 
 //关闭全部打开的标签(主页除外)
@@ -342,7 +350,7 @@ void Widget::on_closealltabbtn()
 {
 	for (int i = ui->tabWidget->count() - 1; i > 0; i--)
 	{
-		detail *p = (detail*)(ui->tabWidget->widget(i));
+		Widget *p = (Widget*)(ui->tabWidget->widget(i));
 		ui->tabWidget->removeTab(i);
 		delete p;
 	}

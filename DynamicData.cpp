@@ -49,14 +49,13 @@ void DynamicData::GetEntitiesIDs(int eEntityType)
 		char* ptr1 = ptr;
 		int NumOfBuffer = *(int*)(ptr1); ptr1 += sizeof(int);//buffer长度
 
-															 //将此周期内的entity_id全部压入
-		EntitiesId.push_back(*(int*)(ptr1)); ptr1 += sizeof(int);
-		int n = GetEntityCount(eEntityType);
-		for (int i = 1; i < n; i++) {
-			EntitiesId.push_back(*(int*)(ptr1));
-			ptr1 += sizeof(int);
+		//将此周期内的entity_id全部压入,-1表示结尾
+		int Id = *(int*)(ptr1); ptr1 += sizeof(int);
+		while (Id != -1) {
+			EntitiesId.push_back(Id);
+			Id = *(int*)(ptr1); ptr1 += sizeof(int);
 		}
-//		qDebug() << "hello";
+		//qDebug() << "hello";
 	}
 }
 
@@ -205,7 +204,7 @@ void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, 
 	//qDebug() << "hello";
 }
 
-void DynamicData::GetMessageWithAckTableData(enum_t eMessageType, detailMessage*& MessageGridView, HT::HT_TIME & requireTime)
+void DynamicData::GetMessageWithAckTableData(enum_t eMessageType, detailMessage* MessageGridView, HT::HT_TIME & requireTime)
 {
 	m_nCurrentPos = 0;
 	QTableWidget* table = qobject_cast<QTableWidget*>(MessageGridView->findChild<QTableWidget*>("tableWidget"));
@@ -521,7 +520,7 @@ bool DynamicData::ReadFieldFromPtr(char*& fieldPtr, QTableWidgetItem*& item, Sta
 			m_dDoubleValue = *(double*)fieldPtr;
 			item->setData(Tag, m_dDoubleValue);
 			//源代码是从GBBExplorerConfig.xml读出小数点后保留的位数,这里先把值写死
-			double val = Mathround(GetAltData(m_dDoubleValue, 0), 2);
+			double val = Mathround(GetAltData(m_dDoubleValue, 1), 2);
 			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 8;
 			m_nCurrentPos += 8;
@@ -537,7 +536,7 @@ bool DynamicData::ReadFieldFromPtr(char*& fieldPtr, QTableWidgetItem*& item, Sta
 			m_dDoubleValue = *(double*)fieldPtr;
 			item->setData(Tag, m_dDoubleValue);
 			//源代码是从GBBExplorerConfig.xml读出小数点后保留的位数
-			double val = Mathround(GetAzimuth(m_dDoubleValue, 0), 5);
+			double val = Mathround(GetAzimuth(m_dDoubleValue, 1), 5);
 			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 8;
 			m_nCurrentPos += 8;
