@@ -14,6 +14,7 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QButtonGroup>
 #include <QtWidgets/QGridLayout>
+#include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
@@ -35,9 +36,11 @@ public:
     QLabel *label_5;
     QTreeWidget *treeWidget_2;
     QGridLayout *gridLayout_5;
+    QPushButton *pushButton_8;
     QPushButton *pushButton_5;
     QPushButton *pushButton_7;
-    QPushButton *pushButton_8;
+    QHBoxLayout *horizontalLayout;
+    QPushButton *pushButton_9;
     QPushButton *pushButton_6;
     QWidget *widget_2;
     QGridLayout *gridLayout_6;
@@ -83,6 +86,11 @@ public:
 
         gridLayout_5 = new QGridLayout();
         gridLayout_5->setObjectName(QStringLiteral("gridLayout_5"));
+        pushButton_8 = new QPushButton(widget_3);
+        pushButton_8->setObjectName(QStringLiteral("pushButton_8"));
+
+        gridLayout_5->addWidget(pushButton_8, 1, 1, 1, 1);
+
         pushButton_5 = new QPushButton(widget_3);
         pushButton_5->setObjectName(QStringLiteral("pushButton_5"));
 
@@ -93,15 +101,20 @@ public:
 
         gridLayout_5->addWidget(pushButton_7, 1, 2, 1, 1);
 
-        pushButton_8 = new QPushButton(widget_3);
-        pushButton_8->setObjectName(QStringLiteral("pushButton_8"));
+        horizontalLayout = new QHBoxLayout();
+        horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));
+        pushButton_9 = new QPushButton(widget_3);
+        pushButton_9->setObjectName(QStringLiteral("pushButton_9"));
 
-        gridLayout_5->addWidget(pushButton_8, 1, 1, 1, 1);
+        horizontalLayout->addWidget(pushButton_9);
 
         pushButton_6 = new QPushButton(widget_3);
         pushButton_6->setObjectName(QStringLiteral("pushButton_6"));
 
-        gridLayout_5->addWidget(pushButton_6, 0, 2, 1, 1);
+        horizontalLayout->addWidget(pushButton_6);
+
+
+        gridLayout_5->addLayout(horizontalLayout, 0, 2, 1, 1);
 
 
         verticalLayout_2->addLayout(gridLayout_5);
@@ -182,10 +195,11 @@ public:
         label_5->setText(QApplication::translate("detail", "Descriptors", nullptr));
         QTreeWidgetItem *___qtreewidgetitem = treeWidget_2->headerItem();
         ___qtreewidgetitem->setText(0, QApplication::translate("detail", "\346\217\217\350\277\260\347\254\246", nullptr));
+        pushButton_8->setText(QApplication::translate("detail", "\345\205\250\351\200\211", nullptr));
         pushButton_5->setText(QApplication::translate("detail", "\345\210\267\346\226\260", nullptr));
         pushButton_7->setText(QApplication::translate("detail", "\346\270\205\351\231\244\346\211\200\346\234\211", nullptr));
-        pushButton_8->setText(QApplication::translate("detail", "\345\205\250\351\200\211", nullptr));
-        pushButton_6->setText(QApplication::translate("detail", "PushButton", nullptr));
+        pushButton_9->setText(QApplication::translate("detail", "/\\", nullptr));
+        pushButton_6->setText(QApplication::translate("detail", "/\\", nullptr));
         label_4->setText(QApplication::translate("detail", "Entities", nullptr));
         QTreeWidgetItem *___qtreewidgetitem1 = treeWidget->headerItem();
         ___qtreewidgetitem1->setText(0, QApplication::translate("detail", "\345\256\236\344\275\223ID", nullptr));

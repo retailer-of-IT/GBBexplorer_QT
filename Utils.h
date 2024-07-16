@@ -18,8 +18,9 @@ public:
 	Utils();
 	~Utils();
 
-private:
+public :
 	enum CoordinateType { Longitude, Latitude };
+private:
 	static double NM_TO_METERS;
 	static double METERS_TO_NM;
 	static double YARD_TO_METER;

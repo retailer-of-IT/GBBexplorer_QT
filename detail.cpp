@@ -50,15 +50,16 @@ void QTimerThread::start(int interval1, int interval2 = -1) {
 
 
 detail::detail() {}
-detail::detail(StaticData::M_EntityInfo ei, QWidget *parent) : QWidget(parent), ui(new Ui::detail){
+detail::detail(StaticData::M_EntityInfo ei, QWidget *parent) : QWidget(parent), ui(new Ui::detail) {
 	ui->setupUi(this);
 
 	//tablewidget_2勾选列显示
 	connect(ui->treeWidget_2, &QTreeWidget::itemChanged, this, &detail::on_treeWidget_2_clicked);
 	//tablewidget勾选行显示
 	connect(ui->treeWidget, &QTreeWidget::itemChanged, this, &detail::on_treeWidget_clicked);
-	//确定当前detail页所属实体类型
-	
+	//将自定义信号与全选槽函数连接起来，用于在双击tableview1的同时触发触发一次treewidget_2的全选
+	connect(this, &detail::FirstAllSelect, this, &detail::on_pushButton_8_clicked);
+
 	//维护实体列表
 	qmt_p = new QMutex;
 	qmt_p->lock();
@@ -71,7 +72,7 @@ detail::detail(StaticData::M_EntityInfo ei, QWidget *parent) : QWidget(parent), 
 	d_argv.push_back((void *)(qsi_p));
 	qmt_p->unlock();
 	qtt_p = new QTimerThread(&detail::keep_Entities, d_argv);
-	qtt_p->start(100,1000);
+	qtt_p->start(100, 1000);
 
 	//MET_ID
 	ui->tableWidget->verticalHeader()->setVisible(false);
@@ -80,7 +81,7 @@ detail::detail(StaticData::M_EntityInfo ei, QWidget *parent) : QWidget(parent), 
 	ui->tableWidget->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
 	ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
 }
-detail::~detail(){
+detail::~detail() {
 	delete ui;
 	delete qtt_p;
 	delete qmt_p;
@@ -88,48 +89,73 @@ detail::~detail(){
 	delete qsi_p;
 }
 
-void detail::creatNewTopItem(QString name){
+void detail::creatNewTopItem(QString name) {
 	topItem = new QTreeWidgetItem(QStringList() << name); //当前tab界面的treewidget_2建立根节点
 	ui->treeWidget_2->addTopLevelItem(topItem); //topItem->setCheckState(0, Qt::Unchecked);
 }
-void detail::creatNewItem(QTreeWidgetItem *parentItem, QString name){
+void detail::creatNewItem(QTreeWidgetItem *parentItem, QString name) {
 	item = new QTreeWidgetItem(parentItem);
 	item->setText(0, name);
 	item->setCheckState(0, Qt::Unchecked);
 }
 
-void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item){
+void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item) {
 	QString s = item->text(0), _s = s;
 	if (item->parent() != Q_NULLPTR)
-		_s = ((item->parent()->parent()!= Q_NULLPTR)?(item->parent()->parent()->text(0)):(item->parent()->text(0)))+"\n"+_s;
+		_s = ((item->parent()->parent() != Q_NULLPTR) ? (item->parent()->parent()->text(0)) : (item->parent()->text(0))) + "\n" + _s;
 	Qt::CheckState ist = item->checkState(0);
 	int columnCount = ui->tableWidget->columnCount();
-//	qDebug() << QString("reach %1 when %2 columns").arg(s,QString(columnCount));
+	//	qDebug() << QString("reach %1 when %2 columns").arg(s,QString(columnCount));
 	if (item->child(0) == Q_NULLPTR) {	//最后一层节点，才展示
-		if (ist == Qt::Checked) { //增加列表头
-			ui->tableWidget->setColumnCount(columnCount + 1);
-			ui->tableWidget->setHorizontalHeaderItem(columnCount, new QTableWidgetItem(_s));
-			ui->tableWidget->horizontalHeader()->setSectionResizeMode(columnCount, QHeaderView::ResizeToContents);
-			ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+		if (count == 0) {//还未进行一次性全选，此时是进行插入操作
+			if (ist == Qt::Checked) { //增加列表头
+				ui->tableWidget->setColumnCount(columnCount + 1);
+				ui->tableWidget->setHorizontalHeaderItem(columnCount, new QTableWidgetItem(_s));
+				ui->tableWidget->horizontalHeader()->setSectionResizeMode(columnCount, QHeaderView::ResizeToContents);
+				ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+			}
+			else { //隐藏列表头
+				for (int i = 1; i < columnCount; i++) {
+					QString name = ui->tableWidget->model()->headerData(i, Qt::Horizontal).toString();
+					name.remove(0, name.lastIndexOf("\n") + 1);
+					if (name == s) {
+						ui->tableWidget->setColumnHidden(i, true);
+						break;
+					}
+				}
+			}
 		}
-		else { //删除列表头
-			for (int i = 1; i< columnCount; i++) {
-				QString name = ui->tableWidget->model()->headerData(i, Qt::Horizontal).toString();
-				name.remove(0, name.lastIndexOf("\n")+1);
-				if (name == s) {
-					QAbstractItemModel *model = ui->tableWidget->model();
-					model->removeColumn(i);
-					break;
+		else {//count已经>=1，执行显示/隐藏操作
+			if (ist == Qt::Checked) {
+				for (int i = 1; i < columnCount; i++) {
+					QString name = ui->tableWidget->model()->headerData(i, Qt::Horizontal).toString();
+					name.remove(0, name.lastIndexOf("\n") + 1);
+					if (name == s) {
+						//QAbstractItemModel *model = ui->tableWidget->model();
+						//model->removeColumn(i);
+						ui->tableWidget->setColumnHidden(i, false);
+						break;
+					}
+				}
+			}
+			else { //隐藏列表头
+				for (int i = 1; i < columnCount; i++) {
+					QString name = ui->tableWidget->model()->headerData(i, Qt::Horizontal).toString();
+					name.remove(0, name.lastIndexOf("\n") + 1);
+					if (name == s) {
+						ui->tableWidget->setColumnHidden(i, true);
+						break;
+					}
 				}
 			}
 		}
 	}
-	if (item->checkState(0) == Qt::PartiallyChecked){ //子到父导致，继续向上
+	if (item->checkState(0) == Qt::PartiallyChecked) { //子到父导致，继续向上
 		if (item->parent() != Q_NULLPTR && item->parent()->checkState(0) != Qt::PartiallyChecked) {
 			item->parent()->setCheckState(0, Qt::PartiallyChecked);
-//			qDebug() << QString("\tcheckstate set on %1").arg(item->parent()->text(0));
+			//			qDebug() << QString("\tcheckstate set on %1").arg(item->parent()->text(0));
 		}
-		return ; 
+		return;
 	}
 	if (item->parent() != Q_NULLPTR) { //更新父节点
 		QTreeWidgetItem *pp = item->parent(), *cp = pp->child(0);
@@ -144,11 +170,11 @@ void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item){
 		if (flg) {
 			if (pp->checkState(0) != Qt::PartiallyChecked)
 				pp->setCheckState(0, Qt::PartiallyChecked);
-//				qDebug() << QString("\tcheckstate set on %1").arg(pp->text(0));
+			//				qDebug() << QString("\tcheckstate set on %1").arg(pp->text(0));
 		}
 		else {
-			pp->setCheckState(0,ist);
-//			qDebug() << QString("\tcheckstate set on %1").arg(pp->text(0));
+			pp->setCheckState(0, ist);
+			//			qDebug() << QString("\tcheckstate set on %1").arg(pp->text(0));
 		}
 	}
 	// 更新子节点
@@ -156,32 +182,33 @@ void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item){
 	for (int i = 1; sp != Q_NULLPTR; i++) {
 		if (ist != sp->checkState(0)) {
 			sp->setCheckState(0, ist);
-//			qDebug() << QString("\tcheckstate set on %1").arg(sp->text(0));
+			//			qDebug() << QString("\tcheckstate set on %1").arg(sp->text(0));
 		}
 		sp = item->child(i);
 	}
 }
-void detail::on_treeWidget_clicked(QTreeWidgetItem * item){
+void detail::on_treeWidget_clicked(QTreeWidgetItem * item) {
 	QString s = item->text(0);
 	QAbstractItemModel *model = ui->tableWidget->model();
 	if (item->checkState(0) == Qt::Checked) {
-		int rowCount = model->rowCount();// 获取行数
-		model->insertRow(rowCount);
-		model->setData(model->index(rowCount, 0), s);
+		for (int i = 0; i<model->rowCount(); i++) {
+			QModelIndex index = model->index(i, 0);
+			if (model->data(index) == s) {
+				ui->tableWidget->setRowHidden(i, false);
+			}
+		}
 	}
 	else {
 		for (int i = 0; i<model->rowCount(); i++) {
 			QModelIndex index = model->index(i, 0);
 			if (model->data(index) == s) {
-				//ui->tableView->horizontalHeader()->setSectionHidden(i,true);
-				model->removeRow(i);
+				ui->tableWidget->setRowHidden(i, true);
 			}
 		}
 	}
-//	ui->tableWidget->setModel(model);
 }
 
-void detail::on_pushButton_7_clicked(){
+void detail::on_pushButton_7_clicked() {
 	for (int i = 0; i < ui->treeWidget_2->topLevelItemCount(); ++i) {
 		QTreeWidgetItem *item = ui->treeWidget_2->topLevelItem(i);
 		if (item == nullptr) {
@@ -195,7 +222,7 @@ void detail::on_pushButton_7_clicked(){
 		}
 	}
 }
-void detail::on_pushButton_8_clicked(){
+void detail::on_pushButton_8_clicked() {
 	for (int i = 0; i < ui->treeWidget_2->topLevelItemCount(); ++i) {
 		QTreeWidgetItem *item = ui->treeWidget_2->topLevelItem(i);
 		if (item == nullptr) {
@@ -208,6 +235,7 @@ void detail::on_pushButton_8_clicked(){
 			child->setCheckState(0, Qt::Checked);
 		}
 	}
+	count += 1;
 }
 void detail::on_pushButton_3_clicked() { //全选实体
 	qmt_p->lock();
@@ -218,12 +246,16 @@ void detail::on_pushButton_3_clicked() { //全选实体
 	}
 	qmt_p->unlock();
 }
-void detail::on_pushButton_2_clicked() { //清除实体
+/*void detail::on_pushButton_2_clicked() { //清除实体
 	for (int i = 0;; i++) {
 		QTreeWidgetItem *p = ui->treeWidget->topLevelItem(i);
 		if (p == Q_NULLPTR) break;
 		if (p->checkState(0) != Qt::Unchecked) p->setCheckState(0, Qt::Unchecked);
 	}
+}*/
+void detail::on_pushButton_2_clicked() { //清除实体
+	CArrayDetail *cad = new CArrayDetail();
+	cad->show();
 }
 void detail::keep_Entities(QVector<void *> in_date) { //QMutex，QTreeWidget，M_EntityInfo，QSet<int>
 	if (in_date.size() != 4) {
@@ -248,11 +280,11 @@ void detail::keep_Entities(QVector<void *> in_date) { //QMutex，QTreeWidget，M_E
 			if (!recp->contains(id)) {  //若该id不存在于tWidget则插入
 				recp->insert(id);
 				QTreeWidgetItem *p = new QTreeWidgetItem(QStringList() << QString::number(id));
-				p->setCheckState(0, Qt::Unchecked);
+				p->setCheckState(0, Qt::Checked);//加入后的初始状态设为checked
 				twp->addTopLevelItem(p);
 			}
 		}
-		for (int _id : (*recp) ) { //检查是否减少了实体
+		for (int _id : (*recp)) { //检查是否减少了实体
 			bool _flg = 0;
 			for (int id : dD.EntitiesId) {
 				if (id != _id) continue;
@@ -274,4 +306,3 @@ void detail::keep_Entities(QVector<void *> in_date) { //QMutex，QTreeWidget，M_E
 	}
 	mtp->unlock();
 }
-
