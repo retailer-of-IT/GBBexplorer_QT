@@ -95,7 +95,7 @@ int DynamicData::GetDescriptorCount(int eDescriptorType)
 }
 
 
-void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, std::string>> items, detail*& EntityGridView)
+void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, std::string>> items, detail*& EntityGridView, QVector<QMap<int, CArrayDetail *> > ArrayDetailMapList)
 {
 	m_nCurrentPos = 0;
 	for each(StaticData::M_EntityInfo vecInfo in staticdata.vecEntityInfo)
@@ -184,7 +184,7 @@ void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, 
 			//QTableWidget* table;
 			////用于读取对应id的所有field的值（一行）并进行切分，非数组array结构
 			////传入表格视图,iscomparetab先预设为true
-			bool flag = ReadRowFromIntPtr(ptr1, table, i, FieldsList, false, true, false, bufferLength);
+			bool flag = ReadRowFromIntPtr(ptr1, table, i, FieldsList, false, true, false, bufferLength, ArrayDetailMapList[i]); //ArrayDetailMapList里没有数据
 			//qDebug() << "hello";
 		}
 	}
@@ -319,7 +319,7 @@ void DynamicData::GetMessageDynamicData(enum_t eMessageType, detailMessage*& Mes
 					// Create all the ArrayDialogs for the new row TODO
 					//CurrentMessageView.CreateNewArrayDialog();
 					QMap<int, CArrayDetail *> ArrayDetailMap;
-					bool flag = ReadRowFromIntPtr(ptr1, table, table->rowCount() - 1, FieldsList, false, false, WithAck, bufferLength);
+					bool flag = ReadRowFromIntPtr(ptr1, table, table->rowCount() - 1, FieldsList, false, false, WithAck, bufferLength, ArrayDetailMap);
 					if (flag)
 					{
 						lst_LastCreationTime[table->rowCount() - 1]->TheCreationTime = table->item(table->rowCount() - 1, 0)->data(Tag).toLongLong();//注意qt中的table获取单元格是[row,column],c#中是先列后行
@@ -387,7 +387,7 @@ void DynamicData::GetMessageDynamicData(enum_t eMessageType, detailMessage*& Mes
 
 
 
-bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, int ElementIndex, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, bool isThisEntity, bool WithAckMessage, int bufferLength)
+bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, int ElementIndex, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, bool isThisEntity, bool WithAckMessage, int bufferLength, QMap<int, CArrayDetail *> ArrayDetailMap)
 {
 	int RowIndex = 0, ColumnIndex = 0, LoopIndex = 0;
 	bool DescriptorInitialized = false;
