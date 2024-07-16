@@ -11,7 +11,14 @@ detailMessage::detailMessage(QWidget *parent)
 	//将自定义信号与全选槽函数连接起来，用于在双击tableview1的同时触发触发一次treewidget_2的全选
 	connect(this, &detailMessage::FirstAllSelect, this, &detailMessage::on_pushButton_8_clicked);
 }
-detailMessage::~detailMessage(){}
+detailMessage::~detailMessage()
+{
+	// 停止并删除 QTimer 对象
+	if (m_timer) {
+		m_timer->stop();
+		m_timer->deleteLater();
+	}
+}
 
 void detailMessage::creatNewTopItem(QString name)
 {

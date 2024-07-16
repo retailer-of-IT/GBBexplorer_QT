@@ -2,6 +2,8 @@
 
 #include <QWidget>
 #include "ui_detailMessage.h"
+#include "StaticData.h"
+#include <qtimer.h>
 
 class detailMessage : public QWidget
 {
@@ -18,6 +20,8 @@ public:
 	QTreeWidgetItem *topItem;
 	QTreeWidgetItem *item;
 	int count = 0; //判断是否已经一次性插入所有表头，初始化为0，全选执行一次后+1，之后只做隐藏/显示
+	QTimer* m_timer = nullptr;
+	StaticData::M_MessageInfo m_curMsgInfo;
 
 public:
 	void creatNewTopItem(QString name) ;

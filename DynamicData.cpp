@@ -48,7 +48,7 @@ void DynamicData::GetEntitiesIDs(int eEntityType){
 		char* ptr1 = ptr;
 		int NumOfBuffer = *(int*)(ptr1); ptr1 += sizeof(int);//buffer长度
 
-															 //将此周期内的entity_id全部压入,-1表示结尾
+		//将此周期内的entity_id全部压入,-1表示结尾
 		int Id = *(int*)(ptr1); ptr1 += sizeof(int);
 		while (Id != -1) {
 			EntitiesId.push_back(Id);
@@ -57,7 +57,6 @@ void DynamicData::GetEntitiesIDs(int eEntityType){
 		//qDebug() << "hello";
 	}
 }
-
 
 int DynamicData::GetEntityEnumType(long pEntityMet_ID)
 {
@@ -96,23 +95,28 @@ int DynamicData::GetDescriptorCount(int eDescriptorType)
 }
 
 
-void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, std::string>> items, detail*& EntityGridView, QVector<QMap<int, CArrayDetail *> > ArrayDetailMapList)
+void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, std::string>> items, detail*& EntityGridView)
 {
 	m_nCurrentPos = 0;
-	for each(StaticData::M_EntityInfo vecInfo in staticdata.vecEntityInfo)	{
-		if (vecInfo.EnumType == eEntityType)		{
+	for each(StaticData::M_EntityInfo vecInfo in staticdata.vecEntityInfo)
+	{
+		if (vecInfo.EnumType == eEntityType)
+		{
 			//为每个描述符在分配的空间中占位，以enumtype作为标志，-1作为结束
 			for each(auto var in items){
 				//*(int*)(m_descriptorPtr + m_nCurrentPos) = staticdata.vecDescriptorsInfo[i].EnumType;
 				*(int*)(m_descriptorPtr + m_nCurrentPos) = var.first;
 				m_nCurrentPos += sizeof(int);
 				for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfoInGBBEx)				{
-					if (desInfo.EnumType == var.first)					{
-						for each(StaticData::M_StructuresInfo structInfo in staticdata.vecStructuresInfo)						{
-							if (structInfo.StructureName == desInfo.StructureName)							{
-								for each(StaticData::M_FieldInfo fieldInfo in structInfo.vecField)								{
+					if (desInfo.EnumType == var.first){
+						for each(StaticData::M_StructuresInfo structInfo in staticdata.vecStructuresInfo){
+							if (structInfo.StructureName == desInfo.StructureName)
+							{
+								for each(StaticData::M_FieldInfo fieldInfo in structInfo.vecField)
+								{
 									FieldsList.push_back(fieldInfo);
-									//if (fieldInfo.NestedName.empty()) {
+									//if (fieldInfo.NestedName.empty())
+									//{
 									//	FieldsList.push_back(fieldInfo);
 									//}
 									//else {
@@ -180,7 +184,7 @@ void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, 
 			//QTableWidget* table;
 			////用于读取对应id的所有field的值（一行）并进行切分，非数组array结构
 			////传入表格视图,iscomparetab先预设为true
-			bool flag = ReadRowFromIntPtr(ptr1, table, i, FieldsList, false, true, false, bufferLength, ArrayDetailMapList[i]); //ArrayDetailMapList里没有数据
+			bool flag = ReadRowFromIntPtr(ptr1, table, i, FieldsList, false, true, false, bufferLength);
 			//qDebug() << "hello";
 		}
 	}
@@ -192,7 +196,7 @@ void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, 
 	//qDebug() << "hello";
 }
 
-void DynamicData::GetMessageWithAckTableData(enum_t eMessageType, detailMessage*& MessageGridView, HT::HT_TIME & requireTime)
+void DynamicData::GetMessageWithAckTableData(enum_t eMessageType, detailMessage* MessageGridView, HT::HT_TIME & requireTime)
 {
 	m_nCurrentPos = 0;
 	QTableWidget* table = qobject_cast<QTableWidget*>(MessageGridView->findChild<QTableWidget*>("tableWidget"));
@@ -315,7 +319,7 @@ void DynamicData::GetMessageDynamicData(enum_t eMessageType, detailMessage*& Mes
 					// Create all the ArrayDialogs for the new row TODO
 					//CurrentMessageView.CreateNewArrayDialog();
 					QMap<int, CArrayDetail *> ArrayDetailMap;
-					bool flag = ReadRowFromIntPtr(ptr1, table, table->rowCount() - 1, FieldsList, false, false, WithAck, bufferLength, ArrayDetailMap);
+					bool flag = ReadRowFromIntPtr(ptr1, table, table->rowCount() - 1, FieldsList, false, false, WithAck, bufferLength);
 					if (flag)
 					{
 						lst_LastCreationTime[table->rowCount() - 1]->TheCreationTime = table->item(table->rowCount() - 1, 0)->data(Tag).toLongLong();//注意qt中的table获取单元格是[row,column],c#中是先列后行
@@ -383,7 +387,7 @@ void DynamicData::GetMessageDynamicData(enum_t eMessageType, detailMessage*& Mes
 
 
 
-bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, int ElementIndex, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, bool isThisEntity, bool WithAckMessage, int bufferLength, QMap<int, CArrayDetail *> ArrayDetailMap)
+bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, int ElementIndex, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, bool isThisEntity, bool WithAckMessage, int bufferLength)
 {
 	int RowIndex = 0, ColumnIndex = 0, LoopIndex = 0;
 	bool DescriptorInitialized = false;
@@ -517,7 +521,7 @@ bool DynamicData::ReadFieldFromPtr(char*& fieldPtr, QTableWidgetItem*& item, Sta
 			m_dDoubleValue = *(double*)fieldPtr;
 			item->setData(Tag, m_dDoubleValue);
 			//源代码是从GBBExplorerConfig.xml读出小数点后保留的位数,这里先把值写死
-			double val = Mathround(GetAltData(m_dDoubleValue, 0), 2);
+			double val = Mathround(GetAltData(m_dDoubleValue, 1), 2);
 			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 8;
 			m_nCurrentPos += 8;
@@ -533,7 +537,7 @@ bool DynamicData::ReadFieldFromPtr(char*& fieldPtr, QTableWidgetItem*& item, Sta
 			m_dDoubleValue = *(double*)fieldPtr;
 			item->setData(Tag, m_dDoubleValue);
 			//源代码是从GBBExplorerConfig.xml读出小数点后保留的位数
-			double val = Mathround(GetAzimuth(m_dDoubleValue, 0), 5);
+			double val = Mathround(GetAzimuth(m_dDoubleValue, 1), 5);
 			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 8;
 			m_nCurrentPos += 8;

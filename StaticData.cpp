@@ -68,6 +68,17 @@ void StaticData::InitDescriptors()
 			ptr1 += SetStringFromPtr(ptr1, cInfo.StructureName);
 			cInfo.EnumType = *(int*)(ptr1); ptr1 += sizeof(int);
 			cInfo.MaxMessageNum = *(int*)(ptr1); ptr1 += sizeof(int);
+			// Define the first field as "first field"
+			for each(StaticData::M_StructuresInfo structInfo in vecStructuresInfo)
+			{
+				if (structInfo.StructureName == cInfo.StructureName)
+				{
+					if (structInfo.NumOfFields > 0)
+					{
+						structInfo.vecField[0].IsThisFirstInDes = true;
+					}
+				}
+			}
 			//调试发现只有maxmessagenum!=0的才会显示在界面上，这里做修改
 			if (cInfo.MaxMessageNum != 0) {
 				vecDescriptorsInfoInGBBEx.push_back(cInfo);
