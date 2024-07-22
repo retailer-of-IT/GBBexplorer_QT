@@ -99,6 +99,8 @@ void detail::creatNewItem(QTreeWidgetItem *parentItem, QString name) {
 	item->setCheckState(0, Qt::Unchecked);
 }
 
+
+
 void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item) {
 	QString s = item->text(0), _s = s;
 	if (item->parent() != Q_NULLPTR)
@@ -305,4 +307,16 @@ void detail::keep_Entities(QVector<void *> in_date) { //QMutex£¬QTreeWidget£¬M_E
 		}
 	}
 	mtp->unlock();
+}
+
+void detail::connectArray(){
+	for (int rowIndex = 0; rowIndex < allRowsArrays.size(); rowIndex++) {
+		for (auto it = allRowsArrays[rowIndex].begin(); it != allRowsArrays[rowIndex].end(); it++) {
+			int colIndex = it.key();
+			CArrayDetail *arrayD = it.value();
+			if (arrayD == Q_NULLPTR || arrayD->ptb == Q_NULLPTR)
+				continue ;
+			connect(arrayD->ptb, &QPushButton::clicked, arrayD, &CArrayDetail::hide_show);
+		}
+	}
 }

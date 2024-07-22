@@ -229,7 +229,7 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 							QString field = QString::fromStdString(fieldInfo.FieldName);
 							QString s = fieldInfo.FieldType == StaticData::FieldType::Array ? "(#)" + field : field;
 							//如果nestname为空，不是结构体，直接进行展示
-							if (fieldInfo.NestedName.empty())
+							if (fieldInfo.NestedName.empty()|| fieldInfo.ArrayMaxSize > 0)
 							{
 								newTab->creatNewItem(newTab->topItem, s);
 								//							qDebug() << "hello";
@@ -259,7 +259,7 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 		}
 	}
 	emit newTab->FirstAllSelect();//发射信号，触发一次全选操作，执行插入列表头操作，count+1
-	dD.GetEntityDynamicData(_vecInfo.EnumType, items, newTab, ArrayDetailMapList);
+	dD.GetEntityDynamicData(_vecInfo.EnumType, items, newTab);
 }
 
 

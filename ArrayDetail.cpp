@@ -15,3 +15,10 @@ CArrayDetail::~CArrayDetail(){
 QTableWidget* CArrayDetail::table_ptr() {
 	return ui->tableWidget;
 }
+
+void CArrayDetail::hide_show(){
+	if (isHidden()) 
+		show();
+	else 
+		hide();
+}

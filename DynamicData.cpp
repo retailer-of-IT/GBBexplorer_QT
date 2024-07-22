@@ -95,9 +95,12 @@ int DynamicData::GetDescriptorCount(int eDescriptorType)
 }
 
 
-void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, std::string>> items, detail*& EntityGridView, QVector<QMap<int, CArrayDetail *> > ArrayDetailMapList)
+void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, std::string>> items, detail*& EntityGridView)
 {
 	m_nCurrentPos = 0;
+	m_tmpPos[0] = staticdata.vecStructuresInfo.size();
+	m_tmpPos[1] = staticdata.vecDescriptorsInfo.size();
+	m_tmpPos[2] = staticdata.vecEntityInfoInGBBEx.size();
 	for each(StaticData::M_EntityInfo vecInfo in staticdata.vecEntityInfo)
 	{
 		if (vecInfo.EnumType == eEntityType)
@@ -148,8 +151,8 @@ void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, 
 	//*(int*)(m_descriptorPtr + m_nCurrentPos) = -1;
 
 	GetEntitiesIDs(eEntityType);//每个周期，获取对应id实体的所有metid
-	int num2 = EntitiesId.size();
 	QTableWidget* table = qobject_cast<QTableWidget*>(EntityGridView->findChild<QTableWidget*>("tableWidget"));
+	allRowsArrays = &(EntityGridView->allRowsArrays);
 	if (table)
 		qDebug() << "get table";
 	//设置tablewiget中的单元格个数，行列
@@ -157,14 +160,16 @@ void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, 
 	int columnCount = FieldsList.size() + 1;
 	table->setRowCount(rowCount);
 	table->setColumnCount(columnCount);
-	//先用Met_id填充行
+	//先用Met_id填充行，给每行添加一个Array的Map
+	QMap<int, CArrayDetail*> tmpMA;
 	for (int i = 0; i < rowCount; i++)	{
 		QTableWidgetItem* item = new QTableWidgetItem();
 		item->setData(Qt::DisplayRole, EntitiesId[i]);
 		table->setItem(i, 0, item);
+		allRowsArrays->push_back(tmpMA);
 	}
 
-	for (int i = 0; i < num2; i++) {
+	for (int i = 0; i < rowCount; i++) {
 		if (theMonitorManager.GetEntityDynamicData(EntitiesId[i], m_descriptorPtr)) {
 			GBBMonitor::SerializedBuffer* p = theMonitorManager.GetSerializedBuffer();
 			char* ptr = (char*)p->GetBuffer();
@@ -184,7 +189,7 @@ void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, 
 			//QTableWidget* table;
 			////用于读取对应id的所有field的值（一行）并进行切分，非数组array结构
 			////传入表格视图,iscomparetab先预设为true
-			bool flag = ReadRowFromIntPtr(ptr1, table, i, FieldsList, false, true, false, bufferLength, ArrayDetailMapList[i]); //ArrayDetailMapList里没有数据
+			bool flag = ReadRowFromIntPtr(ptr1, table, i, FieldsList, false, true, false, bufferLength); //ArrayDetailMapList里没有数据
 			//qDebug() << "hello";
 		}
 	}
@@ -194,6 +199,7 @@ void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, 
 	FieldsList.clear();
 	EntitiesId.clear();
 	//qDebug() << "hello";
+	EntityGridView->connectArray();
 }
 
 void DynamicData::GetMessageWithAckTableData(enum_t eMessageType, detailMessage* MessageGridView, HT::HT_TIME & requireTime)
@@ -318,8 +324,7 @@ void DynamicData::GetMessageDynamicData(enum_t eMessageType, detailMessage*& Mes
 
 					// Create all the ArrayDialogs for the new row TODO
 					//CurrentMessageView.CreateNewArrayDialog();
-					QMap<int, CArrayDetail *> ArrayDetailMap;
-					bool flag = ReadRowFromIntPtr(ptr1, table, table->rowCount() - 1, FieldsList, false, false, WithAck, bufferLength, ArrayDetailMap);
+					bool flag = ReadRowFromIntPtr(ptr1, table, table->rowCount() - 1, FieldsList, false, false, WithAck, bufferLength);
 					if (flag)
 					{
 						lst_LastCreationTime[table->rowCount() - 1]->TheCreationTime = table->item(table->rowCount() - 1, 0)->data(Tag).toLongLong();//注意qt中的table获取单元格是[row,column],c#中是先列后行
@@ -342,8 +347,7 @@ void DynamicData::GetMessageDynamicData(enum_t eMessageType, detailMessage*& Mes
 				}
 				else
 				{
-					QMap<int, CArrayDetail *> ArrayDetailMap;
-					bool flag2 = ReadRowFromIntPtr(ptr1, table, lst_LastCreationTime[NextCreationTimeIndex]->IndexInTable, FieldsList, false, false, false, bufferLength, ArrayDetailMap);
+					bool flag2 = ReadRowFromIntPtr(ptr1, table, lst_LastCreationTime[NextCreationTimeIndex]->IndexInTable, FieldsList, false, false, false, bufferLength);
 					if (flag2)
 					{
 						lst_LastCreationTime[NextCreationTimeIndex]->TheCreationTime = table->item(lst_LastCreationTime[NextCreationTimeIndex]->IndexInTable, 0)->data(Tag).toLongLong();//注意qt中的table获取单元格是[row,column],c#中是先列后行
@@ -386,8 +390,7 @@ void DynamicData::GetMessageDynamicData(enum_t eMessageType, detailMessage*& Mes
 }
 
 
-
-bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, int ElementIndex, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, bool isThisEntity, bool WithAckMessage, int bufferLength, QMap<int, CArrayDetail *> ArrayDetailMap)
+bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, int ElementIndex, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, bool isThisEntity, bool WithAckMessage, int bufferLength)
 {
 	int RowIndex = 0, ColumnIndex = 0, LoopIndex = 0;
 	bool DescriptorInitialized = false;
@@ -424,7 +427,7 @@ bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, int 
 					{
 						FinishReadRow(item, FieldsList, LoopIndex, ColumnIndex, RowIndex, IsThisCompareTab, false);
 						//tableWidget->update();
-						return false;
+						return 0;
 						//tableWidget->setItem(RowIndex, ColumnIndex, item);
 					}
 				}
@@ -435,13 +438,11 @@ bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, int 
 			}
 			//array类型，单独展示
 			else{
-				int rowCount = tableWidget->rowCount(), columnCount = tableWidget->columnCount();
-				QTableWidgetItem* item = new QTableWidgetItem();
-				if (item){ //不为空
-					tableWidget->setItem(RowIndex, ColumnIndex, item);
-					if (!ShowArrayField(ptr, tableWidget, LoopIndex,ColumnIndex, RowIndex, FieldsList[LoopIndex], ArrayDetailMap, FieldsList, IsThisCompareTab, bufferLength))	{
+				if (1){
+					if (!ShowArrayField(ptr, tableWidget, LoopIndex,ColumnIndex, RowIndex, FieldsList[LoopIndex], (*allRowsArrays)[ElementIndex], FieldsList, IsThisCompareTab, bufferLength))	{
+						QTableWidgetItem* item = tableWidget->item(RowIndex, ColumnIndex);
 						FinishReadRow(item, FieldsList, LoopIndex, ColumnIndex, RowIndex, IsThisCompareTab, false);
-						return false;
+						return 0;
 					}
 				}
 				else{
@@ -454,7 +455,7 @@ bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, int 
 		IncreaseLoopIndex(false, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
 	}
 	tableWidget->update();
-	return true;
+	return 1;
 }
 
 bool DynamicData::ReadAckRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, QVector<StaticData::M_FieldInfo> FieldsList, int nRowIndex, int columnCount, int bufferLength)
@@ -507,7 +508,6 @@ bool DynamicData::ReadAckRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, Q
 	}
 	return true;
 }
-
 
 bool DynamicData::ReadFieldFromPtr(char*& fieldPtr, QTableWidgetItem*& item, StaticData::M_FieldInfo currentField,int bufferLength)
 {
@@ -748,7 +748,7 @@ bool DynamicData::ReadFieldFromPtr(char*& fieldPtr, QTableWidgetItem*& item, Sta
 		{
 			long long value = *(long long*)(fieldPtr);
 			item->setData(Tag, value);
-			QVariant val = GetTime(value, 2);
+			QVariant val = GetTime(value, 3);
 			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 8;
 			m_nCurrentPos += 8;
@@ -834,7 +834,6 @@ double DynamicData::GetAzimuth(double Data, int DisplayState)
 	}
 	return Utils::ConvertFromRadToDeg(Data);
 }
-
 QString DynamicData::GetBoolean(std::string Data, int DisplatState)
 {
 	if (DisplatState != 0)
@@ -844,7 +843,6 @@ QString DynamicData::GetBoolean(std::string Data, int DisplatState)
 	}
 	return QString::fromStdString(Data);
 }
-
 QString DynamicData::GetEnum2String(int Data, int DislayState, std::string NestedName)
 {
 	if (DislayState != 0)
@@ -853,28 +851,22 @@ QString DynamicData::GetEnum2String(int Data, int DislayState, std::string Neste
 	}
 	return QString::number(Data);
 }
-
 QVariant DynamicData::GetLatLong(double Data, int DisplayState, Utils::CoordinateType Type)
 {
 	return Utils::ConvertToLatLongRequire(Data, DisplayState, Type, 3);
 }
-
 QVariant DynamicData::GetSpeed(double Data, int DisplayState)
 {
 	return Utils::GetSpeed(Data, DisplayState, 3);
 }
-
 QVariant DynamicData::GetTime(long long Data, int DisplayState)
 {
 	return Utils::ConvertToDateTime(Data, DisplayState);
 }
-
 double DynamicData::GetRange(double Data, int DisplayState, int DecimalPlaces)
 {
 	return Utils::ConvertToRequireRange(Data, DisplayState, DecimalPlaces);
 }
-
-
 std::string DynamicData::GetString(char* currentPtr)
 {
 	std::string StringName = std::string(currentPtr);
@@ -883,7 +875,6 @@ std::string DynamicData::GetString(char* currentPtr)
 	m_nCurrentPos += StringName.length() + 1;
 	return StringName;
 }
-
 void DynamicData::getAfterString(char* currentPtr ,int bufferLength)
 {
 	int len = 0;
@@ -898,7 +889,6 @@ void DynamicData::getAfterString(char* currentPtr ,int bufferLength)
 			return;
 	}
 }
-
 QString DynamicData::ConvertIntToEnum2String(int Data, std::string NestedName)
 {
 	QString nestedNameQStr = QString::fromStdString(NestedName);
@@ -910,13 +900,11 @@ QString DynamicData::ConvertIntToEnum2String(int Data, std::string NestedName)
 	}
 	return "N/A";
 }
-
 int DynamicData::SetStringFromPtr(char* CurrentIntPtr, std::string &StringName)
 {
 	StringName = std::string(CurrentIntPtr);
 	return StringName.length() + 1;
 }
-
 double DynamicData::Mathround(double Data, int DecimalPlaces)
 {
 	return std::round(Data * pow(10, DecimalPlaces)) / pow(10, DecimalPlaces);
@@ -938,91 +926,72 @@ void DynamicData::ReturnOriginalPositions(int &m_nCurrentPos, int &ColumnIndex, 
 	LoopIndex = m_tmpPos[2];
 	m_nCurrentPos = m_tmpPos[3];
 }
-bool DynamicData::ShowArrayField(char *&ptr, QTableWidget* &tableWidget, int &LoopIndex, int &ColumnIndex, int &RowIndex, StaticData::M_FieldInfo CurrentField, QMap<int, CArrayDetail*> ArraysDic, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, int bLen) {
-	int ALen = *(int*)ptr;
-	QTableWidgetItem *item = new QTableWidgetItem(QString(ALen));
-	tableWidget->setItem(RowIndex, ColumnIndex, item);
+bool DynamicData::ShowArrayField(char *&ptr, QTableWidget* &tableWidget, int &LoopIndex, int &ColumnIndex, int &RowIndex, StaticData::M_FieldInfo CurrentField, QMap<int, CArrayDetail*> &ArraysDic, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, int bLen) {
+	int ALen = *(int*)ptr;		ptr+=sizeof(int);
+	QPushButton *i_btn = new QPushButton(QString::number(ALen));
+	tableWidget->setCellWidget(RowIndex, ColumnIndex, i_btn);
+	ArraysDic[ColumnIndex] = new CArrayDetail();
+	ArraysDic[ColumnIndex]->ptb = i_btn;
 	if (ALen < 0)  return 0;
-	if (CurrentField.NestedName.empty()) { //jian dan lei xing
-										   //2.1
-		if (ArraysDic.find(ColumnIndex + 1) == ArraysDic.end()) {  //? why is CI+1
-			if (!AppendArrayElementsToCell(ALen, tableWidget, ColumnIndex, RowIndex, FieldsList, LoopIndex, IsThisCompareTab, ptr, bLen))
-				return 0;
-		}
-		else {
-			//2.2.1
-			SaveOriginalPositions(RowIndex, ColumnIndex, LoopIndex);
-			if (!AppendArrayElementsToCell(ALen, tableWidget, ColumnIndex, RowIndex, FieldsList, LoopIndex, IsThisCompareTab, ptr, bLen))
-				return 0;
-			ReturnOriginalPositions(m_nCurrentPos, ColumnIndex, RowIndex, LoopIndex);
-			//2.2.2
-			ReadArrayFromIntPtr(ALen, ptr, ArraysDic[ColumnIndex + 1]);
-			IncreaseLoopIndex(true, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
-		}
+	if (CurrentField.NestedName.empty()) { //jian dan lei xing    //2.1
+		tableWidget->setColumnWidth(ColumnIndex, 200);
+		//2.2.1
+		SaveOriginalPositions(RowIndex, ColumnIndex, LoopIndex);
+		IncreaseLoopIndex(1, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
+		if (!AppendArrayElementsToCell(ALen, tableWidget, ColumnIndex, RowIndex, FieldsList, LoopIndex, IsThisCompareTab, ptr, bLen))
+			return 0;
+		ReturnOriginalPositions(m_nCurrentPos, ColumnIndex, RowIndex, LoopIndex);
+		//2.2.2
+		ReadArrayFromIntPtr(ALen, ptr, ArraysDic[ColumnIndex], bLen);
+		IncreaseLoopIndex(true, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
 	}
 	else {//3.1
+		/*
 		if (ArraysDic.find(ColumnIndex) == ArraysDic.end()) {  //? why is CI+1
 			if (!PushPointerToEndArray(ptr, ALen, CurrentField.NestedName)) return 0;
 		}
 		//3.2
 		else {
-			if (!ReadArrayFromIntPtr(ALen, ptr, ArraysDic[ColumnIndex])) return 0;
-		}
+			if (!ReadArrayFromIntPtr(ALen, ptr, ArraysDic[ColumnIndex], bLen)) return 0;
+		}*/
 	}
 	return 1;
 }
-//DONE
+//DONE-附加列的设置
 bool DynamicData::AppendArrayElementsToCell(int ALen, QTableWidget*& tableWidget, int &ColumnIndex, int &RowIndex, QVector<StaticData::M_FieldInfo> &FieldsList, int &LoopIndex, bool IsThisCompareTab, char *&ptr, int bLen) {
-	IncreaseLoopIndex(1, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
 	QTableWidgetItem *item = new QTableWidgetItem("");
 	tableWidget->setItem(RowIndex, ColumnIndex, item);
 	if (ALen > 0) {
 		QTableWidgetItem *_item = new QTableWidgetItem();
 		for (int i = 0; i < ALen - 1; i++) {
-			if (ReadFieldFromPtr(ptr, _item, FieldsList[LoopIndex], bLen))
-			{
-				if (_item->data(0) != QVariant(""))
-				{
+			if (ReadFieldFromPtr(ptr, _item, FieldsList[LoopIndex], bLen)){
+				if (_item->data(0) != QVariant("")){
 					item->setData(0, item->data(0).toString() + _item->data(0).toString() + ", ");
 				}
 			}
 			else {
-				FinishReadRow(item, FieldsList, LoopIndex, ColumnIndex, RowIndex, IsThisCompareTab, true);
+			//	FinishReadRow(item, FieldsList, LoopIndex, ColumnIndex, RowIndex, IsThisCompareTab, true);
 				return 0;
 			}
 		}
 		//write the last element
-		if (ReadFieldFromPtr(ptr, _item, FieldsList[LoopIndex], bLen))
-		{
-			if (_item->data(0) != QVariant(""))
-			{
+		if (ReadFieldFromPtr(ptr, _item, FieldsList[LoopIndex], bLen)){
+			if (_item->data(0) != QVariant("")){
 				item->setData(0, item->data(0).toString() + _item->data(0).toString());
 			}
 		}
-		else
-		{
-			FinishReadRow(item, FieldsList, LoopIndex, ColumnIndex, RowIndex, IsThisCompareTab, true);
-			return false;
+		else{
+		//	FinishReadRow(item, FieldsList, LoopIndex, ColumnIndex, RowIndex, IsThisCompareTab, true);
+			return 0;
 		}
 	}
-	else //In case the array descriptor is Init but the number of the elements  is 0
-	{
+	else{ //In case the array descriptor is Init but the number of the elements  is 0
 		item->setData(0, QVariant(""));
 	}
 	return 1;
 }
 //TODO
-bool DynamicData::ReadArrayFromIntPtr(int ALen, char *&ptr, CArrayDetail *CurrentArrayDetail) {
-	/*
-	CurrentArrayDialog.ctl_DataTable.RowCount = NumElements;
-	foreach(DataGridViewRow row in CurrentArrayDialog.ctl_DataTable.Rows)
-		row.Cells[0].Value = row.Index;
-	for (int RowIndex = 0; RowIndex < NumElements; ++RowIndex)
-		if (!ReadRowFromIntPtr(ref AllTheTablePtr, ref CurrentArrayDialog.ctl_DataTable, null, RowIndex, CurrentArrayDialog.AllFields, false, false, false))
-			return false;
-	Sorting(CurrentArrayDialog.ctl_DataTable);
-	CurrentArrayDialog.ctl_DataTable.ClearSelection();
-	*/
+bool DynamicData::ReadArrayFromIntPtr(int ALen, char *&ptr, CArrayDetail *CurrentArrayDetail, int bufferLength) {
 	QTableWidget *table = CurrentArrayDetail->table_ptr();
 	table->setRowCount(ALen);
 	for (int i = 0; i < ALen; i++) {
@@ -1032,8 +1001,7 @@ bool DynamicData::ReadArrayFromIntPtr(int ALen, char *&ptr, CArrayDetail *Curren
 			table->setItem(i, 0, item);
 		}
 		item->setData(Qt::DisplayRole, i);
-		QMap<int, CArrayDetail *> ArrayDetailMap;
-		if (!ReadRowFromIntPtr(ptr, table, i, FieldsList, 0, 0, 0, -1, ArrayDetailMap)) {
+		if (!ReadRowFromIntPtr(ptr, table, i, FieldsList, 0, 0, 0, bufferLength)) {
 			return 0;
 		}
 	}
@@ -1041,32 +1009,6 @@ bool DynamicData::ReadArrayFromIntPtr(int ALen, char *&ptr, CArrayDetail *Curren
 }
 //TODO
 bool DynamicData::PushPointerToEndArray(char *ptr, int ALen, std::string StructureName) {
-	/*	// Move to pointer to the end of array data (use when don't need to display the array data
-        // NumberOfElements number of Elements in the array 
-	Structure temp = m_cStaticData.GetStructureByName(StructureName);
-	List<Field> StructureFields;
-	if (temp != null){
-		StructureFields = temp.AllFields;
-		for (int i = 0; i < NumberOfElements; ++i){
-			for (int j = 0; j < StructureFields.Count; ++j){
-				if (StructureFields[j].m_eCurrentType != FieldType.Array)
-					IncreasePointer(ref AllTheTablePtr, StructureFields[j]);
-				else{
-					int nNumberOfElenemts = Get32Bit(ref AllTheTablePtr);
-					if (StructureFields[j].m_sNestedName == ""){
-						++j;
-						for (int k = 0; k < nNumberOfElenemts; ++k)	
-							IncreasePointer(ref AllTheTablePtr, StructureFields[j]);
-					}
-
-				}
-			}
-		}
-		if (m_nCurrentPos > m_nBufferLength)
-			return false;
-	}
-	return true;
-	*/
 	StaticData::M_StructuresInfo structure_info;
 	QVector<StaticData::M_StructuresInfo> structureV = staticdata.vecStructuresInfo;
 	for (auto structurei : structureV) {

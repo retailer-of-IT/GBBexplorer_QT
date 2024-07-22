@@ -121,11 +121,12 @@ void StaticData::InitStructures()
 						M_FieldInfo info;
 						info.FieldType = cInfo2.FieldType;
 						info.ShowField = true;
-						cInfo.vecField.push_back(info);
 						cInfo2.FieldType = Array;
+						cInfo.vecField.push_back(info);
+
 						M_FieldInfo &cInfo3 = cInfo.vecField[j + 1 + NumberOfArrays];
-						cInfo3.FieldName = cInfo2.FieldName;
-						cInfo3.NestedName = cInfo2.NestedName;
+						cInfo3.FieldName = cInfo.vecField[j + NumberOfArrays].FieldName;
+						cInfo3.NestedName = cInfo.vecField[j + NumberOfArrays].NestedName;
 						++NumberOfArrays;
 					}
 					// In case the array is reference type then the table don't display the array data, only if opening the "Array Dialog"
