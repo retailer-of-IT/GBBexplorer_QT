@@ -930,19 +930,25 @@ bool DynamicData::ShowArrayField(char *&ptr, QTableWidget* &tableWidget, int &Lo
 	int ALen = *(int*)ptr;		ptr+=sizeof(int);
 	QPushButton *i_btn = new QPushButton(QString::number(ALen));
 	tableWidget->setCellWidget(RowIndex, ColumnIndex, i_btn);
-	ArraysDic[ColumnIndex] = new CArrayDetail();
-	ArraysDic[ColumnIndex]->ptb = i_btn;
+	CArrayDetail *pArrayDetail = new CArrayDetail();
+	pArrayDetail->ptb = i_btn;
+	ArraysDic[ColumnIndex] = pArrayDetail;
 	if (ALen < 0)  return 0;
 	if (CurrentField.NestedName.empty()) { //jian dan lei xing    //2.1
 		tableWidget->setColumnWidth(ColumnIndex, 200);
 		//2.2.1
 		SaveOriginalPositions(RowIndex, ColumnIndex, LoopIndex);
 		IncreaseLoopIndex(1, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
+		QVector<StaticData::M_FieldInfo> tFieldsList(1, FieldsList[LoopIndex]);
+		StaticData::M_FieldInfo tmpField;
+		tmpField.FieldName = "#";
+		tFieldsList.insert(0, tmpField);
+		pArrayDetail->setColumns(tFieldsList);
 		if (!AppendArrayElementsToCell(ALen, tableWidget, ColumnIndex, RowIndex, FieldsList, LoopIndex, IsThisCompareTab, ptr, bLen))
 			return 0;
 		ReturnOriginalPositions(m_nCurrentPos, ColumnIndex, RowIndex, LoopIndex);
 		//2.2.2
-		ReadArrayFromIntPtr(ALen, ptr, ArraysDic[ColumnIndex], bLen);
+		ReadArrayFromIntPtr(ALen, ptr, tFieldsList, ArraysDic[ColumnIndex], bLen);
 		IncreaseLoopIndex(true, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
 	}
 	else {//3.1
@@ -991,7 +997,7 @@ bool DynamicData::AppendArrayElementsToCell(int ALen, QTableWidget*& tableWidget
 	return 1;
 }
 //TODO
-bool DynamicData::ReadArrayFromIntPtr(int ALen, char *&ptr, CArrayDetail *CurrentArrayDetail, int bufferLength) {
+bool DynamicData::ReadArrayFromIntPtr(int ALen, char *&ptr, QVector<StaticData::M_FieldInfo> tFieldsList, CArrayDetail *CurrentArrayDetail, int bufferLength) {
 	QTableWidget *table = CurrentArrayDetail->table_ptr();
 	table->setRowCount(ALen);
 	for (int i = 0; i < ALen; i++) {
@@ -1001,7 +1007,8 @@ bool DynamicData::ReadArrayFromIntPtr(int ALen, char *&ptr, CArrayDetail *Curren
 			table->setItem(i, 0, item);
 		}
 		item->setData(Qt::DisplayRole, i);
-		if (!ReadRowFromIntPtr(ptr, table, i, FieldsList, 0, 0, 0, bufferLength)) {
+		//创建一个新的FieldList只有这个类型
+		if (!ReadRowFromIntPtr(ptr, table, i, tFieldsList, 0, 0, 0, bufferLength)) {
 			return 0;
 		}
 	}
@@ -1038,4 +1045,19 @@ bool DynamicData::PushPointerToEndArray(char *ptr, int ALen, std::string Structu
 	}
 	return 1;
 
+}
+
+bool DynamicData::getStructurebyFieldName(std::string FieldName, QVector<StaticData::M_FieldInfo> &tFieldsList){
+	for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfoInGBBEx) {
+		if (desInfo.DescriptorName == FieldName) {
+			for each(StaticData::M_StructuresInfo structInfo in staticdata.vecStructuresInfo) {
+				if (structInfo.StructureName == desInfo.StructureName){
+					for each(StaticData::M_FieldInfo fieldInfo in structInfo.vecField){
+						tFieldsList.push_back(fieldInfo);
+					}
+				}
+			}
+		}
+	}
+	return 1;
 }

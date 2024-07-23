@@ -22,3 +22,14 @@ void CArrayDetail::hide_show(){
 	else 
 		hide();
 }
+
+bool CArrayDetail::setColumns(const QVector<StaticData::M_FieldInfo> &tFieldList) {
+	ui->tableWidget->setColumnCount(tFieldList.size());
+	ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+	ui->tableWidget->verticalHeader()->setVisible(0);
+	for (int i = 0; i < tFieldList.size(); i++) {
+		ui->tableWidget->horizontalHeader()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
+		ui->tableWidget->setHorizontalHeaderItem(i, new QTableWidgetItem(QString::fromStdString(tFieldList[i].FieldName)));
+	}
+	return 1;
+}

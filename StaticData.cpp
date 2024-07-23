@@ -67,6 +67,9 @@ void StaticData::InitDescriptors()
 			ptr1 += SetStringFromPtr(ptr1, cInfo.DescriptorName);
 			ptr1 += SetStringFromPtr(ptr1, cInfo.StructureName);
 			cInfo.EnumType = *(int*)(ptr1); ptr1 += sizeof(int);
+			if (cInfo.DescriptorName == "Subordinates") {
+				qDebug() << "1";
+			}
 			cInfo.MaxMessageNum = *(int*)(ptr1); ptr1 += sizeof(int);
 			// Define the first field as "first field"
 			for each(StaticData::M_StructuresInfo structInfo in vecStructuresInfo)
