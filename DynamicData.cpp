@@ -408,7 +408,9 @@ bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, int 
 		if (isThisEntity)
 		{
 			DescriptorInitialized = true;
-
+			if (FieldsList[LoopIndex].IsThisFirstInDes) {
+				DescriptorInitialized = *(bool*)ptr;
+			}
 		}
 		// In case the (descriptor is Init AND DescriptorShow) OR (this is message)
 		if (DescriptorInitialized || !isThisEntity)
@@ -450,7 +452,36 @@ bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, int 
 				}
 			}
 		}
-		else{ //The descriptor is not Init OR descriptor is not show
+		else //The descriptor is not Init OR descriptor is not show
+		{
+			//处理
+			if ((FieldsList[LoopIndex].mDiscriptorShow)){
+				do {
+					QTableWidgetItem* item = tableWidget->item(RowIndex, ColumnIndex);
+					item->setBackground(QBrush(Qt::lightGray));
+					item->setText("N\\A");
+					IncreaseLoopIndex(true, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
+				} while ((FieldsList.size() > LoopIndex) && (!FieldsList[LoopIndex].IsThisFirstInDes));
+				if (IsThisCompareTab){
+					--RowIndex;
+				}
+				else{
+					--ColumnIndex;
+				}
+				--LoopIndex;
+			}
+			else{
+				do{
+					IncreaseLoopIndex(true, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
+				} while ((FieldsList.size() > LoopIndex) && (!FieldsList[LoopIndex].IsThisFirstInDes));
+				if (IsThisCompareTab){
+					--RowIndex;
+				}
+				else{
+					--ColumnIndex;
+				}
+				--LoopIndex;
+			}
 		}
 		IncreaseLoopIndex(false, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
 	}
@@ -509,8 +540,7 @@ bool DynamicData::ReadAckRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, Q
 	return true;
 }
 
-bool DynamicData::ReadFieldFromPtr(char*& fieldPtr, QTableWidgetItem*& item, StaticData::M_FieldInfo currentField,int bufferLength)
-{
+bool DynamicData::ReadFieldFromPtr(char*& fieldPtr, QTableWidgetItem*& item, StaticData::M_FieldInfo currentField,int bufferLength){
 	//char* fieldPtr = ptr;
 	//const int Tag = Qt::DisplayRole + 1;//单元格tag
 	switch (currentField.FieldType)
@@ -748,7 +778,7 @@ bool DynamicData::ReadFieldFromPtr(char*& fieldPtr, QTableWidgetItem*& item, Sta
 		{
 			long long value = *(long long*)(fieldPtr);
 			item->setData(Tag, value);
-			QVariant val = GetTime(value, 3);
+			QVariant val = GetTime(value, 0);
 			item->setData(Qt::DisplayRole, val);
 			fieldPtr += 8;
 			m_nCurrentPos += 8;
@@ -944,11 +974,16 @@ bool DynamicData::ShowArrayField(char *&ptr, QTableWidget* &tableWidget, int &Lo
 		tmpField.FieldName = "#";
 		tFieldsList.insert(0, tmpField);
 		pArrayDetail->setColumns(tFieldsList);
+		char *tmpptr = ptr;
 		if (!AppendArrayElementsToCell(ALen, tableWidget, ColumnIndex, RowIndex, FieldsList, LoopIndex, IsThisCompareTab, ptr, bLen))
 			return 0;
 		ReturnOriginalPositions(m_nCurrentPos, ColumnIndex, RowIndex, LoopIndex);
+		char *_tmpptr = ptr;
 		//2.2.2
+		tFieldsList.remove(0);
+		ptr = tmpptr;
 		ReadArrayFromIntPtr(ALen, ptr, tFieldsList, ArraysDic[ColumnIndex], bLen);
+		ptr = _tmpptr;
 		IncreaseLoopIndex(true, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
 	}
 	else {//3.1
@@ -1044,7 +1079,6 @@ bool DynamicData::PushPointerToEndArray(char *ptr, int ALen, std::string Structu
 			return 0;
 	}
 	return 1;
-
 }
 
 bool DynamicData::getStructurebyFieldName(std::string FieldName, QVector<StaticData::M_FieldInfo> &tFieldsList){

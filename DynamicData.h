@@ -85,7 +85,7 @@ public:
 	void SaveOriginalPositions(int RowIndex, int ColumnIndex, int LoopIndex);
 	void ReturnOriginalPositions(int & m_nCurrentPos, int & ColumnIndex, int & RowIndex, int & LoopIndex);
 	bool ShowArrayField(char *& ptr, QTableWidget *& tableWidget, int & LoopIndex, int & ColumnIndex, int & RowIndex, StaticData::M_FieldInfo CurrentField, QMap<int, CArrayDetail*> &ArraysDic, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, int bLen);
-	bool AppendArrayElementsToCell(int ALen, QTableWidget *& tableWidget, int & ColumnIndex, int & RowIndex, QVector<StaticData::M_FieldInfo>& FieldsList, int & LoopIndex, bool IsThisCompareTab, char *& ptr, int bLen);
+	bool AppendArrayElementsToCell(int ALen, QTableWidget *& tableWidget, int & ColumnIndex, int & RowIndex, QVector<StaticData::M_FieldInfo>& FieldsList, int & LoopIndex, bool IsThisCompareTab, char * &ptr, int bLen);
 	bool ReadArrayFromIntPtr(int ALen, char *& ptr, QVector<StaticData::M_FieldInfo> tFieldsList, CArrayDetail * CurrentArrayDetail, int bufferLength);
 	bool PushPointerToEndArray(char *ptr, int ALen, std::string StructureName);
 	bool getStructurebyFieldName(std::string FieldName, QVector<StaticData::M_FieldInfo> &tFieldsList);

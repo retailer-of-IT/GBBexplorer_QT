@@ -215,18 +215,15 @@ QString Utils::ConvertFromBooleanValue(std::string Data, int DisplayState)
 	}
 }
 
-QVariant Utils::ConvertToDateTime(qint64 Time, int State)
-{
+QVariant Utils::ConvertToDateTime(qint64 Time, int State){
 	try {
-		// 将时间戳转换为UTC的QDateTime
-		UTCTime = QDateTime::fromMSecsSinceEpoch(Time + 504911232000000000, Qt::UTC);
+		UTCTime = QDateTime::fromMSecsSinceEpoch(Time / 10000 - 11644473600000, Qt::UTC);
 	}
 	catch (...) {
 		return "Error";
 	}
 	// 根据状态码设置日期时间格式
-	switch (State) 
-	{
+	switch (State) {
 	case 0:
 		return UTCTime.toString("MM/dd/yyyy HH:mm:ss.zzz");
 	case 1:
