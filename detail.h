@@ -66,12 +66,14 @@ public:
 	QSet<int> *qsi_p;
 	int count = 0; //判断是否已经一次性插入所有表头，初始化为0，全选执行一次后+1，之后只做隐藏/显示
 	QVector<QMap<int, CArrayDetail*> > allRowsArrays;
+	int ColCount;
 
 public:
 	static void keep_Entities(QVector<void *> in_date);
 	void creatNewTopItem(QString name); //创建根节点
 	void creatNewItem(QTreeWidgetItem *parentItem, QString name); //根据父节点创建子节点
 	void connectArray();
+	void SetTreeItems(StaticData::M_StructuresInfo structInfo, QTreeWidgetItem * parentItem, StaticData &staticdata);
 
 signals:
 	void EntityRetrieve();

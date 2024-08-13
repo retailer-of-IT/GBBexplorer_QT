@@ -118,6 +118,7 @@ public:
 	int AckMessageEnum;
 
 public:
+	
 	StaticData();
 	void InitLanguage();       // Set require language 
 	void InitEnumToString();   // Set the EnumToString variable

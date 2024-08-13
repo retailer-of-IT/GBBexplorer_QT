@@ -3,6 +3,7 @@
 #include <QWidget>
 #include <QTableWidget>
 #include <QPushButton>
+#include <QMessageBox>
 #include "StaticData.h"
 namespace Ui { class CArrayDetail; };
 

@@ -80,6 +80,7 @@ detail::detail(StaticData::M_EntityInfo ei, QWidget *parent) : QWidget(parent), 
 	ui->tableWidget->setHorizontalHeaderItem(0, new QTableWidgetItem("MET_ID"));
 	ui->tableWidget->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
 	ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+	ColCount = 0;
 }
 detail::~detail() {
 	delete ui;
@@ -88,26 +89,25 @@ detail::~detail() {
 	delete ei_p;
 	delete qsi_p;
 }
-
+//创建描述符树状表的顶级节点
 void detail::creatNewTopItem(QString name) {
-	topItem = new QTreeWidgetItem(QStringList() << name); //当前tab界面的treewidget_2建立根节点
-	ui->treeWidget_2->addTopLevelItem(topItem); //topItem->setCheckState(0, Qt::Unchecked);
+	topItem = new QTreeWidgetItem(QStringList() << name); 
+	ui->treeWidget_2->addTopLevelItem(topItem); 
 }
+//创建描述符树状表的非顶级节点
 void detail::creatNewItem(QTreeWidgetItem *parentItem, QString name) {
 	item = new QTreeWidgetItem(parentItem);
 	item->setText(0, name);
 	item->setCheckState(0, Qt::Unchecked);
 }
 
-
-
-void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item) {
+//描述符列表的勾选
+void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item) { 
 	QString s = item->text(0), _s = s;
 	if (item->parent() != Q_NULLPTR)
 		_s = ((item->parent()->parent() != Q_NULLPTR) ? (item->parent()->parent()->text(0)) : (item->parent()->text(0))) + "\n" + _s;
 	Qt::CheckState ist = item->checkState(0);
 	int columnCount = ui->tableWidget->columnCount();
-	//	qDebug() << QString("reach %1 when %2 columns").arg(s,QString(columnCount));
 	if (item->child(0) == Q_NULLPTR) {	//最后一层节点，才展示
 		if (count == 0) {//还未进行一次性全选，此时是进行插入操作
 			if (ist == Qt::Checked) { //增加列表头
@@ -155,7 +155,6 @@ void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item) {
 	if (item->checkState(0) == Qt::PartiallyChecked) { //子到父导致，继续向上
 		if (item->parent() != Q_NULLPTR && item->parent()->checkState(0) != Qt::PartiallyChecked) {
 			item->parent()->setCheckState(0, Qt::PartiallyChecked);
-			//			qDebug() << QString("\tcheckstate set on %1").arg(item->parent()->text(0));
 		}
 		return;
 	}
@@ -172,11 +171,9 @@ void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item) {
 		if (flg) {
 			if (pp->checkState(0) != Qt::PartiallyChecked)
 				pp->setCheckState(0, Qt::PartiallyChecked);
-			//				qDebug() << QString("\tcheckstate set on %1").arg(pp->text(0));
 		}
 		else {
 			pp->setCheckState(0, ist);
-			//			qDebug() << QString("\tcheckstate set on %1").arg(pp->text(0));
 		}
 	}
 	// 更新子节点
@@ -184,11 +181,42 @@ void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item) {
 	for (int i = 1; sp != Q_NULLPTR; i++) {
 		if (ist != sp->checkState(0)) {
 			sp->setCheckState(0, ist);
-			//			qDebug() << QString("\tcheckstate set on %1").arg(sp->text(0));
 		}
 		sp = item->child(i);
 	}
 }
+//描述符的清除所有
+void detail::on_pushButton_7_clicked() {
+	for (int i = 0; i < ui->treeWidget_2->topLevelItemCount(); ++i) {
+		QTreeWidgetItem *item = ui->treeWidget_2->topLevelItem(i);
+		if (item == nullptr) 
+			return;
+		if (item->checkState(0) != Qt::Unchecked)
+			item->setCheckState(0, Qt::Unchecked);
+		//int count = item->childCount();
+		//for (int i = 0; i < count; ++i) {
+		//	QTreeWidgetItem *child = item->child(i);
+		//	child->setCheckState(0, Qt::Unchecked);
+		//}
+	}
+}
+//描述符的全选
+void detail::on_pushButton_8_clicked() {
+	for (int i = 0; i < ui->treeWidget_2->topLevelItemCount(); ++i) {
+		QTreeWidgetItem *item = ui->treeWidget_2->topLevelItem(i);
+		if (item == nullptr) 
+			return;
+		if(item->checkState(0)!= Qt::Checked)
+			item->setCheckState(0, Qt::Checked);
+		//int count = item->childCount();
+		//for (int i = 0; i < count; ++i) {
+		//	QTreeWidgetItem *child = item->child(i);
+		//	child->setCheckState(0, Qt::Checked);
+		//}
+	}
+	count += 1;
+}
+//实体列表的勾选
 void detail::on_treeWidget_clicked(QTreeWidgetItem * item) {
 	QString s = item->text(0);
 	QAbstractItemModel *model = ui->tableWidget->model();
@@ -209,36 +237,7 @@ void detail::on_treeWidget_clicked(QTreeWidgetItem * item) {
 		}
 	}
 }
-
-void detail::on_pushButton_7_clicked() {
-	for (int i = 0; i < ui->treeWidget_2->topLevelItemCount(); ++i) {
-		QTreeWidgetItem *item = ui->treeWidget_2->topLevelItem(i);
-		if (item == nullptr) {
-			return;
-		}
-		item->setCheckState(0, Qt::Unchecked);
-		int count = item->childCount();
-		for (int i = 0; i < count; ++i) {
-			QTreeWidgetItem *child = item->child(i);
-			child->setCheckState(0, Qt::Unchecked);
-		}
-	}
-}
-void detail::on_pushButton_8_clicked() {
-	for (int i = 0; i < ui->treeWidget_2->topLevelItemCount(); ++i) {
-		QTreeWidgetItem *item = ui->treeWidget_2->topLevelItem(i);
-		if (item == nullptr) {
-			return;
-		}
-		item->setCheckState(0, Qt::Checked);
-		int count = item->childCount();
-		for (int i = 0; i < count; ++i) {
-			QTreeWidgetItem *child = item->child(i);
-			child->setCheckState(0, Qt::Checked);
-		}
-	}
-	count += 1;
-}
+//实体的全选
 void detail::on_pushButton_3_clicked() { //全选实体
 	qmt_p->lock();
 	for (int i = 0;; i++) {
@@ -248,17 +247,12 @@ void detail::on_pushButton_3_clicked() { //全选实体
 	}
 	qmt_p->unlock();
 }
-/*void detail::on_pushButton_2_clicked() { //清除实体
-	for (int i = 0;; i++) {
-		QTreeWidgetItem *p = ui->treeWidget->topLevelItem(i);
-		if (p == Q_NULLPTR) break;
-		if (p->checkState(0) != Qt::Unchecked) p->setCheckState(0, Qt::Unchecked);
-	}
-}*/
+//实体的清除所有
 void detail::on_pushButton_2_clicked() { //清除实体
 	CArrayDetail *cad = new CArrayDetail();
 	cad->show();
 }
+//维护实体列表的工作函数（QTimerThread需要）
 void detail::keep_Entities(QVector<void *> in_date) { //QMutex，QTreeWidget，M_EntityInfo，QSet<int>
 	if (in_date.size() != 4) {
 		qDebug() << "keep_Entities ERROR: wrong count of in_date!";
@@ -308,7 +302,7 @@ void detail::keep_Entities(QVector<void *> in_date) { //QMutex，QTreeWidget，M_E
 	}
 	mtp->unlock();
 }
-
+//对该detail的所有ArrayDetail的处理（槽函数连接）
 void detail::connectArray(){
 	for (int rowIndex = 0; rowIndex < allRowsArrays.size(); rowIndex++) {
 		for (auto it = allRowsArrays[rowIndex].begin(); it != allRowsArrays[rowIndex].end(); it++) {
@@ -317,6 +311,25 @@ void detail::connectArray(){
 			if (arrayD == Q_NULLPTR || arrayD->ptb == Q_NULLPTR)
 				continue ;
 			connect(arrayD->ptb, &QPushButton::clicked, arrayD, &CArrayDetail::hide_show);
+		}
+	}
+}
+
+void detail::SetTreeItems(StaticData::M_StructuresInfo structInfo, QTreeWidgetItem * parentItem, StaticData &staticdata)
+{
+	for each(StaticData::M_FieldInfo fieldInfo in structInfo.vecField)
+	{
+		QString field = QString::fromStdString(fieldInfo.FieldName); 
+		QString s = fieldInfo.FieldType == StaticData::FieldType::Array ? "(#)" + field : field;
+		if (field == "vec To Sensor") {
+			qDebug()<<"a";
+		}
+		//如果nestname为空，不是结构体，直接进行展示
+		//否则，寻找名称对应的结构体,分层展示
+		creatNewItem(parentItem, s);
+		if (!fieldInfo.NestedName.empty() && fieldInfo.FieldType!=StaticData::Array){
+			StaticData::M_StructuresInfo structInfo2 = DynamicData::getStructureInfobyName(fieldInfo.NestedName, staticdata);
+			SetTreeItems(structInfo2, item, staticdata);
 		}
 	}
 }

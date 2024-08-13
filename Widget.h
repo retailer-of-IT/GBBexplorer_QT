@@ -27,6 +27,8 @@ public:
 	StaticData staticdata;
 	DynamicData dD;
 	QVector<QMap<int, CArrayDetail *> > ArrayDetailMapList;
+	static int m_map(char c);
+	static bool m_cmp(const std::pair<int, std::string>& a, const std::pair<int, std::string>& b);
 
 private slots:
 	void initForm(); //初始化主窗口

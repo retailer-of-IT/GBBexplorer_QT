@@ -162,6 +162,30 @@ void Widget::initForm()
 	ui->tabWidget->setTabsClosable(true);
 }
 
+int Widget::m_map(char c) {
+	if (c >= 'a'&&c <= 'z')
+		return (c - 'a') * 2 + 256;
+	if (c >= 'A'&&c <= 'Z')
+		return (c - 'A') * 2 + 257;
+	if (c >= '0'&&c <= '9')
+		return c + 128;
+	return c;
+}
+bool Widget::m_cmp(const std::pair<int, std::string>& a, const std::pair<int, std::string>& b){
+	int va, vb;		//判断是否小于
+	std::string sa = a.second, sb = b.second;
+	for (int i = 0; ; i++) {
+		va = m_map(sa[i]);
+		vb = m_map(sb[i]);
+		//		cout<<va<<","<<vb<<"; ";
+		if (va == vb) {
+			if (sa[i] == 0) return 0;
+			continue;
+		}
+		return va<vb;
+	}
+	return 0;
+}
 
 //双击实体栏显示详情实现
 void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
@@ -186,14 +210,11 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 	}
 
 	//排序_vecInfo中的map的values，按照字典序比较，保持与GBBExplorer相同，以便后续动态数据的视图读取顺序
-	QVector<std::pair<int, std::string>> items;
-	for (auto it = _vecInfo.mapDescriptores.constBegin(); it != _vecInfo.mapDescriptores.constEnd(); ++it) 
-	{
+	QVector<std::pair<int, std::string> > items;
+	for (auto it = _vecInfo.mapDescriptores.constBegin(); it != _vecInfo.mapDescriptores.constEnd(); ++it) {
 		items.append(std::pair<int, std::string>(it.key(), it.value()));
 	}
-	std::sort(items.begin(), items.end(), [](const std::pair<int, std::string>& a, const std::pair<int, std::string>& b) {
-		return a.second < b.second; 
-	});
+	std::sort(items.begin(), items.end(), Widget::m_cmp);
 
 	//创建一个新的tab标签页
 	detail *newTab = new detail(_vecInfo);
@@ -213,53 +234,51 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 	QString labelText2 = "Descriptors(" + QString::number(numOfDes) + ")";
 	label2->setText(labelText2);
 	//QTableWidget* table = qobject_cast<QTableWidget*>(newTab->findChild<QTableWidget*>("tableWidget"));
+
 	for each(auto var in items)
 	{
 		newTab->creatNewTopItem(QString::fromStdString(var.second));
-		for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfoInGBBEx)
-		{
-			if (desInfo.EnumType == var.first)
-			{
-				for each(StaticData::M_StructuresInfo structInfo in staticdata.vecStructuresInfo)
-				{
-					if (structInfo.StructureName == desInfo.StructureName)
-					{
-						for each(StaticData::M_FieldInfo fieldInfo in structInfo.vecField)
-						{
-							QString field = QString::fromStdString(fieldInfo.FieldName);
-							QString s = fieldInfo.FieldType == StaticData::FieldType::Array ? "(#)" + field : field;
-							//如果nestname为空，不是结构体，直接进行展示
-							if (fieldInfo.NestedName.empty()|| fieldInfo.ArrayMaxSize > 0)
-							{
-								newTab->creatNewItem(newTab->topItem, s);
-								//							qDebug() << "hello";
-							}
-							//否则，寻找名称对应的结构体,分层展示
-							else
-							{
-								newTab->creatNewItem(newTab->topItem, s);
-								for each(StaticData::M_StructuresInfo structInfo2 in staticdata.vecStructuresInfo)
-								{
-									if (structInfo2.StructureName == fieldInfo.NestedName) {
-										for each(StaticData::M_FieldInfo fieldInfo2 in structInfo2.vecField)
-										{
-											QTreeWidgetItem *item1 = new QTreeWidgetItem(newTab->item);
-											QString field = QString::fromStdString(fieldInfo2.FieldName);
-											QString s = fieldInfo2.FieldType == StaticData::FieldType::Array ? "(#)" + field : field;
-											item1->setText(0, s);
-											item1->setCheckState(0, Qt::Unchecked);
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+		StaticData::M_DescriptorsInfo desInfo = DynamicData::getDescInfobyType(var.first, staticdata);
+		StaticData::M_StructuresInfo structInfo = DynamicData::getStructureInfobyName(desInfo.StructureName, staticdata);
+		newTab->SetTreeItems(structInfo, newTab->topItem, staticdata);
 	}
+	//for each(auto var in items){
+	//	newTab->creatNewTopItem(QString::fromStdString(var.second));
+	//	for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfoInGBBEx){
+	//		if (desInfo.EnumType == var.first){
+	//			for each(StaticData::M_StructuresInfo structInfo in staticdata.vecStructuresInfo){
+	//				if (structInfo.StructureName == desInfo.StructureName){
+	//					for each(StaticData::M_FieldInfo fieldInfo in structInfo.vecField){
+	//						QString field = QString::fromStdString(fieldInfo.FieldName);
+	//						QString s = fieldInfo.FieldType == StaticData::FieldType::Array ? "(#)" + field : field;
+	//						//如果nestname为空，不是结构体，直接进行展示
+	//						if (fieldInfo.NestedName.empty()|| fieldInfo.ArrayMaxSize > 0){
+	//							newTab->creatNewItem(newTab->topItem, s);
+	//						}
+	//						//否则，寻找名称对应的结构体,分层展示
+	//						else{
+	//							newTab->creatNewItem(newTab->topItem, s);
+	//							for each(StaticData::M_StructuresInfo structInfo2 in staticdata.vecStructuresInfo){
+	//								if (structInfo2.StructureName == fieldInfo.NestedName) {
+	//									for each(StaticData::M_FieldInfo fieldInfo2 in structInfo2.vecField){
+	//										QTreeWidgetItem *item1 = new QTreeWidgetItem(newTab->item);
+	//										QString field = QString::fromStdString(fieldInfo2.FieldName);
+	//										QString s = fieldInfo2.FieldType == StaticData::FieldType::Array ? "(#)" + field : field;
+	//										item1->setText(0, s);
+	//									//	item1->setCheckState(0, Qt::Unchecked);
+	//									}
+	//								}
+	//							}
+
+	//						}
+	//					}
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
 	emit newTab->FirstAllSelect();//发射信号，触发一次全选操作，执行插入列表头操作，count+1
-	dD.GetEntityDynamicData(_vecInfo.EnumType, items, newTab);
+	dD.GetEntityDynamicData(_vecInfo.EnumType, items, newTab);  //items有错
 }
 
 

@@ -95,51 +95,32 @@ int DynamicData::GetDescriptorCount(int eDescriptorType)
 }
 
 
-void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, std::string>> items, detail*& EntityGridView)
-{
+void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, std::string>> items, detail*& EntityGridView){
 	m_nCurrentPos = 0;
 	m_tmpPos[0] = staticdata.vecStructuresInfo.size();
 	m_tmpPos[1] = staticdata.vecDescriptorsInfo.size();
 	m_tmpPos[2] = staticdata.vecEntityInfoInGBBEx.size();
-	for each(StaticData::M_EntityInfo vecInfo in staticdata.vecEntityInfo)
-	{
-		if (vecInfo.EnumType == eEntityType)
-		{
-			//为每个描述符在分配的空间中占位，以enumtype作为标志，-1作为结束
-			for each(auto var in items){
-				//*(int*)(m_descriptorPtr + m_nCurrentPos) = staticdata.vecDescriptorsInfo[i].EnumType;
-				*(int*)(m_descriptorPtr + m_nCurrentPos) = var.first;
-				m_nCurrentPos += sizeof(int);
-				for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfoInGBBEx)				{
-					if (desInfo.EnumType == var.first){
-						for each(StaticData::M_StructuresInfo structInfo in staticdata.vecStructuresInfo){
-							if (structInfo.StructureName == desInfo.StructureName)
-							{
-								for each(StaticData::M_FieldInfo fieldInfo in structInfo.vecField)
-								{
-									FieldsList.push_back(fieldInfo);
-									//if (fieldInfo.NestedName.empty())
-									//{
-									//	FieldsList.push_back(fieldInfo);
-									//}
-									//else {
-									//	for each(StaticData::M_StructuresInfo structInfo2 in staticdata.vecStructuresInfo) {
-									//		if (structInfo2.StructureName == fieldInfo.NestedName) {
-									//			for each(StaticData::M_FieldInfo fieldInfo2 in structInfo2.vecField) {
-									//				FieldsList.push_back(fieldInfo2);
-									//			}
-									//		}
-									//	}
-									//}
-								}
-							}
-						}
-					}
-				}
-			}
-			*(int*)(m_descriptorPtr + m_nCurrentPos) = -1;
-		}
+#pragma region test
+	//for (auto ex : staticdata.vecEntityInfoInGBBEx) {  //包含EntityIndo的实体类型
+	//	for (auto dx : ex.mapDescriptores) {
+	//		if (dx == "EntityInfo") {
+	//			qDebug() << QString::fromStdString(ex.EntityName);
+	//		}
+	//	}
+	//}
+#pragma endregion
+
+	StaticData::M_EntityInfo vecInfo =getEntityInfobyType(eEntityType, staticdata); //找到EnumType为eEntityType的实体类型信息
+	//为每个描述符在分配的空间中占位，以enumtype作为标志，-1作为结束
+	for each(auto var in items) {  //items存储描述符列表
+		*(int*)(m_descriptorPtr + m_nCurrentPos) = var.first;
+		m_nCurrentPos += sizeof(int);
+		StaticData::M_DescriptorsInfo desInfo = getDescInfobyType(var.first, staticdata); //找到EnumType为var.first
+		StaticData::M_StructuresInfo structInfo = getStructureInfobyName(desInfo.StructureName, staticdata);
+		appendFieldList(structInfo.vecField, FieldsList, staticdata);
 	}
+	*(int*)(m_descriptorPtr + m_nCurrentPos) = -1;
+	
 	//staticdata.InitDescriptors();
 	//int num = staticdata.vecDescriptorsInfo.size();
 	//int m_nCurrentPos = 0;
@@ -159,7 +140,7 @@ void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, 
 	int rowCount = EntitiesId.size();
 	int columnCount = FieldsList.size() + 1;
 	table->setRowCount(rowCount);
-	table->setColumnCount(columnCount);
+//	table->setColumnCount(columnCount);   //待修改
 	//先用Met_id填充行，给每行添加一个Array的Map
 	QMap<int, CArrayDetail*> tmpMA;
 	for (int i = 0; i < rowCount; i++)	{
@@ -189,8 +170,7 @@ void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, 
 			//QTableWidget* table;
 			////用于读取对应id的所有field的值（一行）并进行切分，非数组array结构
 			////传入表格视图,iscomparetab先预设为true
-			bool flag = ReadRowFromIntPtr(ptr1, table, i, FieldsList, false, true, false, bufferLength); //ArrayDetailMapList里没有数据
-			//qDebug() << "hello";
+			bool flag = ReadRowFromIntPtr(ptr1, table, i, FieldsList, false, true, false, bufferLength);
 		}
 	}
 	table->show();
@@ -202,8 +182,7 @@ void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, 
 	EntityGridView->connectArray();
 }
 
-void DynamicData::GetMessageWithAckTableData(enum_t eMessageType, detailMessage* MessageGridView, HT::HT_TIME & requireTime)
-{
+void DynamicData::GetMessageWithAckTableData(enum_t eMessageType, detailMessage* MessageGridView, HT::HT_TIME & requireTime){
 	m_nCurrentPos = 0;
 	QTableWidget* table = qobject_cast<QTableWidget*>(MessageGridView->findChild<QTableWidget*>("tableWidget"));
 	//table->setRowCount(100);
@@ -389,52 +368,44 @@ void DynamicData::GetMessageDynamicData(enum_t eMessageType, detailMessage*& Mes
 	FieldsList.clear();
 }
 
-
-bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, int ElementIndex, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, bool isThisEntity, bool WithAckMessage, int bufferLength)
-{
+bool DynamicData::_ReadRowFromIntPtr(char *&ptr, QTableWidget*& tableWidget, int ElementIndex, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, bool isThisEntity, bool WithAckMessage, int bufferLength){
 	int RowIndex = 0, ColumnIndex = 0, LoopIndex = 0;
 	bool DescriptorInitialized = false;
 	SetElementIndex(IsThisCompareTab, ElementIndex, RowIndex, ColumnIndex, LoopIndex);
-	if (IsThisCompareTab)
-	{
+	if (IsThisCompareTab)	{
 		++ColumnIndex;
 	}
 	//都加1，第一行和第一列都不是数据
 	RowIndex;
 	++ColumnIndex;
 	//循环，读取一整行field的数据
-	for (LoopIndex = 0; LoopIndex < FieldsList.size(); ++LoopIndex)
-	{
-		if (isThisEntity)
-		{
+	for (LoopIndex = 0; LoopIndex < FieldsList.size(); ++LoopIndex){
+		if (isThisEntity){
 			DescriptorInitialized = true;
 			if (FieldsList[LoopIndex].IsThisFirstInDes) {
 				DescriptorInitialized = *(bool*)ptr;
 			}
 		}
 		// In case the (descriptor is Init AND DescriptorShow) OR (this is message)
-		if (DescriptorInitialized || !isThisEntity)
-		{
-			//普通的field(非数组array)
-			if (FieldsList[LoopIndex].FieldType != StaticData::FieldType::Array)
-			{
-				int rowCount = tableWidget->rowCount();
-				int columnCount = tableWidget->columnCount();
-				//QTableWidgetItem* item = tableWidget->item(RowIndex, ColumnIndex);//获取单元格
+		if (DescriptorInitialized || !isThisEntity){
+			if (FieldsList[LoopIndex].FieldType != StaticData::FieldType::Array){//普通的field(非数组array)
 				QTableWidgetItem* item = new QTableWidgetItem();
-				if (item)//不为空
-				{
-					tableWidget->setItem(RowIndex, ColumnIndex, item);
-					if (!ReadFieldFromPtr(ptr, item, FieldsList[LoopIndex], bufferLength))
-					{
-						FinishReadRow(item, FieldsList, LoopIndex, ColumnIndex, RowIndex, IsThisCompareTab, false);
-						//tableWidget->update();
-						return 0;
-						//tableWidget->setItem(RowIndex, ColumnIndex, item);
+				if (item){//不为空
+					if (!FieldsList[LoopIndex].ShowField) {
+						if (!ReadFieldFromPtr(ptr, item, FieldsList[LoopIndex], bufferLength)) {
+							FinishReadRow(item, FieldsList, LoopIndex, ColumnIndex, RowIndex, IsThisCompareTab, false);
+							return 0;
+						}
+					}
+					else {
+						tableWidget->setItem(RowIndex, ColumnIndex, item);
+						if (!ReadFieldFromPtr(ptr, item, FieldsList[LoopIndex], bufferLength)){
+							FinishReadRow(item, FieldsList, LoopIndex, ColumnIndex, RowIndex, IsThisCompareTab, false);
+							return 0;
+						}
 					}
 				}
-				else
-				{
+				else{
 					qDebug() << "invalid item";
 				}
 			}
@@ -483,10 +454,14 @@ bool DynamicData::ReadRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, int 
 				--LoopIndex;
 			}
 		}
-		IncreaseLoopIndex(false, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
+		if (FieldsList[LoopIndex].ShowField)
+			IncreaseLoopIndex(false, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
 	}
 	tableWidget->update();
 	return 1;
+}
+bool DynamicData::ReadRowFromIntPtr(char *ptr, QTableWidget*& tableWidget, int ElementIndex, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, bool isThisEntity, bool WithAckMessage, int bufferLength) {
+	return _ReadRowFromIntPtr(ptr, tableWidget, ElementIndex, FieldsList, IsThisCompareTab, isThisEntity, WithAckMessage, bufferLength);
 }
 
 bool DynamicData::ReadAckRowFromIntPtr(char * ptr, QTableWidget*& tableWidget, QVector<StaticData::M_FieldInfo> FieldsList, int nRowIndex, int columnCount, int bufferLength)
@@ -944,57 +919,50 @@ DynamicData::~DynamicData()
 {
 }
 
-void DynamicData::SaveOriginalPositions(int RowIndex, int ColumnIndex, int LoopIndex) {
+void DynamicData::SaveOriginalPositions(int RowIndex, int ColumnIndex, int LoopIndex, char *ptr) {
 	m_tmpPos[0] = RowIndex;
 	m_tmpPos[1] = ColumnIndex;
 	m_tmpPos[2] = LoopIndex;
 	m_tmpPos[3] = m_nCurrentPos;
+	m_tmpPtr = ptr;
 }
-void DynamicData::ReturnOriginalPositions(int &m_nCurrentPos, int &ColumnIndex, int &RowIndex, int &LoopIndex) {
+void DynamicData::ReturnOriginalPositions(int &m_nCurrentPos, int &ColumnIndex, int &RowIndex, int &LoopIndex, char *&ptr) {
 	RowIndex = m_tmpPos[0];
 	ColumnIndex = m_tmpPos[1];
 	LoopIndex = m_tmpPos[2];
 	m_nCurrentPos = m_tmpPos[3];
+	if(m_tmpPtr!=Q_NULLPTR) ptr = m_tmpPtr;
 }
 bool DynamicData::ShowArrayField(char *&ptr, QTableWidget* &tableWidget, int &LoopIndex, int &ColumnIndex, int &RowIndex, StaticData::M_FieldInfo CurrentField, QMap<int, CArrayDetail*> &ArraysDic, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, int bLen) {
 	int ALen = *(int*)ptr;		ptr+=sizeof(int);
-	QPushButton *i_btn = new QPushButton(QString::number(ALen));
+	QPushButton *i_btn = new QPushButton(QString::number(ALen)); //设置按钮，显示Array长度
 	tableWidget->setCellWidget(RowIndex, ColumnIndex, i_btn);
 	CArrayDetail *pArrayDetail = new CArrayDetail();
 	pArrayDetail->ptb = i_btn;
 	ArraysDic[ColumnIndex] = pArrayDetail;
 	if (ALen < 0)  return 0;
-	if (CurrentField.NestedName.empty()) { //jian dan lei xing    //2.1
-		tableWidget->setColumnWidth(ColumnIndex, 200);
-		//2.2.1
-		SaveOriginalPositions(RowIndex, ColumnIndex, LoopIndex);
+	QVector<StaticData::M_FieldInfo> tFieldsList;
+	if (CurrentField.NestedName.empty()) { //jian dan lei xing  
+		//Reference列
+		SaveOriginalPositions(RowIndex, ColumnIndex, LoopIndex, ptr);
 		IncreaseLoopIndex(1, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
-		QVector<StaticData::M_FieldInfo> tFieldsList(1, FieldsList[LoopIndex]);
+		tableWidget->setColumnWidth(ColumnIndex, 200);  //设置附加Reference列的宽度防止过长
+		tFieldsList.push_back(FieldsList[LoopIndex]);  //设置Array内的Field表（简单类型仅两个元素）
 		StaticData::M_FieldInfo tmpField;
 		tmpField.FieldName = "#";
 		tFieldsList.insert(0, tmpField);
-		pArrayDetail->setColumns(tFieldsList);
-		char *tmpptr = ptr;
+		pArrayDetail->setColumns(tFieldsList);  //向ArrayDetail中的表格设置列数
 		if (!AppendArrayElementsToCell(ALen, tableWidget, ColumnIndex, RowIndex, FieldsList, LoopIndex, IsThisCompareTab, ptr, bLen))
 			return 0;
-		ReturnOriginalPositions(m_nCurrentPos, ColumnIndex, RowIndex, LoopIndex);
-		char *_tmpptr = ptr;
-		//2.2.2
+		ReturnOriginalPositions(m_nCurrentPos, ColumnIndex, RowIndex, LoopIndex, ptr);
+		//ArrayDetail列
 		tFieldsList.remove(0);
-		ptr = tmpptr;
-		ReadArrayFromIntPtr(ALen, ptr, tFieldsList, ArraysDic[ColumnIndex], bLen);
-		ptr = _tmpptr;
+		if(!ReadArrayFromIntPtr(ALen, ptr, tFieldsList, ArraysDic[ColumnIndex], bLen)) 
+			return 0;
 		IncreaseLoopIndex(true, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
 	}
-	else {//3.1
-		/*
-		if (ArraysDic.find(ColumnIndex) == ArraysDic.end()) {  //? why is CI+1
-			if (!PushPointerToEndArray(ptr, ALen, CurrentField.NestedName)) return 0;
-		}
-		//3.2
-		else {
-			if (!ReadArrayFromIntPtr(ALen, ptr, ArraysDic[ColumnIndex], bLen)) return 0;
-		}*/
+	else {
+	//	if (!ReadArrayFromIntPtr(ALen, ptr, tFieldsList, ArraysDic[ColumnIndex], bLen)) return 0;
 	}
 	return 1;
 }
@@ -1042,8 +1010,7 @@ bool DynamicData::ReadArrayFromIntPtr(int ALen, char *&ptr, QVector<StaticData::
 			table->setItem(i, 0, item);
 		}
 		item->setData(Qt::DisplayRole, i);
-		//创建一个新的FieldList只有这个类型
-		if (!ReadRowFromIntPtr(ptr, table, i, tFieldsList, 0, 0, 0, bufferLength)) {
+		if (!_ReadRowFromIntPtr(ptr, table, i, tFieldsList, 0, 0, 0, bufferLength)) {
 			return 0;
 		}
 	}
@@ -1094,4 +1061,50 @@ bool DynamicData::getStructurebyFieldName(std::string FieldName, QVector<StaticD
 		}
 	}
 	return 1;
+}
+
+StaticData::M_EntityInfo DynamicData::getEntityInfobyType(id_t eEntityType, StaticData &staticdata){
+	for each(StaticData::M_EntityInfo vecInfo in staticdata.vecEntityInfo) {
+		if (vecInfo.EnumType == eEntityType) {
+			return vecInfo;
+		}
+	}
+	return StaticData::M_EntityInfo();
+}
+
+StaticData::M_DescriptorsInfo DynamicData::getDescInfobyType(int type, StaticData &staticdata){
+	for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfoInGBBEx) { //找到EnumType为var.first
+		if (desInfo.EnumType == type) {
+			return desInfo;
+		}
+	}
+	return StaticData::M_DescriptorsInfo();
+}
+
+StaticData::M_StructuresInfo DynamicData::getStructureInfobyName(std::string StructureName, StaticData &staticdata){
+	for each(StaticData::M_StructuresInfo structInfo in staticdata.vecStructuresInfo) {
+		if (structInfo.StructureName == StructureName) {
+			return structInfo;
+		}
+	}
+	return StaticData::M_StructuresInfo();
+}
+
+void DynamicData::appendFieldList(const QVector<StaticData::M_FieldInfo> &sFieldList, QVector<StaticData::M_FieldInfo>& dFieldList, StaticData &staticdata){
+	for(StaticData::M_FieldInfo fieldInfo : sFieldList) {
+		if (!fieldInfo.NestedName.empty()) { //结构体，需进一步展开
+			StaticData::M_StructuresInfo _structInfo = getStructureInfobyName(fieldInfo.NestedName, staticdata);
+			if (!_structInfo.StructureName.empty()) {
+				appendFieldList(_structInfo.vecField, dFieldList, staticdata);
+				continue;
+			}
+		}
+		if (fieldInfo.FieldName == "Entity Id") {
+			StaticData::M_FieldInfo tmpfi;
+			tmpfi.ShowField = 0;
+			tmpfi.FieldType = StaticData::FieldType::Boolean;
+			dFieldList.push_back(tmpfi);
+		}
+		dFieldList.push_back(fieldInfo);
+	}
 }

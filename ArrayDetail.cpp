@@ -17,10 +17,12 @@ QTableWidget* CArrayDetail::table_ptr() {
 }
 
 void CArrayDetail::hide_show(){
-	if (isHidden()) 
-		show();
-	else 
-		hide();
+	if (ui->tableWidget->rowCount() < 1) {
+		QMessageBox::critical(nullptr, QStringLiteral("¾¯¸æ"), QStringLiteral("¿ÕArray"));
+		return;
+	}
+	if (isHidden()) show();
+	else hide();
 }
 
 bool CArrayDetail::setColumns(const QVector<StaticData::M_FieldInfo> &tFieldList) {
