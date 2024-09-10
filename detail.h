@@ -64,28 +64,31 @@ public:
 	QMutex *qmt_p;
 	StaticData::M_EntityInfo *ei_p;
 	QSet<int> *qsi_p;
-	int count = 0; //判断是否已经一次性插入所有表头，初始化为0，全选执行一次后+1，之后只做隐藏/显示
+	//int count = 0; //判断是否已经一次性插入所有表头，初始化为0，全选执行一次后+1，之后只做隐藏/显示
 	QVector<QMap<int, CArrayDetail*> > allRowsArrays;
-	int ColCount;
 
 public:
 	static void keep_Entities(QVector<void *> in_date);
-	void creatNewTopItem(QString name); //创建根节点
-	void creatNewItem(QTreeWidgetItem *parentItem, QString name); //根据父节点创建子节点
+	void creatNewTopItem(StaticData::M_DescriptorsInfo); //创建根节点
+	void creatNewItem(QTreeWidgetItem *parentItem, StaticData::M_FieldInfo _item); //根据父节点创建子节点
+	//将Array类型Field的按钮信号与弹出的Array窗口的隐藏状态切换相连接。
 	void connectArray();
+	void addColumn(QString ColName, QTreeWidgetItem *sp);
 	void SetTreeItems(StaticData::M_StructuresInfo structInfo, QTreeWidgetItem * parentItem, StaticData &staticdata);
 
 signals:
+	//维护实体列表
 	void EntityRetrieve();
+	//在detail被创建后首先全选以向表格中插入列头
 	void FirstAllSelect();
 
 private slots:
-	void on_pushButton_3_clicked();//实体全选
-	void on_pushButton_2_clicked();//实体清除
-	void on_pushButton_7_clicked();//清除按钮功能实现
-	void on_pushButton_8_clicked(); //实体详情页全选子项目按钮的实现
-	void on_treeWidget_2_clicked(QTreeWidgetItem *item);//treeWidget_2选中/不选中触发事件，模拟GBBexplorer中选择与取消
-	void on_treeWidget_clicked(QTreeWidgetItem *item);//treewidget选中进行全部的行显示
+	void on_btnESelectAll_clicked();//实体全选
+	void on_btnEClearAll_clicked();//实体清除
+	void on_btnDSelectAll_clicked();//清除按钮功能实现
+	void on_btnDClearAll_clicked(); //实体详情页全选子项目按钮的实现
+	void on_treeDescriptors_clicked(QTreeWidgetItem *item);//treeDescriptors选中/不选中触发事件，模拟GBBexplorer中选择与取消
+	void on_treeEntities_clicked(QTreeWidgetItem *item);//treewidget选中进行全部的行显示
 };
 
 

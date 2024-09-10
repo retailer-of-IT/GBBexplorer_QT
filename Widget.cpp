@@ -19,7 +19,7 @@
 Widget::Widget(QWidget *parent) :
 	QWidget(parent),
 	ui(new Ui::Widget)
-{
+{	
 	ui->setupUi(this);
 
 	//链接双击相应事件
@@ -47,41 +47,42 @@ Widget::~Widget()
 void Widget::initForm()
 {
 	qDebug() << u8"GBB主页面线程启动";
+	//实体表
+	//设置主页面列头
 	QStandardItemModel* model = new QStandardItemModel(this);
 	model->setHorizontalHeaderItem(0, new QStandardItem("GBB"));
 	model->setHorizontalHeaderItem(1, new QStandardItem("Entities"));
 	model->setHorizontalHeaderItem(2, new QStandardItem(u8"数量"));
 	model->setHorizontalHeaderItem(3, new QStandardItem(u8"最大"));
 	model->setHorizontalHeaderItem(4, new QStandardItem("%"));
-
 	//读取entity数据显示
 	for (int i = 0; i < staticdata.vecEntityInfoInGBBEx.size(); i++)
 	{
 		int EnumType = staticdata.vecEntityInfoInGBBEx[i].EnumType;
 		QStandardItem *item = new QStandardItem();
-		item->setData(EnumType, Qt::EditRole);
+		item->setData(EnumType, Qt::EditRole);					//不知为何不用DisplayRole
 		QString EntityName = QString::fromStdString(staticdata.vecEntityInfoInGBBEx[i].EntityName);
 		int MaxEntityNum = staticdata.vecEntityInfoInGBBEx[i].MaxEntityNum;
 		QStandardItem *item1 = new QStandardItem();
-		item1->setData(MaxEntityNum, Qt::EditRole);
-		model->setItem(i, 0, item);
-		model->setItem(i, 1, new QStandardItem(EntityName));
+		item1->setData(MaxEntityNum, Qt::EditRole);				//最大数量
+		model->setItem(i, 0, item);								//第0列为实体类型枚举，其实就是一个int用以区分不同实体类型
+		model->setItem(i, 1, new QStandardItem(EntityName));	//第1列为实体类型名称
 		int n = dD.GetEntityCount(EnumType);
 		//int n = entityNum[i];
-		model->setItem(i, 2, new QStandardItem(QString::number(n)));
-		model->setItem(i, 3, item1);
-		double rate = static_cast<double>(n) / MaxEntityNum * 100;//强转
-		QString formattedRate = QString::number(rate, 'f', 2);//保留两位小数
-		model->setItem(i, 4, new QStandardItem(formattedRate));
+		model->setItem(i, 2, new QStandardItem(QString::number(n)));	//第2列为该类型实体的数量
+		model->setItem(i, 3, item1);							//第3列为最大数量
+		double rate = static_cast<double>(n) / MaxEntityNum * 100;	//强转
+		QString formattedRate = QString::number(rate, 'f', 2);	//保留两位小数
+		model->setItem(i, 4, new QStandardItem(formattedRate));	//最后一列为当前数量占最大数量的百分比
 	}
-
+	//以上代码待修改：问题(排序结果错误)，原因(是根据QString排的，与对整数的排序不同)
 	ui->tableView_1->setModel(model);
 	ui->tableView_1->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
 	ui->tableView_1->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	ui->tableView_1->setFont(QFont("宋体", 15));
 	ui->tableView_1->setSortingEnabled(true);
 	ui->tableView_1->show();
-
+	//消息表，这部分还未修改
 	QStandardItemModel* model2 = new QStandardItemModel(this);
 	model2->setHorizontalHeaderItem(0, new QStandardItem("GBB"));
 	model2->setHorizontalHeaderItem(1, new QStandardItem("Message"));
@@ -115,7 +116,7 @@ void Widget::initForm()
 	ui->tableView_2->setFont(QFont("宋体", 15));
 	ui->tableView_2->setSortingEnabled(true);
 	ui->tableView_2->show();
-
+	//描述符表
 	QStandardItemModel* model3 = new QStandardItemModel(this);
 	model3->setHorizontalHeaderItem(0, new QStandardItem("GBB"));
 	model3->setHorizontalHeaderItem(1, new QStandardItem("Descriptor"));
@@ -161,7 +162,7 @@ void Widget::initForm()
 	//设置页面关闭按钮。
 	ui->tabWidget->setTabsClosable(true);
 }
-
+//下面两个函数用于修正对字符串的排序结果与原版C#结果不同的问题
 int Widget::m_map(char c) {
 	if (c >= 'a'&&c <= 'z')
 		return (c - 'a') * 2 + 256;
@@ -218,70 +219,44 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 
 	//创建一个新的tab标签页
 	detail *newTab = new detail(_vecInfo);
-	qDebug() << "new detail is : " << newTab << " | " << QThread::currentThreadId();
+	//qDebug() << "new detail is : " << newTab << " | " << QThread::currentThreadId();
 	// 将新的tab页面添加到QTabWidget并跳转
 	QString tabName = "Entity-" + s;
 	ui->tabWidget->addTab(newTab, tabName);
 	ui->tabWidget->setCurrentWidget(newTab);
 	int openTabsCount = ui->tabWidget->count() + 1;
-	//设置详情页的描述符和实体个数信息
-	QLabel* label = qobject_cast<QLabel*>(newTab->findChild<QLabel*>("label_4"));
+	//设置详情页的实体个数信息
+	QLabel* label = qobject_cast<QLabel*>(newTab->findChild<QLabel*>("lbEntities"));
 	int numOfEntities = dD.GetEntityCount(_vecInfo.EnumType);
 	QString labelText = "Entities(" + QString::number(numOfEntities) + ")";
 	label->setText(labelText);
-	QLabel* label2 = qobject_cast<QLabel*>(newTab->findChild<QLabel*>("label_5"));
+	//设置详情页的描述符个数信息
+	QLabel* label2 = qobject_cast<QLabel*>(newTab->findChild<QLabel*>("lbDescriptors"));
 	int numOfDes = _vecInfo.mapDescriptores.size();
 	QString labelText2 = "Descriptors(" + QString::number(numOfDes) + ")";
 	label2->setText(labelText2);
-	//QTableWidget* table = qobject_cast<QTableWidget*>(newTab->findChild<QTableWidget*>("tableWidget"));
-
+	//为了让树和表的节点能够相互访问：
+	//树节点的value为：
+	//UserRole(对叶子节点来说为对应的列Index，对顶级节点为-1，若都不是则为-2)
+	//UserRole+1(M_DescriptorsInfo或M_FieldInfo，取决于深度)
+	//列表头的value为:
+	//UserRole(对应的树节点指针转为void*，使用时记得将void*转回QTreeWidgetItem*)
+	//处理树节点
 	for each(auto var in items)
 	{
-		newTab->creatNewTopItem(QString::fromStdString(var.second));
+		//处理items里记录的描述符，这是第一层
 		StaticData::M_DescriptorsInfo desInfo = DynamicData::getDescInfobyType(var.first, staticdata);
+		newTab->creatNewTopItem(desInfo);
+		//设置UserRole的列号需要在后面进行
 		StaticData::M_StructuresInfo structInfo = DynamicData::getStructureInfobyName(desInfo.StructureName, staticdata);
+		//根据描述符的结构体信息找到对应的Field数组，根据其设置树的非顶级节点
 		newTab->SetTreeItems(structInfo, newTab->topItem, staticdata);
 	}
-	//for each(auto var in items){
-	//	newTab->creatNewTopItem(QString::fromStdString(var.second));
-	//	for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfoInGBBEx){
-	//		if (desInfo.EnumType == var.first){
-	//			for each(StaticData::M_StructuresInfo structInfo in staticdata.vecStructuresInfo){
-	//				if (structInfo.StructureName == desInfo.StructureName){
-	//					for each(StaticData::M_FieldInfo fieldInfo in structInfo.vecField){
-	//						QString field = QString::fromStdString(fieldInfo.FieldName);
-	//						QString s = fieldInfo.FieldType == StaticData::FieldType::Array ? "(#)" + field : field;
-	//						//如果nestname为空，不是结构体，直接进行展示
-	//						if (fieldInfo.NestedName.empty()|| fieldInfo.ArrayMaxSize > 0){
-	//							newTab->creatNewItem(newTab->topItem, s);
-	//						}
-	//						//否则，寻找名称对应的结构体,分层展示
-	//						else{
-	//							newTab->creatNewItem(newTab->topItem, s);
-	//							for each(StaticData::M_StructuresInfo structInfo2 in staticdata.vecStructuresInfo){
-	//								if (structInfo2.StructureName == fieldInfo.NestedName) {
-	//									for each(StaticData::M_FieldInfo fieldInfo2 in structInfo2.vecField){
-	//										QTreeWidgetItem *item1 = new QTreeWidgetItem(newTab->item);
-	//										QString field = QString::fromStdString(fieldInfo2.FieldName);
-	//										QString s = fieldInfo2.FieldType == StaticData::FieldType::Array ? "(#)" + field : field;
-	//										item1->setText(0, s);
-	//									//	item1->setCheckState(0, Qt::Unchecked);
-	//									}
-	//								}
-	//							}
-
-	//						}
-	//					}
-	//				}
-	//			}
-	//		}
-	//	}
-	//}
-	emit newTab->FirstAllSelect();//发射信号，触发一次全选操作，执行插入列表头操作，count+1
-	dD.GetEntityDynamicData(_vecInfo.EnumType, items, newTab);  //items有错
+	//emit newTab->FirstAllSelect();//发射信号，触发一次全选操作，执行插入列表头操作，count+1
+	dD.GetEntityDynamicData(_vecInfo.EnumType, items, newTab);  
 }
 
-
+//双击消息栏显示详情
 void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
 {
 	int curRow = index.row();//选中行
@@ -311,10 +286,14 @@ void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
 				flag = true;
 		}
 	}
-	newTab->creatNewTopItem("Creation Time");
+	StaticData::M_FieldInfo CT_field;
+	CT_field.FieldName = "Creation Time";
+	newTab->creatNewTopItem(CT_field);
 	if (flag)
 	{
-		newTab->creatNewTopItem("MET_ID");
+		StaticData::M_FieldInfo met_field;
+		met_field.FieldName = "MET_ID";
+		newTab->creatNewTopItem(met_field);
 	}
 	//匹配消息描述符名称，找到对应结构struct
 	for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfo)
@@ -327,16 +306,15 @@ void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
 				{
 					for each(StaticData::M_FieldInfo fieldInfo in structInfo.vecField)
 					{
-						QString field = QString::fromStdString(fieldInfo.FieldName);
 						//如果nestedname为空，不是结构体，直接进行展示
 						if (fieldInfo.NestedName.empty())
 						{
-							newTab->creatNewTopItem(field);
+							newTab->creatNewTopItem(fieldInfo);
 						}
 						//否则，寻找名称对应的结构体,分层展示
 						else
 						{
-							newTab->creatNewTopItem(field);
+							newTab->creatNewTopItem(fieldInfo);
 							for each(StaticData::M_StructuresInfo structInfo2 in staticdata.vecStructuresInfo)
 							{
 								if (structInfo2.StructureName == fieldInfo.NestedName) {

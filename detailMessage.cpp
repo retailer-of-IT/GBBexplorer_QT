@@ -20,17 +20,17 @@ detailMessage::~detailMessage()
 	}
 }
 
-void detailMessage::creatNewTopItem(QString name)
+void detailMessage::creatNewTopItem(StaticData::M_FieldInfo _item)
 {
-	topItem = new QTreeWidgetItem(QStringList() << name);
-	//当前tab界面的treewidget_2建立根节点
+	topItem = new QTreeWidgetItem(QStringList() << QString::fromStdString(_item.FieldName));
+	topItem->setData(0, Qt::UserRole, QVariant::fromValue(_item));
 	ui.treeWidget_2->addTopLevelItem(topItem);
-	topItem->setCheckState(0, Qt::Unchecked);
 }
-void detailMessage::creatNewItem(QTreeWidgetItem *parentItem, QString name)
+void detailMessage::creatNewItem(QTreeWidgetItem *parentItem, StaticData::M_FieldInfo _item)
 {
 	item = new QTreeWidgetItem(parentItem);
-	item->setText(0, name);
+	item->setText(0, QString::fromStdString(_item.FieldName));
+	item->setData(0, Qt::UserRole, QVariant::fromValue(_item));
 	item->setCheckState(0, Qt::Unchecked);
 }
 

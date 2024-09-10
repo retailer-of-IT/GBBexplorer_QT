@@ -73,7 +73,6 @@ public:
 		QVector<M_FieldInfo> vecField;
 	};
 
-
 	struct M_EntityInfo
 	{
 		int EnumType;
@@ -129,7 +128,13 @@ public:
 	void GetAckMessageEnum();
 	~StaticData();
 
+	
+
 private:
 	int SetStringFromPtr(char* CurrentIntPtr, std::string &StringName); // 用于切割buffer，每到\0截至
 	void SetEnumFromFile(QMap<QString, QMap<int, QString>>& ValueToEnumTypesIS, QString& FilePath);//用于读取EnumtoString
 };
+
+Q_DECLARE_METATYPE(StaticData::FieldType)
+Q_DECLARE_METATYPE(StaticData::M_FieldInfo)
+Q_DECLARE_METATYPE(StaticData::M_DescriptorsInfo)

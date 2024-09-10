@@ -54,11 +54,11 @@ detail::detail(StaticData::M_EntityInfo ei, QWidget *parent) : QWidget(parent), 
 	ui->setupUi(this);
 
 	//tablewidget_2勾选列显示
-	connect(ui->treeWidget_2, &QTreeWidget::itemChanged, this, &detail::on_treeWidget_2_clicked);
+	connect(ui->treeDescriptors, &QTreeWidget::itemChanged, this, &detail::on_treeDescriptors_clicked);
 	//tablewidget勾选行显示
-	connect(ui->treeWidget, &QTreeWidget::itemChanged, this, &detail::on_treeWidget_clicked);
-	//将自定义信号与全选槽函数连接起来，用于在双击tableview1的同时触发触发一次treewidget_2的全选
-	connect(this, &detail::FirstAllSelect, this, &detail::on_pushButton_8_clicked);
+	connect(ui->treeEntities, &QTreeWidget::itemChanged, this, &detail::on_treeEntities_clicked);
+	//将自定义信号与全选槽函数连接起来，用于在双击tableview1的同时触发触发一次treeWidget_2的全选
+	connect(this, &detail::FirstAllSelect, this, &detail::on_btnDSelectAll_clicked);
 
 	//维护实体列表
 	qmt_p = new QMutex;
@@ -67,7 +67,7 @@ detail::detail(StaticData::M_EntityInfo ei, QWidget *parent) : QWidget(parent), 
 	ei_p = new StaticData::M_EntityInfo(ei);
 	qsi_p = new QSet<int>;
 	d_argv.push_back((void *)(qmt_p));
-	d_argv.push_back((void *)(ui->treeWidget));
+	d_argv.push_back((void *)(ui->treeEntities));
 	d_argv.push_back((void *)(ei_p));
 	d_argv.push_back((void *)(qsi_p));
 	qmt_p->unlock();
@@ -75,12 +75,12 @@ detail::detail(StaticData::M_EntityInfo ei, QWidget *parent) : QWidget(parent), 
 	qtt_p->start(100, 1000);
 
 	//MET_ID
-	ui->tableWidget->verticalHeader()->setVisible(false);
-	ui->tableWidget->setColumnCount(1);
-	ui->tableWidget->setHorizontalHeaderItem(0, new QTableWidgetItem("MET_ID"));
-	ui->tableWidget->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-	ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
-	ColCount = 0;
+	ui->tableDetail->verticalHeader()->setVisible(false);
+	ui->tableDetail->setColumnCount(1);
+	ui->tableDetail->setHorizontalHeaderItem(0, new QTableWidgetItem("MET_ID"));
+	ui->tableDetail->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+	ui->tableDetail->setEditTriggers(QAbstractItemView::NoEditTriggers);
+	ui->tableDetail->horizontalHeaderItem(0)->setData(Qt::UserRole, QVariant::fromValue(Q_NULLPTR));
 }
 detail::~detail() {
 	delete ui;
@@ -89,142 +89,148 @@ detail::~detail() {
 	delete ei_p;
 	delete qsi_p;
 }
-//创建描述符树状表的顶级节点
-void detail::creatNewTopItem(QString name) {
-	topItem = new QTreeWidgetItem(QStringList() << name); 
-	ui->treeWidget_2->addTopLevelItem(topItem); 
+//创建描述符树状表的顶级节点。	顶级节点一定来自描述符
+void detail::creatNewTopItem(StaticData::M_DescriptorsInfo _item) {
+	//描述符应该没有数组类的，目前如此认为
+	QString name = QString::fromStdString(_item.DescriptorName);
+	topItem = new QTreeWidgetItem(QStringList() << name);
+	topItem->setData(0, Qt::UserRole, -1); 
+	topItem->setData(0, Qt::UserRole + 1, QVariant::fromValue(_item));//UserRole+1(M_DescriptorsInfo或M_FieldInfo，取决于深度)
+	ui->treeDescriptors->addTopLevelItem(topItem);
+	topItem->setCheckState(0, Qt::Unchecked);
 }
 //创建描述符树状表的非顶级节点
-void detail::creatNewItem(QTreeWidgetItem *parentItem, QString name) {
+void detail::creatNewItem(QTreeWidgetItem *parentItem, StaticData::M_FieldInfo _item) {
 	item = new QTreeWidgetItem(parentItem);
-	item->setText(0, name);
+	//对Array类型特殊处理（加#）
+	if (_item.FieldType == StaticData::FieldType::Array) {
+		item->setText(0, QString::fromStdString("(#)" + _item.FieldName));
+	}
+	else {
+		item->setText(0, QString::fromStdString(_item.FieldName));
+	}
+	item->setData(0, Qt::UserRole + 1, QVariant::fromValue(_item));//UserRole+1(M_DescriptorsInfo或M_FieldInfo，取决于深度)
 	item->setCheckState(0, Qt::Unchecked);
 }
 
 //描述符列表的勾选
-void detail::on_treeWidget_2_clicked(QTreeWidgetItem * item) { 
-	QString s = item->text(0), _s = s;
-	if (item->parent() != Q_NULLPTR)
-		_s = ((item->parent()->parent() != Q_NULLPTR) ? (item->parent()->parent()->text(0)) : (item->parent()->text(0))) + "\n" + _s;
+//前提：默认 实体包含的描述符 和 描述符包含的Field 不变（则两者属于staticdata），
+//		若要改变则可以考虑将处理写到btnDRefresh里，btnDRefresh的实现方法可以是让widget删掉当前detail然后重新new一个到当前页
+//需要修改：在遍历树时将描述符正确展开同时完成列的插入，而本槽函数不再涉及列的插入
+void detail::on_treeDescriptors_clicked(QTreeWidgetItem * item) {
 	Qt::CheckState ist = item->checkState(0);
-	int columnCount = ui->tableWidget->columnCount();
-	if (item->child(0) == Q_NULLPTR) {	//最后一层节点，才展示
-		if (count == 0) {//还未进行一次性全选，此时是进行插入操作
-			if (ist == Qt::Checked) { //增加列表头
-				ui->tableWidget->setColumnCount(columnCount + 1);
-				ui->tableWidget->setHorizontalHeaderItem(columnCount, new QTableWidgetItem(_s));
-				ui->tableWidget->horizontalHeader()->setSectionResizeMode(columnCount, QHeaderView::ResizeToContents);
-				ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+	int ColIndex = item->data(0, Qt::UserRole).toInt();
+	QString name = item->data(0, Qt::DisplayRole).toString();
+	QTreeWidgetItem *cp, *pp;
+	//当这个结点不是叶子节点，则他有子节点，它的状态改变将影响祖先节点和子孙节点，且有三种状态
+	if (ColIndex <= 0) {
+		//树内处理-向上-特例（由子节点导致PartiallyChecked时，会使它的祖先节点全变为PartiallyChecked）
+		if (item->checkState(0) == Qt::PartiallyChecked) { //无需进行其他操作了
+			if (item->parent() != Q_NULLPTR && item->parent()->checkState(0) != Qt::PartiallyChecked) {
+				item->parent()->setCheckState(0, Qt::PartiallyChecked);
 			}
-			else { //隐藏列表头
-				for (int i = 1; i < columnCount; i++) {
-					QString name = ui->tableWidget->model()->headerData(i, Qt::Horizontal).toString();
-					name.remove(0, name.lastIndexOf("\n") + 1);
-					if (name == s) {
-						ui->tableWidget->setColumnHidden(i, true);
-						break;
-					}
-				}
-			}
+			return;
 		}
-		else {//count已经>=1，执行显示/隐藏操作
-			if (ist == Qt::Checked) {
-				for (int i = 1; i < columnCount; i++) {
-					QString name = ui->tableWidget->model()->headerData(i, Qt::Horizontal).toString();
-					name.remove(0, name.lastIndexOf("\n") + 1);
-					if (name == s) {
-						//QAbstractItemModel *model = ui->tableWidget->model();
-						//model->removeColumn(i);
-						ui->tableWidget->setColumnHidden(i, false);
-						break;
-					}
-				}
-			}
-			else { //隐藏列表头
-				for (int i = 1; i < columnCount; i++) {
-					QString name = ui->tableWidget->model()->headerData(i, Qt::Horizontal).toString();
-					name.remove(0, name.lastIndexOf("\n") + 1);
-					if (name == s) {
-						ui->tableWidget->setColumnHidden(i, true);
-						break;
-					}
-				}
-			}
-		}
-	}
-	if (item->checkState(0) == Qt::PartiallyChecked) { //子到父导致，继续向上
-		if (item->parent() != Q_NULLPTR && item->parent()->checkState(0) != Qt::PartiallyChecked) {
-			item->parent()->setCheckState(0, Qt::PartiallyChecked);
-		}
-		return;
-	}
-	if (item->parent() != Q_NULLPTR) { //更新父节点
-		QTreeWidgetItem *pp = item->parent(), *cp = pp->child(0);
+		//树内处理-向下（item为PartiallyChecked时）
+		cp = item->child(0);
 		bool flg = 0;
 		for (int i = 1; cp != Q_NULLPTR; i++) {
-			if (ist != cp->checkState(0)) {
-				flg = 1;
-				break;
+			if (cp->checkState(0) != ist)
+				cp->setCheckState(0, ist);	//此时的ist不会再是PartiallyChecked
+			cp = item->child(i);
+		}
+		//树内处理-向上
+		if (item->parent() != Q_NULLPTR) { //更新父节点
+			pp = item->parent();
+			cp = pp->child(0);
+			bool flg = 0;
+			for (int i = 1; cp != Q_NULLPTR; i++) {
+				if (ist != cp->checkState(0)) {
+					flg = 1;
+					break;
+				}
+				cp = pp->child(i);
 			}
-			cp = pp->child(i);
-		}
-		if (flg) {
-			if (pp->checkState(0) != Qt::PartiallyChecked)
-				pp->setCheckState(0, Qt::PartiallyChecked);
-		}
-		else {
-			pp->setCheckState(0, ist);
+			if (flg) {
+				if (pp->checkState(0) != Qt::PartiallyChecked)
+					pp->setCheckState(0, Qt::PartiallyChecked);
+			}
+			else {
+				if (pp->checkState(0) != ist)
+					pp->setCheckState(0, ist);
+			}
 		}
 	}
-	// 更新子节点
-	QTreeWidgetItem *sp = item->child(0);
-	for (int i = 1; sp != Q_NULLPTR; i++) {
-		if (ist != sp->checkState(0)) {
-			sp->setCheckState(0, ist);
+	//当这个结点是叶子节点，它在tableDetail里有对应的列，它的状态改变仅会影响祖先节点，有两种状态
+	//一个叶子节点一定只会对应一个列吗？
+	else {
+		//树内处理-向上
+		if (item->parent() != Q_NULLPTR) { //更新父节点，只更新一层即可
+			pp = item->parent();
+			cp = pp->child(0);
+			bool flg = 0;
+			for (int i = 1; cp != Q_NULLPTR; i++) {
+				if (ist != cp->checkState(0)) {
+					flg = 1;
+					break;
+				}
+				cp = pp->child(i);
+			}
+			if (flg) {
+				if (pp->checkState(0) != Qt::PartiallyChecked)
+					pp->setCheckState(0, Qt::PartiallyChecked);
+			}
+			else {
+				if (pp->checkState(0) != ist)
+					pp->setCheckState(0, ist);
+			}
 		}
-		sp = item->child(i);
+		//tableDetail处理
+		if (ist == Qt::Checked) {
+			if (ui->tableDetail->isColumnHidden(ColIndex)) {
+				ui->tableDetail->setColumnHidden(ColIndex, false);
+			}
+		}
+		else if(ist == Qt::Unchecked){
+			if (!ui->tableDetail->isColumnHidden(ColIndex)) {
+				ui->tableDetail->setColumnHidden(ColIndex, true);
+			}
+		}
+		else {
+			QMessageBox::warning(this, "Warning from detail", QString("Wrong item checkstate:%1").arg(ist));
+		}
 	}
 }
 //描述符的清除所有
-void detail::on_pushButton_7_clicked() {
-	for (int i = 0; i < ui->treeWidget_2->topLevelItemCount(); ++i) {
-		QTreeWidgetItem *item = ui->treeWidget_2->topLevelItem(i);
+void detail::on_btnDClearAll_clicked() {
+	for (int i = 0; i < ui->treeDescriptors->topLevelItemCount(); ++i) {
+		QTreeWidgetItem *item = ui->treeDescriptors->topLevelItem(i);
 		if (item == nullptr) 
 			return;
 		if (item->checkState(0) != Qt::Unchecked)
 			item->setCheckState(0, Qt::Unchecked);
-		//int count = item->childCount();
-		//for (int i = 0; i < count; ++i) {
-		//	QTreeWidgetItem *child = item->child(i);
-		//	child->setCheckState(0, Qt::Unchecked);
-		//}
 	}
 }
 //描述符的全选
-void detail::on_pushButton_8_clicked() {
-	for (int i = 0; i < ui->treeWidget_2->topLevelItemCount(); ++i) {
-		QTreeWidgetItem *item = ui->treeWidget_2->topLevelItem(i);
+void detail::on_btnDSelectAll_clicked() {
+	for (int i = 0; i < ui->treeDescriptors->topLevelItemCount(); ++i) {
+		QTreeWidgetItem *item = ui->treeDescriptors->topLevelItem(i);
 		if (item == nullptr) 
 			return;
 		if(item->checkState(0)!= Qt::Checked)
 			item->setCheckState(0, Qt::Checked);
-		//int count = item->childCount();
-		//for (int i = 0; i < count; ++i) {
-		//	QTreeWidgetItem *child = item->child(i);
-		//	child->setCheckState(0, Qt::Checked);
-		//}
 	}
-	count += 1;
 }
 //实体列表的勾选
-void detail::on_treeWidget_clicked(QTreeWidgetItem * item) {
+void detail::on_treeEntities_clicked(QTreeWidgetItem * item) {
 	QString s = item->text(0);
-	QAbstractItemModel *model = ui->tableWidget->model();
+	QAbstractItemModel *model = ui->tableDetail->model();
 	if (item->checkState(0) == Qt::Checked) {
 		for (int i = 0; i<model->rowCount(); i++) {
+			//取第i行第0个元素
 			QModelIndex index = model->index(i, 0);
 			if (model->data(index) == s) {
-				ui->tableWidget->setRowHidden(i, false);
+				ui->tableDetail->setRowHidden(i, false);
 			}
 		}
 	}
@@ -232,23 +238,23 @@ void detail::on_treeWidget_clicked(QTreeWidgetItem * item) {
 		for (int i = 0; i<model->rowCount(); i++) {
 			QModelIndex index = model->index(i, 0);
 			if (model->data(index) == s) {
-				ui->tableWidget->setRowHidden(i, true);
+				ui->tableDetail->setRowHidden(i, true);
 			}
 		}
 	}
 }
 //实体的全选
-void detail::on_pushButton_3_clicked() { //全选实体
+void detail::on_btnESelectAll_clicked() { //全选实体
 	qmt_p->lock();
 	for (int i = 0;; i++) {
-		QTreeWidgetItem *p = ui->treeWidget->topLevelItem(i);
+		QTreeWidgetItem *p = ui->treeEntities->topLevelItem(i);
 		if (p == Q_NULLPTR) break;
 		if (p->checkState(0) != Qt::Checked) p->setCheckState(0, Qt::Checked);
 	}
 	qmt_p->unlock();
 }
 //实体的清除所有
-void detail::on_pushButton_2_clicked() { //清除实体
+void detail::on_btnEClearAll_clicked() { //清除实体
 	CArrayDetail *cad = new CArrayDetail();
 	cad->show();
 }
@@ -293,7 +299,7 @@ void detail::keep_Entities(QVector<void *> in_date) { //QMutex，QTreeWidget，M_E
 					QTreeWidgetItem *p = twp->topLevelItem(i);
 					if (p == Q_NULLPTR) break;
 					if (p->text(0) == QString::number(_id)) {
-						delete p; //删除节点，未测试正确性
+						delete p;
 						break;
 					}
 				}
@@ -314,22 +320,53 @@ void detail::connectArray(){
 		}
 	}
 }
+//根据传入的树节点指针sp，向ui->tableDetail中添加一列，
+void detail::addColumn(QString ColName, QTreeWidgetItem * sp)
+{
+	int columnCount = ui->tableDetail->columnCount();
+	ui->tableDetail->setColumnCount(columnCount + 1);
+	ui->tableDetail->setHorizontalHeaderItem(columnCount, new QTableWidgetItem(ColName));
+	ui->tableDetail->setEditTriggers(QAbstractItemView::NoEditTriggers);
+	ui->tableDetail->horizontalHeader()->setSectionResizeMode(columnCount, QHeaderView::ResizeToContents);
 
+	//使树节点和表头节点能相互访问
+	ui->tableDetail->horizontalHeaderItem(columnCount)->setData(Qt::UserRole, QVariant::fromValue((void *)sp));
+	sp->setData(0, Qt::UserRole, columnCount);
+}
+//作用：向detail页的描述符树中插入新节点，这些节点都不是顶级节点，是parentItem的子节点
 void detail::SetTreeItems(StaticData::M_StructuresInfo structInfo, QTreeWidgetItem * parentItem, StaticData &staticdata)
 {
 	for each(StaticData::M_FieldInfo fieldInfo in structInfo.vecField)
 	{
-		QString field = QString::fromStdString(fieldInfo.FieldName); 
-		QString s = fieldInfo.FieldType == StaticData::FieldType::Array ? "(#)" + field : field;
-		if (field == "vec To Sensor") {
-			qDebug()<<"a";
+		creatNewItem(parentItem, fieldInfo);
+		//如果nestname为空，不是结构体，直接进行展示，否则，寻找名称对应的结构体,分层展示
+		//是有效地结构体且非数组，则需要再展开一层，且不占用一行,item设置UserRole=-2表示是非顶级节点也非叶节点
+		if (!fieldInfo.NestedName.empty() && fieldInfo.FieldType != StaticData::Array) {
+			StaticData::M_StructuresInfo FildStructure = DynamicData::getStructureInfobyName(fieldInfo.NestedName, staticdata);
+			//能通过staticdata找到结构体信息，即结构体信息有效
+			if (!FildStructure.StructureName.empty()) {
+				item->setData(0, Qt::UserRole, -2);
+				SetTreeItems(FildStructure, item, staticdata);
+				continue;
+			}
 		}
-		//如果nestname为空，不是结构体，直接进行展示
-		//否则，寻找名称对应的结构体,分层展示
-		creatNewItem(parentItem, s);
-		if (!fieldInfo.NestedName.empty() && fieldInfo.FieldType!=StaticData::Array){
-			StaticData::M_StructuresInfo structInfo2 = DynamicData::getStructureInfobyName(fieldInfo.NestedName, staticdata);
-			SetTreeItems(structInfo2, item, staticdata);
+		//否则不展开，在tableDetail里单独占一列，需要使用creatNewItem(p)中刚申请的item
+		//找到祖先节点（描述符）的名字,与Field名结合为列头名
+		//应修改为从FieldInfo的DescName获取，要提前在Info里插入（函数调用前）
+		QString comName, field = QString::fromStdString(fieldInfo.FieldName);
+		//因为此处的节点一定是有parentItem的非顶级节点，所以item->parent()一定有值（后续可做异常处理）
+		QTreeWidgetItem *pitem = item->parent();
+		while (pitem->parent() != Q_NULLPTR)
+			pitem = pitem->parent();
+		comName = pitem->text(0) + "\n" + field;
+		//特例：Array类型若非有效结构体则存在额外一列，此处处理为前面那一列，名字为#，内容为按钮
+		if (fieldInfo.FieldType == StaticData::Array) {
+			if (fieldInfo.NestedName.empty() || DynamicData::getStructureInfobyName(fieldInfo.NestedName, staticdata).StructureName.empty()) {
+				addColumn("#", item);
+				continue;
+			}
 		}
+		//创建新的列
+		addColumn(comName, item);
 	}
 }

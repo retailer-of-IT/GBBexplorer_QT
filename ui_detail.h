@@ -29,30 +29,30 @@ class Ui_detail
 {
 public:
     QGridLayout *gridLayout;
-    QGridLayout *gridLayout_7;
-    QWidget *widget_3;
+    QGridLayout *gridLayout_2;
+    QWidget *wgtDescriptors;
     QGridLayout *gridLayout_3;
-    QVBoxLayout *verticalLayout_2;
-    QLabel *label_5;
-    QTreeWidget *treeWidget_2;
-    QGridLayout *gridLayout_5;
-    QPushButton *pushButton_8;
-    QPushButton *pushButton_5;
-    QPushButton *pushButton_7;
-    QHBoxLayout *horizontalLayout;
+    QVBoxLayout *verticalLayoutD;
+    QLabel *lbDescriptors;
+    QTreeWidget *treeDescriptors;
+    QGridLayout *gridLayoutD;
+    QPushButton *btnDSelectAll;
+    QPushButton *btnDRefresh;
+    QPushButton *btnDClearAll;
+    QHBoxLayout *horizontalLayoutD;
     QPushButton *pushButton_9;
     QPushButton *pushButton_6;
-    QWidget *widget_2;
+    QWidget *wgtEntities;
     QGridLayout *gridLayout_6;
-    QVBoxLayout *verticalLayout;
-    QLabel *label_4;
-    QTreeWidget *treeWidget;
-    QGridLayout *gridLayout_4;
-    QPushButton *pushButton_3;
-    QPushButton *pushButton_2;
-    QPushButton *pushButton;
-    QPushButton *pushButton_4;
-    QTableWidget *tableWidget;
+    QVBoxLayout *verticalLayoutE;
+    QLabel *lbEntities;
+    QTreeWidget *treeEntities;
+    QGridLayout *gridLayoutE;
+    QPushButton *btnESelectAll;
+    QPushButton *btnEClearAll;
+    QPushButton *btnEFilter;
+    QPushButton *btnERefresh;
+    QTableWidget *tableDetail;
 
     void setupUi(QWidget *detail)
     {
@@ -61,127 +61,127 @@ public:
         detail->resize(686, 517);
         gridLayout = new QGridLayout(detail);
         gridLayout->setObjectName(QStringLiteral("gridLayout"));
-        gridLayout_7 = new QGridLayout();
-        gridLayout_7->setObjectName(QStringLiteral("gridLayout_7"));
-        widget_3 = new QWidget(detail);
-        widget_3->setObjectName(QStringLiteral("widget_3"));
-        gridLayout_3 = new QGridLayout(widget_3);
+        gridLayout_2 = new QGridLayout();
+        gridLayout_2->setObjectName(QStringLiteral("gridLayout_2"));
+        wgtDescriptors = new QWidget(detail);
+        wgtDescriptors->setObjectName(QStringLiteral("wgtDescriptors"));
+        gridLayout_3 = new QGridLayout(wgtDescriptors);
         gridLayout_3->setObjectName(QStringLiteral("gridLayout_3"));
-        verticalLayout_2 = new QVBoxLayout();
-        verticalLayout_2->setObjectName(QStringLiteral("verticalLayout_2"));
-        label_5 = new QLabel(widget_3);
-        label_5->setObjectName(QStringLiteral("label_5"));
+        verticalLayoutD = new QVBoxLayout();
+        verticalLayoutD->setObjectName(QStringLiteral("verticalLayoutD"));
+        lbDescriptors = new QLabel(wgtDescriptors);
+        lbDescriptors->setObjectName(QStringLiteral("lbDescriptors"));
         QFont font;
         font.setPointSize(15);
         font.setBold(true);
         font.setWeight(75);
-        label_5->setFont(font);
+        lbDescriptors->setFont(font);
 
-        verticalLayout_2->addWidget(label_5);
+        verticalLayoutD->addWidget(lbDescriptors);
 
-        treeWidget_2 = new QTreeWidget(widget_3);
-        treeWidget_2->setObjectName(QStringLiteral("treeWidget_2"));
+        treeDescriptors = new QTreeWidget(wgtDescriptors);
+        treeDescriptors->setObjectName(QStringLiteral("treeDescriptors"));
 
-        verticalLayout_2->addWidget(treeWidget_2);
+        verticalLayoutD->addWidget(treeDescriptors);
 
-        gridLayout_5 = new QGridLayout();
-        gridLayout_5->setObjectName(QStringLiteral("gridLayout_5"));
-        pushButton_8 = new QPushButton(widget_3);
-        pushButton_8->setObjectName(QStringLiteral("pushButton_8"));
+        gridLayoutD = new QGridLayout();
+        gridLayoutD->setObjectName(QStringLiteral("gridLayoutD"));
+        btnDSelectAll = new QPushButton(wgtDescriptors);
+        btnDSelectAll->setObjectName(QStringLiteral("btnDSelectAll"));
 
-        gridLayout_5->addWidget(pushButton_8, 1, 1, 1, 1);
+        gridLayoutD->addWidget(btnDSelectAll, 1, 1, 1, 1);
 
-        pushButton_5 = new QPushButton(widget_3);
-        pushButton_5->setObjectName(QStringLiteral("pushButton_5"));
+        btnDRefresh = new QPushButton(wgtDescriptors);
+        btnDRefresh->setObjectName(QStringLiteral("btnDRefresh"));
 
-        gridLayout_5->addWidget(pushButton_5, 0, 1, 1, 1);
+        gridLayoutD->addWidget(btnDRefresh, 0, 1, 1, 1);
 
-        pushButton_7 = new QPushButton(widget_3);
-        pushButton_7->setObjectName(QStringLiteral("pushButton_7"));
+        btnDClearAll = new QPushButton(wgtDescriptors);
+        btnDClearAll->setObjectName(QStringLiteral("btnDClearAll"));
 
-        gridLayout_5->addWidget(pushButton_7, 1, 2, 1, 1);
+        gridLayoutD->addWidget(btnDClearAll, 1, 2, 1, 1);
 
-        horizontalLayout = new QHBoxLayout();
-        horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));
-        pushButton_9 = new QPushButton(widget_3);
+        horizontalLayoutD = new QHBoxLayout();
+        horizontalLayoutD->setObjectName(QStringLiteral("horizontalLayoutD"));
+        pushButton_9 = new QPushButton(wgtDescriptors);
         pushButton_9->setObjectName(QStringLiteral("pushButton_9"));
 
-        horizontalLayout->addWidget(pushButton_9);
+        horizontalLayoutD->addWidget(pushButton_9);
 
-        pushButton_6 = new QPushButton(widget_3);
+        pushButton_6 = new QPushButton(wgtDescriptors);
         pushButton_6->setObjectName(QStringLiteral("pushButton_6"));
 
-        horizontalLayout->addWidget(pushButton_6);
+        horizontalLayoutD->addWidget(pushButton_6);
 
 
-        gridLayout_5->addLayout(horizontalLayout, 0, 2, 1, 1);
+        gridLayoutD->addLayout(horizontalLayoutD, 0, 2, 1, 1);
 
 
-        verticalLayout_2->addLayout(gridLayout_5);
+        verticalLayoutD->addLayout(gridLayoutD);
 
 
-        gridLayout_3->addLayout(verticalLayout_2, 0, 0, 1, 1);
+        gridLayout_3->addLayout(verticalLayoutD, 0, 0, 1, 1);
 
 
-        gridLayout_7->addWidget(widget_3, 0, 0, 1, 1);
+        gridLayout_2->addWidget(wgtDescriptors, 0, 0, 1, 1);
 
-        widget_2 = new QWidget(detail);
-        widget_2->setObjectName(QStringLiteral("widget_2"));
-        gridLayout_6 = new QGridLayout(widget_2);
+        wgtEntities = new QWidget(detail);
+        wgtEntities->setObjectName(QStringLiteral("wgtEntities"));
+        gridLayout_6 = new QGridLayout(wgtEntities);
         gridLayout_6->setObjectName(QStringLiteral("gridLayout_6"));
-        verticalLayout = new QVBoxLayout();
-        verticalLayout->setObjectName(QStringLiteral("verticalLayout"));
-        label_4 = new QLabel(widget_2);
-        label_4->setObjectName(QStringLiteral("label_4"));
-        label_4->setFont(font);
+        verticalLayoutE = new QVBoxLayout();
+        verticalLayoutE->setObjectName(QStringLiteral("verticalLayoutE"));
+        lbEntities = new QLabel(wgtEntities);
+        lbEntities->setObjectName(QStringLiteral("lbEntities"));
+        lbEntities->setFont(font);
 
-        verticalLayout->addWidget(label_4);
+        verticalLayoutE->addWidget(lbEntities);
 
-        treeWidget = new QTreeWidget(widget_2);
-        treeWidget->setObjectName(QStringLiteral("treeWidget"));
+        treeEntities = new QTreeWidget(wgtEntities);
+        treeEntities->setObjectName(QStringLiteral("treeEntities"));
 
-        verticalLayout->addWidget(treeWidget);
+        verticalLayoutE->addWidget(treeEntities);
 
-        gridLayout_4 = new QGridLayout();
-        gridLayout_4->setObjectName(QStringLiteral("gridLayout_4"));
-        pushButton_3 = new QPushButton(widget_2);
-        pushButton_3->setObjectName(QStringLiteral("pushButton_3"));
+        gridLayoutE = new QGridLayout();
+        gridLayoutE->setObjectName(QStringLiteral("gridLayoutE"));
+        btnESelectAll = new QPushButton(wgtEntities);
+        btnESelectAll->setObjectName(QStringLiteral("btnESelectAll"));
 
-        gridLayout_4->addWidget(pushButton_3, 0, 1, 1, 1);
+        gridLayoutE->addWidget(btnESelectAll, 0, 1, 1, 1);
 
-        pushButton_2 = new QPushButton(widget_2);
-        pushButton_2->setObjectName(QStringLiteral("pushButton_2"));
+        btnEClearAll = new QPushButton(wgtEntities);
+        btnEClearAll->setObjectName(QStringLiteral("btnEClearAll"));
 
-        gridLayout_4->addWidget(pushButton_2, 0, 2, 1, 1);
+        gridLayoutE->addWidget(btnEClearAll, 0, 2, 1, 1);
 
-        pushButton = new QPushButton(widget_2);
-        pushButton->setObjectName(QStringLiteral("pushButton"));
+        btnEFilter = new QPushButton(wgtEntities);
+        btnEFilter->setObjectName(QStringLiteral("btnEFilter"));
 
-        gridLayout_4->addWidget(pushButton, 1, 2, 1, 1);
+        gridLayoutE->addWidget(btnEFilter, 1, 2, 1, 1);
 
-        pushButton_4 = new QPushButton(widget_2);
-        pushButton_4->setObjectName(QStringLiteral("pushButton_4"));
+        btnERefresh = new QPushButton(wgtEntities);
+        btnERefresh->setObjectName(QStringLiteral("btnERefresh"));
 
-        gridLayout_4->addWidget(pushButton_4, 1, 1, 1, 1);
-
-
-        verticalLayout->addLayout(gridLayout_4);
+        gridLayoutE->addWidget(btnERefresh, 1, 1, 1, 1);
 
 
-        gridLayout_6->addLayout(verticalLayout, 0, 0, 1, 1);
+        verticalLayoutE->addLayout(gridLayoutE);
 
 
-        gridLayout_7->addWidget(widget_2, 1, 0, 1, 1);
+        gridLayout_6->addLayout(verticalLayoutE, 0, 0, 1, 1);
 
-        tableWidget = new QTableWidget(detail);
-        tableWidget->setObjectName(QStringLiteral("tableWidget"));
 
-        gridLayout_7->addWidget(tableWidget, 0, 1, 2, 1);
+        gridLayout_2->addWidget(wgtEntities, 1, 0, 1, 1);
 
-        gridLayout_7->setColumnStretch(0, 1);
-        gridLayout_7->setColumnStretch(1, 3);
+        tableDetail = new QTableWidget(detail);
+        tableDetail->setObjectName(QStringLiteral("tableDetail"));
 
-        gridLayout->addLayout(gridLayout_7, 0, 0, 1, 1);
+        gridLayout_2->addWidget(tableDetail, 0, 1, 2, 1);
+
+        gridLayout_2->setColumnStretch(0, 1);
+        gridLayout_2->setColumnStretch(1, 3);
+
+        gridLayout->addLayout(gridLayout_2, 0, 0, 1, 1);
 
 
         retranslateUi(detail);
@@ -192,21 +192,21 @@ public:
     void retranslateUi(QWidget *detail)
     {
         detail->setWindowTitle(QApplication::translate("detail", "Form", nullptr));
-        label_5->setText(QApplication::translate("detail", "Descriptors", nullptr));
-        QTreeWidgetItem *___qtreewidgetitem = treeWidget_2->headerItem();
+        lbDescriptors->setText(QApplication::translate("detail", "Descriptors", nullptr));
+        QTreeWidgetItem *___qtreewidgetitem = treeDescriptors->headerItem();
         ___qtreewidgetitem->setText(0, QApplication::translate("detail", "\346\217\217\350\277\260\347\254\246", nullptr));
-        pushButton_8->setText(QApplication::translate("detail", "\345\205\250\351\200\211", nullptr));
-        pushButton_5->setText(QApplication::translate("detail", "\345\210\267\346\226\260", nullptr));
-        pushButton_7->setText(QApplication::translate("detail", "\346\270\205\351\231\244\346\211\200\346\234\211", nullptr));
+        btnDSelectAll->setText(QApplication::translate("detail", "\345\205\250\351\200\211", nullptr));
+        btnDRefresh->setText(QApplication::translate("detail", "\345\210\267\346\226\260", nullptr));
+        btnDClearAll->setText(QApplication::translate("detail", "\346\270\205\351\231\244\346\211\200\346\234\211", nullptr));
         pushButton_9->setText(QApplication::translate("detail", "/\\", nullptr));
-        pushButton_6->setText(QApplication::translate("detail", "/\\", nullptr));
-        label_4->setText(QApplication::translate("detail", "Entities", nullptr));
-        QTreeWidgetItem *___qtreewidgetitem1 = treeWidget->headerItem();
+        pushButton_6->setText(QApplication::translate("detail", "\\/", nullptr));
+        lbEntities->setText(QApplication::translate("detail", "Entities", nullptr));
+        QTreeWidgetItem *___qtreewidgetitem1 = treeEntities->headerItem();
         ___qtreewidgetitem1->setText(0, QApplication::translate("detail", "\345\256\236\344\275\223ID", nullptr));
-        pushButton_3->setText(QApplication::translate("detail", "\345\205\250\351\200\211", nullptr));
-        pushButton_2->setText(QApplication::translate("detail", "\346\270\205\351\231\244\346\211\200\346\234\211", nullptr));
-        pushButton->setText(QApplication::translate("detail", "\350\277\207\346\273\244\345\231\250", nullptr));
-        pushButton_4->setText(QApplication::translate("detail", "\345\210\267\346\226\260", nullptr));
+        btnESelectAll->setText(QApplication::translate("detail", "\345\205\250\351\200\211", nullptr));
+        btnEClearAll->setText(QApplication::translate("detail", "\346\270\205\351\231\244\346\211\200\346\234\211", nullptr));
+        btnEFilter->setText(QApplication::translate("detail", "\350\277\207\346\273\244\345\231\250", nullptr));
+        btnERefresh->setText(QApplication::translate("detail", "\345\210\267\346\226\260", nullptr));
     } // retranslateUi
 
 };

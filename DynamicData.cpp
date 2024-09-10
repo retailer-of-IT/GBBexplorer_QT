@@ -117,6 +117,7 @@ void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, 
 		m_nCurrentPos += sizeof(int);
 		StaticData::M_DescriptorsInfo desInfo = getDescInfobyType(var.first, staticdata); //找到EnumType为var.first
 		StaticData::M_StructuresInfo structInfo = getStructureInfobyName(desInfo.StructureName, staticdata);
+		//下面这个函数有改动，记得检查是否还适用
 		appendFieldList(structInfo.vecField, FieldsList, staticdata);
 	}
 	*(int*)(m_descriptorPtr + m_nCurrentPos) = -1;
@@ -132,15 +133,13 @@ void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, 
 	//*(int*)(m_descriptorPtr + m_nCurrentPos) = -1;
 
 	GetEntitiesIDs(eEntityType);//每个周期，获取对应id实体的所有metid
-	QTableWidget* table = qobject_cast<QTableWidget*>(EntityGridView->findChild<QTableWidget*>("tableWidget"));
+	QTableWidget* table = qobject_cast<QTableWidget*>(EntityGridView->findChild<QTableWidget*>("tableDetail"));
 	allRowsArrays = &(EntityGridView->allRowsArrays);
 	if (table)
 		qDebug() << "get table";
 	//设置tablewiget中的单元格个数，行列
 	int rowCount = EntitiesId.size();
-	int columnCount = FieldsList.size() + 1;
 	table->setRowCount(rowCount);
-//	table->setColumnCount(columnCount);   //待修改
 	//先用Met_id填充行，给每行添加一个Array的Map
 	QMap<int, CArrayDetail*> tmpMA;
 	for (int i = 0; i < rowCount; i++)	{
@@ -934,20 +933,27 @@ void DynamicData::ReturnOriginalPositions(int &m_nCurrentPos, int &ColumnIndex, 
 	if(m_tmpPtr!=Q_NULLPTR) ptr = m_tmpPtr;
 }
 bool DynamicData::ShowArrayField(char *&ptr, QTableWidget* &tableWidget, int &LoopIndex, int &ColumnIndex, int &RowIndex, StaticData::M_FieldInfo CurrentField, QMap<int, CArrayDetail*> &ArraysDic, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, int bLen) {
-	int ALen = *(int*)ptr;		ptr+=sizeof(int);
-	QPushButton *i_btn = new QPushButton(QString::number(ALen)); //设置按钮，显示Array长度
+	//从ptr处读取Array的长度
+	int ALen = *(int*)ptr;		
+	ptr+=sizeof(int);
+	//设置按钮，显示Array长度
+	QPushButton *i_btn = new QPushButton(QString::number(ALen)); 
 	tableWidget->setCellWidget(RowIndex, ColumnIndex, i_btn);
+	//创建对应的ArrayDeail并连接到按钮上
 	CArrayDetail *pArrayDetail = new CArrayDetail();
 	pArrayDetail->ptb = i_btn;
+	//将ArrayDeail记录到ArrayDic里
 	ArraysDic[ColumnIndex] = pArrayDetail;
 	if (ALen < 0)  return 0;
 	QVector<StaticData::M_FieldInfo> tFieldsList;
-	if (CurrentField.NestedName.empty()) { //jian dan lei xing  
+	if (CurrentField.NestedName.empty() || getStructureInfobyName(CurrentField.NestedName, staticdata).StructureName.empty()) { //不是有效结构体
 		//Reference列
 		SaveOriginalPositions(RowIndex, ColumnIndex, LoopIndex, ptr);
 		IncreaseLoopIndex(1, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
-		tableWidget->setColumnWidth(ColumnIndex, 200);  //设置附加Reference列的宽度防止过长
-		tFieldsList.push_back(FieldsList[LoopIndex]);  //设置Array内的Field表（简单类型仅两个元素）
+		//设置附加Reference列的宽度防止过长
+		tableWidget->setColumnWidth(ColumnIndex, 200);  
+		//设置Array内的Field表（简单类型仅两个元素）
+		tFieldsList.push_back(FieldsList[LoopIndex]);  
 		StaticData::M_FieldInfo tmpField;
 		tmpField.FieldName = "#";
 		tFieldsList.insert(0, tmpField);
@@ -1034,7 +1040,7 @@ bool DynamicData::PushPointerToEndArray(char *ptr, int ALen, std::string Structu
 				;//todo	IncreasePointer(ptr, fieldV[j].FieldType);
 			else {
 				int nLen = *(int*)ptr;	ptr += sizeof(int);
-				if (fieldV[j].NestedName == ""){
+				if (fieldV[j].NestedName == ""){ //暂不修改
 					j++;
 					for (int k = 0; k < nLen; k++) {
 						;//todo	IncreasePointer(ptr, fieldV[j].FieldType);
@@ -1089,7 +1095,7 @@ StaticData::M_StructuresInfo DynamicData::getStructureInfobyName(std::string Str
 	}
 	return StaticData::M_StructuresInfo();
 }
-
+//已有修改
 void DynamicData::appendFieldList(const QVector<StaticData::M_FieldInfo> &sFieldList, QVector<StaticData::M_FieldInfo>& dFieldList, StaticData &staticdata){
 	for(StaticData::M_FieldInfo fieldInfo : sFieldList) {
 		if (!fieldInfo.NestedName.empty()) { //结构体，需进一步展开
@@ -1099,12 +1105,12 @@ void DynamicData::appendFieldList(const QVector<StaticData::M_FieldInfo> &sField
 				continue;
 			}
 		}
-		if (fieldInfo.FieldName == "Entity Id") {
-			StaticData::M_FieldInfo tmpfi;
-			tmpfi.ShowField = 0;
-			tmpfi.FieldType = StaticData::FieldType::Boolean;
-			dFieldList.push_back(tmpfi);
-		}
+		//if (fieldInfo.FieldName == "Entity Id") {
+		//	StaticData::M_FieldInfo tmpfi;
+		//	tmpfi.ShowField = 0;
+		//	tmpfi.FieldType = StaticData::FieldType::Boolean;
+		//	dFieldList.push_back(tmpfi);
+		//}
 		dFieldList.push_back(fieldInfo);
 	}
 }

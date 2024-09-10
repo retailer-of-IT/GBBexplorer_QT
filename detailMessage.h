@@ -27,6 +27,9 @@ public:
 	void creatNewTopItem(QString name) ;
 	void creatNewItem(QTreeWidgetItem *parentItem, QString name);
 
+	void creatNewTopItem(StaticData::M_FieldInfo _item); //创建根节点
+	void creatNewItem(QTreeWidgetItem *parentItem, StaticData::M_FieldInfo _item); //根据父节点创建子节点
+
 signals:
 	void FirstAllSelect();
 
