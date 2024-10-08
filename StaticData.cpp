@@ -97,9 +97,9 @@ void StaticData::InitStructures()
 		GBBMonitor::SerializedBuffer* p = theMonitorManager.GetSerializedBuffer();
 		char* ptr = (char*)p->GetBuffer();
 		char* ptr1 = ptr;
-		int NumOfStructures = *(int*)(ptr1); ptr1 += sizeof(int);// buff的总长度
-		int NumMax = *(int*)(ptr1); ptr1 += sizeof(int);// 结构数据的总个数
-		for (int i = 0; i < NumMax; ++i)
+		int BufferLen = *(int*)(ptr1);	ptr1 += sizeof(int);// buff的总长度（原名为NumOfStructures，应该有误）
+		int DesNum = *(int*)(ptr1);		ptr1 += sizeof(int);// 结构数据的总个数（原名为NumMax）
+		for (int i = 0; i < DesNum; ++i)
 		{
 			vecStructuresInfo.push_back(M_StructuresInfo());
 			M_StructuresInfo &cInfo = vecStructuresInfo[i];
@@ -149,26 +149,30 @@ void StaticData::InitEntities()
 		GBBMonitor::SerializedBuffer* p = theMonitorManager.GetSerializedBuffer();
 		char* ptr = (char*)p->GetBuffer();
 		char* ptr1 = ptr;
-		int NumOfEntities = *(int*)(ptr1); ptr1 += sizeof(int);// buff的总长度
-		int NumMax = *(int*)(ptr1); ptr1 += sizeof(int);// 结构数据的总个数
-		for (int i = 0; i < NumMax; ++i)
+		int BufferLen = *(int*)(ptr1);	ptr1 += sizeof(int);// buff的总长度（原名为NumOfEntities，应该有误）
+		int EntityNum = *(int*)(ptr1);	ptr1 += sizeof(int);// 结构数据的总个数（原名为NumMax）
+		for (int i = 0; i < EntityNum; ++i)
 		{
+			//结构：实体类型名，类型枚举，最大数量，描述符数，描述符数组（描述符名，类型枚举）
 			vecEntityInfo.push_back(M_EntityInfo());
 			M_EntityInfo &cInfo = vecEntityInfo[i];
 			ptr1 += SetStringFromPtr(ptr1, cInfo.EntityName);
-			cInfo.EnumType = *(int*)(ptr1); ptr1 += sizeof(int);
-			cInfo.MaxEntityNum = *(int*)(ptr1); ptr1 += sizeof(int);
-			cInfo.NumOfDescriptors = *(int*)(ptr1); ptr1 += sizeof(int);
+			cInfo.EnumType = *(int*)(ptr1);			ptr1 += sizeof(int);
+			cInfo.MaxEntityNum = *(int*)(ptr1);		ptr1 += sizeof(int);
+			cInfo.NumOfDescriptors = *(int*)(ptr1);	ptr1 += sizeof(int);
+			//对每一个描述符的数据做处理
 			for (int j = 0; j < cInfo.NumOfDescriptors; ++j)
 			{
 				std::string st1 = "";
 				ptr1 += SetStringFromPtr(ptr1, st1);
-				int EnumType = *(int*)(ptr1); ptr1 += sizeof(int);
+				int EnumType = *(int*)(ptr1);	ptr1 += sizeof(int);
+				//储存 描述符类型枚举 到 描述符名字 的映射
 				cInfo.mapDescriptores[EnumType] = st1;
 			}
 		}
-		for (int i = 0; i < NumMax; ++i)
+		for (int i = 0; i < EntityNum; ++i)
 		{
+			//将MaxEntityNum不为0的实体类型储存起来
 			if (vecEntityInfo[i].MaxEntityNum != 0)
 				vecEntityInfoInGBBEx.push_back(vecEntityInfo[i]);
 		}
@@ -180,9 +184,9 @@ void StaticData::InitMessages()
 		GBBMonitor::SerializedBuffer* p = theMonitorManager.GetSerializedBuffer();
 		char* ptr = (char*)p->GetBuffer();
 		char* ptr1 = ptr;
-		int NumOfMessages = *(int*)(ptr1); ptr1 += sizeof(int);// buff的总长度
-		int NumMax = *(int*)(ptr1); ptr1 += sizeof(int);// 结构数据的总个数
-		for (int i = 0; i < NumMax; ++i)
+		int BufferLen = *(int*)(ptr1);	ptr1 += sizeof(int);// buff的总长度（原名为NumOfEntities，应该有误）
+		int MesNum = *(int*)(ptr1);		ptr1 += sizeof(int);// 结构数据的总个数（原名为NumMax）
+		for (int i = 0; i < MesNum; ++i)
 		{
 			vecMessageInfo.push_back(M_MessageInfo());
 			M_MessageInfo &cInfo = vecMessageInfo[i];
@@ -193,7 +197,7 @@ void StaticData::InitMessages()
 			cInfo.MaxMessageNum = *(int*)(ptr1); ptr1 += sizeof(int);
 			ptr1 += SetStringFromPtr(ptr1, cInfo.DescriptorName);
 		}
-		for (int i = 0; i < NumMax; ++i)
+		for (int i = 0; i < MesNum; ++i)
 		{
 			if (vecMessageInfo[i].MaxMessageNum != 0)
 				vecMessageInfoInGBBEx.push_back(vecMessageInfo[i]);

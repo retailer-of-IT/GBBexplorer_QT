@@ -22,7 +22,7 @@ Widget::Widget(QWidget *parent) :
 {	
 	ui->setupUi(this);
 
-	//链接双击相应事件
+	//链接双击相应事件-实体页和消息页的双击跳转
 	connect(ui->tableView_1, SIGNAL(doubleClicked(const QModelIndex &)), this, SLOT(on_tableView_1doubleClicked(const QModelIndex &)));
 	connect(ui->tableView_2, SIGNAL(doubleClicked(const QModelIndex &)), this, SLOT(on_tableView_2doubleClicked(const QModelIndex &)));
 
@@ -33,8 +33,8 @@ Widget::Widget(QWidget *parent) :
 
 	timer = new QTimer(this);
 	connect(timer, &QTimer::timeout, this, &Widget::initForm);
-	timer->setInterval(1000); // 每隔1秒刷新一次主界面数据
-							  //开启主界面线程（）
+	timer->setInterval(3000); // 每隔3秒刷新一次主界面数据，降低对双击操作的影响，但是依然存在
+	//开启主界面线程（）
 	timer->start();
 }
 
@@ -55,12 +55,12 @@ void Widget::initForm()
 	model->setHorizontalHeaderItem(2, new QStandardItem(u8"数量"));
 	model->setHorizontalHeaderItem(3, new QStandardItem(u8"最大"));
 	model->setHorizontalHeaderItem(4, new QStandardItem("%"));
-	//读取entity数据显示
+	//读取entity数据显示，数组内为所有的实体（过滤掉了）
 	for (int i = 0; i < staticdata.vecEntityInfoInGBBEx.size(); i++)
 	{
 		int EnumType = staticdata.vecEntityInfoInGBBEx[i].EnumType;
 		QStandardItem *item = new QStandardItem();
-		item->setData(EnumType, Qt::EditRole);					//不知为何不用DisplayRole
+		item->setData(EnumType, Qt::DisplayRole);					//原为EditRole，改为DisplayRole
 		QString EntityName = QString::fromStdString(staticdata.vecEntityInfoInGBBEx[i].EntityName);
 		int MaxEntityNum = staticdata.vecEntityInfoInGBBEx[i].MaxEntityNum;
 		QStandardItem *item1 = new QStandardItem();
