@@ -11,7 +11,6 @@
 #include <QMessageBox>
 #include <qtreewidget.h>
 #include <QTreeWidgetItem>
-#include <QStandardItemModel>
 #include <QStandardItem>
 #include "detail.h"
 #include "detailMessage.h"
@@ -23,18 +22,19 @@ Widget::Widget(QWidget *parent) :
 	ui->setupUi(this);
 
 	//链接双击相应事件-实体页和消息页的双击跳转
-	connect(ui->tableView_1, SIGNAL(doubleClicked(const QModelIndex &)), this, SLOT(on_tableView_1doubleClicked(const QModelIndex &)));
-	connect(ui->tableView_2, SIGNAL(doubleClicked(const QModelIndex &)), this, SLOT(on_tableView_2doubleClicked(const QModelIndex &)));
+	connect(ui->tableView_Entity, SIGNAL(doubleClicked(const QModelIndex &)), this, SLOT(on_tableView_1doubleClicked(const QModelIndex &)));
+	connect(ui->tableView_Message, SIGNAL(doubleClicked(const QModelIndex &)), this, SLOT(on_tableView_2doubleClicked(const QModelIndex &)));
 
 	//关闭全部打开标签tab
 	connect(ui->btnclose, &QPushButton::clicked, this, &Widget::on_closealltabbtn);
 	//关闭标签
 	connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this, &Widget::on_removetabbtn);
-
+	//思路：在initForm中构造QStandardItemModel，在维护函数中获取model并修改
+	initForm();
+	//开启QTimer的计时，触发三个表的维护函数
 	timer = new QTimer(this);
-	connect(timer, &QTimer::timeout, this, &Widget::initForm);
-	timer->setInterval(3000); // 每隔3秒刷新一次主界面数据，降低对双击操作的影响，但是依然存在
-	//开启主界面线程（）
+	connect(timer, &QTimer::timeout, this, &Widget::keepTableView);
+	timer->setInterval(200); 
 	timer->start();
 }
 
@@ -43,54 +43,52 @@ Widget::~Widget()
 	delete ui;
 }
 
-
-void Widget::initForm()
-{
-	qDebug() << u8"GBB主页面线程启动";
-	//实体表
-	//设置主页面列头
-	QStandardItemModel* model = new QStandardItemModel(this);
-	model->setHorizontalHeaderItem(0, new QStandardItem("GBB"));
-	model->setHorizontalHeaderItem(1, new QStandardItem("Entities"));
-	model->setHorizontalHeaderItem(2, new QStandardItem(u8"数量"));
-	model->setHorizontalHeaderItem(3, new QStandardItem(u8"最大"));
-	model->setHorizontalHeaderItem(4, new QStandardItem("%"));
-	//读取entity数据显示，数组内为所有的实体（过滤掉了）
+void Widget::keepTableView() {
+	//实体表的维护
 	for (int i = 0; i < staticdata.vecEntityInfoInGBBEx.size(); i++)
 	{
+		//当前所需插入的记录送的实体类型枚举
 		int EnumType = staticdata.vecEntityInfoInGBBEx[i].EnumType;
-		QStandardItem *item = new QStandardItem();
-		item->setData(EnumType, Qt::DisplayRole);					//原为EditRole，改为DisplayRole
+		//当前所需插入的记录的实体类型名
 		QString EntityName = QString::fromStdString(staticdata.vecEntityInfoInGBBEx[i].EntityName);
-		int MaxEntityNum = staticdata.vecEntityInfoInGBBEx[i].MaxEntityNum;
-		QStandardItem *item1 = new QStandardItem();
-		item1->setData(MaxEntityNum, Qt::EditRole);				//最大数量
-		model->setItem(i, 0, item);								//第0列为实体类型枚举，其实就是一个int用以区分不同实体类型
-		model->setItem(i, 1, new QStandardItem(EntityName));	//第1列为实体类型名称
+		//获取当前每行是否已存在，目前根据EnumType来区分
+		QStandardItem *_item = m_pEntityTableModel->item(i, 0);
+		//三种情况：1.不存在_item； 2.存在_item且与待插入对象一致； 3.存在_item且但待插入对象一致；
+		//情况2，则直接跳过
+		if (_item != Q_NULLPTR && _item->data(Qt::DisplayRole) == EnumType)	{
+			continue;
+		}
+		//情况1直接插入，情况3先把原来的内存释放掉再插入
+		if (_item != Q_NULLPTR) {
+			delete _item;
+			//删掉一整行，正常情况下是0到4这5列，第0列刚刚删掉
+			QStandardItem *old_item;
+			for (int j = 1; j < 5; j++) {
+				old_item = m_pEntityTableModel->item(i, j);
+				if (old_item != Q_NULLPTR) {
+					delete old_item;
+				}
+			}
+		}
+		//插入操作，将所有可见不可修改数据以DisplayRole存储
+		QStandardItem *item = new QStandardItem();
+		//第0列为实体类型枚举，其实就是一个int用以区分不同实体类型
+		item->setData(EnumType, Qt::DisplayRole);
+		m_pEntityTableModel->setItem(i, 0, item);
+		//第1列：类型名
+		m_pEntityTableModel->setItem(i, 1, new QStandardItem(EntityName));
+		//第2列：该类型的实体数量
 		int n = dD.GetEntityCount(EnumType);
-		//int n = entityNum[i];
-		model->setItem(i, 2, new QStandardItem(QString::number(n)));	//第2列为该类型实体的数量
-		model->setItem(i, 3, item1);							//第3列为最大数量
+		m_pEntityTableModel->setItem(i, 2, new QStandardItem(QString::number(n)));	//第2列为该类型实体的数量
+		//第3列：最大数量
+		int MaxEntityNum = staticdata.vecEntityInfoInGBBEx[i].MaxEntityNum;
+		m_pEntityTableModel->setItem(i, 3, new QStandardItem(MaxEntityNum));
+		//第4列：当前数量占最大数量的百分比
 		double rate = static_cast<double>(n) / MaxEntityNum * 100;	//强转
 		QString formattedRate = QString::number(rate, 'f', 2);	//保留两位小数
-		model->setItem(i, 4, new QStandardItem(formattedRate));	//最后一列为当前数量占最大数量的百分比
+		m_pEntityTableModel->setItem(i, 4, new QStandardItem(formattedRate));
 	}
-	//以上代码待修改：问题(排序结果错误)，原因(是根据QString排的，与对整数的排序不同)
-	ui->tableView_1->setModel(model);
-	ui->tableView_1->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-	ui->tableView_1->setEditTriggers(QAbstractItemView::NoEditTriggers);
-	ui->tableView_1->setFont(QFont("宋体", 15));
-	ui->tableView_1->setSortingEnabled(true);
-	ui->tableView_1->show();
-	//消息表，这部分还未修改
-	QStandardItemModel* model2 = new QStandardItemModel(this);
-	model2->setHorizontalHeaderItem(0, new QStandardItem("GBB"));
-	model2->setHorizontalHeaderItem(1, new QStandardItem("Message"));
-	model2->setHorizontalHeaderItem(2, new QStandardItem(u8"数量"));
-	model2->setHorizontalHeaderItem(3, new QStandardItem(u8"最大"));
-	model2->setHorizontalHeaderItem(4, new QStandardItem("%"));
-
-	//读取message数据显示
+	//消息表的维护-待完成
 	for (int i = 0; i < staticdata.vecMessageInfoInGBBEx.size(); i++)
 	{
 		int EnumType = staticdata.vecMessageInfoInGBBEx[i].EnumType;
@@ -100,31 +98,16 @@ void Widget::initForm()
 		int MaxMessageNum = staticdata.vecMessageInfoInGBBEx[i].MaxMessageNum;
 		QStandardItem *item1 = new QStandardItem();
 		item1->setData(MaxMessageNum, Qt::EditRole);
-		model2->setItem(i, 0, item);
-		model2->setItem(i, 1, new QStandardItem(MessageName));
+		m_pMessageTableModel->setItem(i, 0, item);
+		m_pMessageTableModel->setItem(i, 1, new QStandardItem(MessageName));
 		int n = dD.GetMessageCount(EnumType);
-		model2->setItem(i, 2, new QStandardItem(QString::number(n)));
-		model2->setItem(i, 3, item1);
+		m_pMessageTableModel->setItem(i, 2, new QStandardItem(QString::number(n)));
+		m_pMessageTableModel->setItem(i, 3, item1);
 		double rate = static_cast<double>(n) / MaxMessageNum * 100;//强转
 		QString formattedRate = QString::number(rate, 'f', 2);//保留两位小数
-		model2->setItem(i, 4, new QStandardItem(formattedRate));
+		m_pMessageTableModel->setItem(i, 4, new QStandardItem(formattedRate));
 	}
-
-	ui->tableView_2->setModel(model2);
-	ui->tableView_2->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-	ui->tableView_2->setEditTriggers(QAbstractItemView::NoEditTriggers);
-	ui->tableView_2->setFont(QFont("宋体", 15));
-	ui->tableView_2->setSortingEnabled(true);
-	ui->tableView_2->show();
-	//描述符表
-	QStandardItemModel* model3 = new QStandardItemModel(this);
-	model3->setHorizontalHeaderItem(0, new QStandardItem("GBB"));
-	model3->setHorizontalHeaderItem(1, new QStandardItem("Descriptor"));
-	model3->setHorizontalHeaderItem(2, new QStandardItem(u8"数量"));
-	model3->setHorizontalHeaderItem(3, new QStandardItem(u8"最大"));
-	model3->setHorizontalHeaderItem(4, new QStandardItem("%"));
-
-	//读取descriptors数据显示
+	//描述符表的维护-待完成
 	for (int i = 0; i < staticdata.vecDescriptorsInfoInGBBEx.size(); i++)
 	{
 		int EnumType = staticdata.vecDescriptorsInfoInGBBEx[i].EnumType;
@@ -134,27 +117,62 @@ void Widget::initForm()
 		int MaxDescriptorNum = staticdata.vecDescriptorsInfoInGBBEx[i].MaxMessageNum;
 		QStandardItem *item1 = new QStandardItem();
 		item1->setData(MaxDescriptorNum, Qt::EditRole);
-		model3->setItem(i, 0, item);
-		model3->setItem(i, 1, new QStandardItem(DescriptorName));
+		m_pDescriptorTableModel->setItem(i, 0, item);
+		m_pDescriptorTableModel->setItem(i, 1, new QStandardItem(DescriptorName));
 		int n = dD.GetDescriptorCount(EnumType);
-		model3->setItem(i, 2, new QStandardItem(QString::number(n)));
-		model3->setItem(i, 3, item1);
+		m_pDescriptorTableModel->setItem(i, 2, new QStandardItem(QString::number(n)));
+		m_pDescriptorTableModel->setItem(i, 3, item1);
 		double rate = static_cast<double>(n) / MaxDescriptorNum * 100;//强转
 		QString formattedRate = QString::number(rate, 'f', 2);//保留两位小数
-		model3->setItem(i, 4, new QStandardItem(formattedRate));
+		m_pDescriptorTableModel->setItem(i, 4, new QStandardItem(formattedRate));
 	}
-
-	ui->tableView_3->setModel(model3);
-	ui->tableView_3->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-	ui->tableView_3->setEditTriggers(QAbstractItemView::NoEditTriggers);
-	ui->tableView_3->setFont(QFont("宋体", 15));
-	ui->tableView_3->setSortingEnabled(true);
-	ui->tableView_3->show();
-	Data = true;
+}
+void Widget::initForm()
+{
+	//实体表初始化
+	m_pEntityTableModel = new QStandardItemModel();
+	m_pEntityTableModel->setHorizontalHeaderItem(0, new QStandardItem("GBB"));
+	m_pEntityTableModel->setHorizontalHeaderItem(1, new QStandardItem("Entities"));
+	m_pEntityTableModel->setHorizontalHeaderItem(2, new QStandardItem(u8"数量"));
+	m_pEntityTableModel->setHorizontalHeaderItem(3, new QStandardItem(u8"最大"));
+	m_pEntityTableModel->setHorizontalHeaderItem(4, new QStandardItem("%"));
+	ui->tableView_Entity->setModel(m_pEntityTableModel);
+	ui->tableView_Entity->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+	ui->tableView_Entity->setEditTriggers(QAbstractItemView::NoEditTriggers);
+	ui->tableView_Entity->setFont(QFont("宋体", 15));
+	ui->tableView_Entity->setSortingEnabled(true);
+	ui->tableView_Entity->show();
+	//消息表初始化-待完成
+	m_pMessageTableModel = new QStandardItemModel(this);
+	m_pMessageTableModel->setHorizontalHeaderItem(0, new QStandardItem("GBB"));
+	m_pMessageTableModel->setHorizontalHeaderItem(1, new QStandardItem("Message"));
+	m_pMessageTableModel->setHorizontalHeaderItem(2, new QStandardItem(u8"数量"));
+	m_pMessageTableModel->setHorizontalHeaderItem(3, new QStandardItem(u8"最大"));
+	m_pMessageTableModel->setHorizontalHeaderItem(4, new QStandardItem("%"));
+	ui->tableView_Message->setModel(m_pMessageTableModel);
+	ui->tableView_Message->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+	ui->tableView_Message->setEditTriggers(QAbstractItemView::NoEditTriggers);
+	ui->tableView_Message->setFont(QFont("宋体", 15));
+	ui->tableView_Message->setSortingEnabled(true);
+	ui->tableView_Message->show();
+	//描述符表初始化-待完成
+	m_pDescriptorTableModel = new QStandardItemModel(this);
+	m_pDescriptorTableModel->setHorizontalHeaderItem(0, new QStandardItem("GBB"));
+	m_pDescriptorTableModel->setHorizontalHeaderItem(1, new QStandardItem("Descriptor"));
+	m_pDescriptorTableModel->setHorizontalHeaderItem(2, new QStandardItem(u8"数量"));
+	m_pDescriptorTableModel->setHorizontalHeaderItem(3, new QStandardItem(u8"最大"));
+	m_pDescriptorTableModel->setHorizontalHeaderItem(4, new QStandardItem("%"));
+	ui->tableView_Descriptor->setModel(m_pDescriptorTableModel);
+	ui->tableView_Descriptor->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+	ui->tableView_Descriptor->setEditTriggers(QAbstractItemView::NoEditTriggers);
+	ui->tableView_Descriptor->setFont(QFont("宋体", 15));
+	ui->tableView_Descriptor->setSortingEnabled(true);
+	ui->tableView_Descriptor->show();
 
 	ui->btnclose->setText(u8"全部关闭");
 	ui->btnclose->show();
-
+	//直接先进行一次更新
+	//keepTableView();
 
 	//标签主页面tabWidget
 	ui->tabWidget->setTabText(0, u8"主窗口");
@@ -192,7 +210,7 @@ bool Widget::m_cmp(const std::pair<int, std::string>& a, const std::pair<int, st
 void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 {
 	int curRow = index.row();//选中行
-	QAbstractItemModel *modessl = ui->tableView_1->model();
+	QAbstractItemModel *modessl = ui->tableView_Entity->model();
 	QModelIndex indextemp;
 	QVariant data;
 	//获取第二列的实体名称
@@ -260,7 +278,7 @@ void Widget::on_tableView_1doubleClicked(const QModelIndex &index)
 void Widget::on_tableView_2doubleClicked(const QModelIndex & index)
 {
 	int curRow = index.row();//选中行
-	QAbstractItemModel *modessl = ui->tableView_2->model();
+	QAbstractItemModel *modessl = ui->tableView_Message->model();
 	QModelIndex indextemp;
 	QVariant data;
 	indextemp = modessl->index(curRow, 1);

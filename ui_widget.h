@@ -36,9 +36,9 @@ public:
     QLabel *label_2;
     QLabel *label;
     QHBoxLayout *horizontalLayout;
-    QTableView *tableView_1;
-    QTableView *tableView_2;
-    QTableView *tableView_3;
+    QTableView *tableView_Entity;
+    QTableView *tableView_Message;
+    QTableView *tableView_Descriptor;
     QWidget *widget;
     QHBoxLayout *horizontalLayout_5;
     QSpacerItem *horizontalSpacer;
@@ -87,20 +87,20 @@ public:
         horizontalLayout = new QHBoxLayout();
         horizontalLayout->setSpacing(6);
         horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));
-        tableView_1 = new QTableView(tab_1);
-        tableView_1->setObjectName(QStringLiteral("tableView_1"));
+        tableView_Entity = new QTableView(tab_1);
+        tableView_Entity->setObjectName(QStringLiteral("tableView_Entity"));
 
-        horizontalLayout->addWidget(tableView_1);
+        horizontalLayout->addWidget(tableView_Entity);
 
-        tableView_2 = new QTableView(tab_1);
-        tableView_2->setObjectName(QStringLiteral("tableView_2"));
+        tableView_Message = new QTableView(tab_1);
+        tableView_Message->setObjectName(QStringLiteral("tableView_Message"));
 
-        horizontalLayout->addWidget(tableView_2);
+        horizontalLayout->addWidget(tableView_Message);
 
-        tableView_3 = new QTableView(tab_1);
-        tableView_3->setObjectName(QStringLiteral("tableView_3"));
+        tableView_Descriptor = new QTableView(tab_1);
+        tableView_Descriptor->setObjectName(QStringLiteral("tableView_Descriptor"));
 
-        horizontalLayout->addWidget(tableView_3);
+        horizontalLayout->addWidget(tableView_Descriptor);
 
 
         gridLayout_2->addLayout(horizontalLayout, 1, 0, 1, 3);

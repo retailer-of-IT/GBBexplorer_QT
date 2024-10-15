@@ -8,6 +8,7 @@
 #include "detail.h"
 #include "ArrayDetail.h"
 #include <qtimer.h>
+#include <QStandardItemModel>
 
 namespace Ui {
 class Widget;
@@ -20,15 +21,17 @@ class Widget : public QWidget
 public:
     explicit Widget(QWidget *parent = 0);
     ~Widget();
+	void keepTableView();
+	static int m_map(char c);
+	static bool m_cmp(const std::pair<int, std::string>& a, const std::pair<int, std::string>& b);
+
+private:
 	Ui::Widget *ui;
-	QTimer* timer;
-	bool Data = false;
-	//类的实例化声明
+	QTimer *timer;
+	QStandardItemModel *m_pEntityTableModel, *m_pMessageTableModel, *m_pDescriptorTableModel;
 	StaticData staticdata;
 	DynamicData dD;
 	QVector<QMap<int, CArrayDetail *> > ArrayDetailMapList;
-	static int m_map(char c);
-	static bool m_cmp(const std::pair<int, std::string>& a, const std::pair<int, std::string>& b);
 
 private slots:
 	void initForm(); //初始化主窗口
