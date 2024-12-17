@@ -9,6 +9,7 @@
 #include "ArrayDetail.h"
 #include <qtimer.h>
 #include <QStandardItemModel>
+#include <QSortFilterProxyModel>
 
 namespace Ui {
 class Widget;
@@ -22,13 +23,15 @@ public:
     explicit Widget(QWidget *parent = 0);
     ~Widget();
 	void keepTableView();
+	bool insert2Model(QStandardItemModel *tModel, int row, int col, const QVariant &data);
 	static int m_map(char c);
 	static bool m_cmp(const std::pair<int, std::string>& a, const std::pair<int, std::string>& b);
 
 private:
 	Ui::Widget *ui;
-	QTimer *timer;
-	QStandardItemModel *m_pEntityTableModel, *m_pMessageTableModel, *m_pDescriptorTableModel;
+	QTimer *timer;	//用于维护主界面的三个表格
+	QStandardItemModel *m_pEntityTableModel, *m_pMessageTableModel, *m_pDescriptorTableModel;	//3表格的model
+	QSortFilterProxyModel *m_pEntitySFPModel, *m_pMessageSFPModel,*m_pDescriptorSFPModel;	//3张表格的排序model
 	StaticData staticdata;
 	DynamicData dD;
 	QVector<QMap<int, CArrayDetail *> > ArrayDetailMapList;

@@ -50,6 +50,9 @@ public:
 	const int Tag = Qt::DisplayRole + 1;//单元格tag
 	QMap<QString, QTableWidgetItem*> m_disAllAckWaitingRows; //这里只能用tablewidget某行的第一个单元格来取代c#里的控件类型DataGridViewRow表示某行
 
+private:
+	bool tmpflg;	//临时flg，用来协助实现对象内的逻辑
+
 public:
 	DynamicData();
 	//DynamicData(QString configPath);
@@ -90,9 +93,10 @@ public:
 	bool AppendArrayElementsToCell(int ALen, QTableWidget *& tableWidget, int & ColumnIndex, int & RowIndex, QVector<StaticData::M_FieldInfo>& FieldsList, int & LoopIndex, bool IsThisCompareTab, char * &ptr, int bLen);
 	bool ReadArrayFromIntPtr(int ALen, char *& ptr, QVector<StaticData::M_FieldInfo> tFieldsList, CArrayDetail * CurrentArrayDetail, int bufferLength);
 	bool PushPointerToEndArray(char *ptr, int ALen, std::string StructureName);
-	bool getStructurebyFieldName(std::string FieldName, QVector<StaticData::M_FieldInfo> &tFieldsList);
+	bool getStructureFieldsbyFieldName(std::string FieldName, QVector<StaticData::M_FieldInfo> &tFieldsList);
 	static StaticData::M_EntityInfo getEntityInfobyType(id_t eEntityType, StaticData &staticdata);
 	static StaticData::M_DescriptorsInfo getDescInfobyType(int type, StaticData &staticdata);
 	static StaticData::M_StructuresInfo getStructureInfobyName(std::string name, StaticData &staticdata);
-	static void appendFieldList(const QVector<StaticData::M_FieldInfo> &sFieldList, QVector<StaticData::M_FieldInfo> &dFieldList, StaticData &staticdata);
+	static QTableWidgetItem* GetOrCreateCell(QTableWidget*& tableWidget, int RowIndex, int  ColumnIndex);
+	void appendFieldList(const QVector<StaticData::M_FieldInfo> &sFieldList, QVector<StaticData::M_FieldInfo> &dFieldList, StaticData &staticdata);
 };

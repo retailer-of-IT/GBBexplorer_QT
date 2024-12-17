@@ -94,7 +94,6 @@ int DynamicData::GetDescriptorCount(int eDescriptorType)
 	}
 }
 
-
 void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, std::string>> items, detail*& EntityGridView){
 	m_nCurrentPos = 0;
 	m_tmpPos[0] = staticdata.vecStructuresInfo.size();
@@ -117,7 +116,8 @@ void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, 
 		m_nCurrentPos += sizeof(int);
 		StaticData::M_DescriptorsInfo desInfo = getDescInfobyType(var.first, staticdata); //找到EnumType为var.first
 		StaticData::M_StructuresInfo structInfo = getStructureInfobyName(desInfo.StructureName, staticdata);
-		//下面这个函数有改动，记得检查是否还适用
+		//用tmpflg来设置IsThisFirstInDes
+		tmpflg = 1;
 		appendFieldList(structInfo.vecField, FieldsList, staticdata);
 	}
 	*(int*)(m_descriptorPtr + m_nCurrentPos) = -1;
@@ -143,12 +143,14 @@ void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, 
 	//先用Met_id填充行，给每行添加一个Array的Map
 	QMap<int, CArrayDetail*> tmpMA;
 	for (int i = 0; i < rowCount; i++)	{
+		//把EntityID写在每行的第0列
 		QTableWidgetItem* item = new QTableWidgetItem();
 		item->setData(Qt::DisplayRole, EntitiesId[i]);
 		table->setItem(i, 0, item);
+		//在allRowsArrays增加对应的空的从int到CArrayDetail*的Map
 		allRowsArrays->push_back(tmpMA);
 	}
-
+	//对于每行分别做处理
 	for (int i = 0; i < rowCount; i++) {
 		if (theMonitorManager.GetEntityDynamicData(EntitiesId[i], m_descriptorPtr)) {
 			GBBMonitor::SerializedBuffer* p = theMonitorManager.GetSerializedBuffer();
@@ -158,15 +160,11 @@ void DynamicData::GetEntityDynamicData(id_t eEntityType, QVector<std::pair<int, 
 			int bufferLength = *(int*)(ptr1); ptr1 += sizeof(int);//buffer长度
 			m_nCurrentPos = 0;
 			//用于标识是开头的描述符
-			bool DescriptorInitialized = *(bool*)ptr1; ptr1 += sizeof(bool);
-			//int met_id = *(int*)ptr1; ptr1 += sizeof(int);
+	//		bool DescriptorInitialized = *(bool*)ptr1; ptr1 += sizeof(bool);	//错误 应在描述符的第一个Field处读取，而非此处
 			//std::string network_name;
 			//ptr1 += SetStringFromPtr(ptr1, network_name);
 			//std::string network_obj;
 			//ptr1 += SetStringFromPtr(ptr1, network_obj);
-			////TODO dynamicdata.cs中 GetEntityTableData等函数使用到的 ReadRowFromIntPtr函数功能
-			//EntityGridView = new detail();
-			//QTableWidget* table;
 			////用于读取对应id的所有field的值（一行）并进行切分，非数组array结构
 			////传入表格视图,iscomparetab先预设为true
 			bool flag = ReadRowFromIntPtr(ptr1, table, i, FieldsList, false, true, false, bufferLength);
@@ -369,39 +367,40 @@ void DynamicData::GetMessageDynamicData(enum_t eMessageType, detailMessage*& Mes
 
 bool DynamicData::_ReadRowFromIntPtr(char *&ptr, QTableWidget*& tableWidget, int ElementIndex, QVector<StaticData::M_FieldInfo> FieldsList, bool IsThisCompareTab, bool isThisEntity, bool WithAckMessage, int bufferLength){
 	int RowIndex = 0, ColumnIndex = 0, LoopIndex = 0;
-	bool DescriptorInitialized = false;
+	bool DescriptorInitialized = true;
 	SetElementIndex(IsThisCompareTab, ElementIndex, RowIndex, ColumnIndex, LoopIndex);
+	//比较页的特殊处理：未验证
 	if (IsThisCompareTab)	{
 		++ColumnIndex;
 	}
-	//都加1，第一行和第一列都不是数据
-	RowIndex;
-	++ColumnIndex;
+	//第一列是MET_ID，该列在其他地方设置
+	ColumnIndex++;
 	//循环，读取一整行field的数据
 	for (LoopIndex = 0; LoopIndex < FieldsList.size(); ++LoopIndex){
-		if (isThisEntity){
-			DescriptorInitialized = true;
+		if (isThisEntity){	//实体的描述符作初始化检测，未初始化则跳过读取
 			if (FieldsList[LoopIndex].IsThisFirstInDes) {
 				DescriptorInitialized = *(bool*)ptr;
+				ptr++;
 			}
 		}
-		// In case the (descriptor is Init AND DescriptorShow) OR (this is message)
+		// In case the (descriptor is Init) OR (this is message)
 		if (DescriptorInitialized || !isThisEntity){
+			//存疑： FieldType为Array 能等价于 Array 吗？
 			if (FieldsList[LoopIndex].FieldType != StaticData::FieldType::Array){//普通的field(非数组array)
 				QTableWidgetItem* item = new QTableWidgetItem();
 				if (item){//不为空
-					if (!FieldsList[LoopIndex].ShowField) {
-						if (!ReadFieldFromPtr(ptr, item, FieldsList[LoopIndex], bufferLength)) {
-							FinishReadRow(item, FieldsList, LoopIndex, ColumnIndex, RowIndex, IsThisCompareTab, false);
-							return 0;
-						}
-					}
-					else {
+					//if (!FieldsList[LoopIndex].ShowField) {
+					//	if (!ReadFieldFromPtr(ptr, item, FieldsList[LoopIndex], bufferLength)) {
+					//		FinishReadRow(item, FieldsList, LoopIndex, ColumnIndex, RowIndex, IsThisCompareTab, false);
+					//		return 0;
+					//	}
+					//}
+					//else {//目前都是走的这里，这个ShowField目前疑似无意义
 						tableWidget->setItem(RowIndex, ColumnIndex, item);
 						if (!ReadFieldFromPtr(ptr, item, FieldsList[LoopIndex], bufferLength)){
 							FinishReadRow(item, FieldsList, LoopIndex, ColumnIndex, RowIndex, IsThisCompareTab, false);
 							return 0;
-						}
+					//	}
 					}
 				}
 				else{
@@ -422,36 +421,22 @@ bool DynamicData::_ReadRowFromIntPtr(char *&ptr, QTableWidget*& tableWidget, int
 				}
 			}
 		}
-		else //The descriptor is not Init OR descriptor is not show
+		else //The descriptor is not Init
 		{
 			//处理
-			if ((FieldsList[LoopIndex].mDiscriptorShow)){
-				do {
-					QTableWidgetItem* item = tableWidget->item(RowIndex, ColumnIndex);
-					item->setBackground(QBrush(Qt::lightGray));
-					item->setText("N\\A");
-					IncreaseLoopIndex(true, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
-				} while ((FieldsList.size() > LoopIndex) && (!FieldsList[LoopIndex].IsThisFirstInDes));
-				if (IsThisCompareTab){
-					--RowIndex;
-				}
-				else{
-					--ColumnIndex;
-				}
-				--LoopIndex;
+			do{
+				QTableWidgetItem* item = GetOrCreateCell(tableWidget, RowIndex, ColumnIndex);
+				item->setBackground(QBrush(Qt::lightGray));
+				item->setText("N\\A");
+				IncreaseLoopIndex(true, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
+			} while ((LoopIndex<FieldsList.size()) && (!FieldsList[LoopIndex].IsThisFirstInDes)); //意图应该是跳过这个描述符
+			if (IsThisCompareTab){
+				--RowIndex;
 			}
 			else{
-				do{
-					IncreaseLoopIndex(true, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
-				} while ((FieldsList.size() > LoopIndex) && (!FieldsList[LoopIndex].IsThisFirstInDes));
-				if (IsThisCompareTab){
-					--RowIndex;
-				}
-				else{
-					--ColumnIndex;
-				}
-				--LoopIndex;
+				--ColumnIndex;
 			}
+			--LoopIndex;
 		}
 		if (FieldsList[LoopIndex].ShowField)
 			IncreaseLoopIndex(false, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
@@ -784,7 +769,7 @@ bool DynamicData::ReadFieldFromPtr(char*& fieldPtr, QTableWidgetItem*& item, Sta
 	}
 	return true;
 }
-
+//未验证
 void DynamicData::FinishReadRow(QTableWidgetItem *& item, QVector<StaticData::M_FieldInfo> FieldsList, int LoopIndex, int ColumnIndex, int RowIndex, bool IsThisCompareTab, bool AlsoLoop)
 {
 	for (int j = LoopIndex; j < FieldsList.size(); ++j)
@@ -946,7 +931,8 @@ bool DynamicData::ShowArrayField(char *&ptr, QTableWidget* &tableWidget, int &Lo
 	ArraysDic[ColumnIndex] = pArrayDetail;
 	if (ALen < 0)  return 0;
 	QVector<StaticData::M_FieldInfo> tFieldsList;
-	if (CurrentField.NestedName.empty() || getStructureInfobyName(CurrentField.NestedName, staticdata).StructureName.empty()) { //不是有效结构体
+	StaticData::M_StructuresInfo ArrayType = getStructureInfobyName(CurrentField.NestedName, staticdata);
+	if (ArrayType.StructureName.empty()) { //不是有效结构体
 		//Reference列
 		SaveOriginalPositions(RowIndex, ColumnIndex, LoopIndex, ptr);
 		IncreaseLoopIndex(1, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
@@ -968,7 +954,10 @@ bool DynamicData::ShowArrayField(char *&ptr, QTableWidget* &tableWidget, int &Lo
 		IncreaseLoopIndex(true, IsThisCompareTab, RowIndex, ColumnIndex, LoopIndex);
 	}
 	else {
-	//	if (!ReadArrayFromIntPtr(ALen, ptr, tFieldsList, ArraysDic[ColumnIndex], bLen)) return 0;
+		//设置Array内的Field表（简单类型仅两个元素）
+		tFieldsList = ArrayType.vecField;
+		if (!ReadArrayFromIntPtr(ALen, ptr, tFieldsList, ArraysDic[ColumnIndex], bLen)) 
+			return 0;
 	}
 	return 1;
 }
@@ -1022,7 +1011,7 @@ bool DynamicData::ReadArrayFromIntPtr(int ALen, char *&ptr, QVector<StaticData::
 	}
 	return 1;
 }
-//TODO
+//TODO，暂时未完全理解这个函数在原C#代码中的意义
 bool DynamicData::PushPointerToEndArray(char *ptr, int ALen, std::string StructureName) {
 	StaticData::M_StructuresInfo structure_info;
 	QVector<StaticData::M_StructuresInfo> structureV = staticdata.vecStructuresInfo;
@@ -1054,7 +1043,7 @@ bool DynamicData::PushPointerToEndArray(char *ptr, int ALen, std::string Structu
 	return 1;
 }
 
-bool DynamicData::getStructurebyFieldName(std::string FieldName, QVector<StaticData::M_FieldInfo> &tFieldsList){
+bool DynamicData::getStructureFieldsbyFieldName(std::string FieldName, QVector<StaticData::M_FieldInfo> &tFieldsList){
 	for each(StaticData::M_DescriptorsInfo desInfo in staticdata.vecDescriptorsInfoInGBBEx) {
 		if (desInfo.DescriptorName == FieldName) {
 			for each(StaticData::M_StructuresInfo structInfo in staticdata.vecStructuresInfo) {
@@ -1086,7 +1075,7 @@ StaticData::M_DescriptorsInfo DynamicData::getDescInfobyType(int type, StaticDat
 	}
 	return StaticData::M_DescriptorsInfo();
 }
-
+//这个函数可判断是否为结构体，特例：存在NestedNmae但无对应的结构体信息则按非结构体处理，非结构体返回默认构造的结构体，名字与FieldList均为空，感觉FiledList来判断是否找到更合适一点（不确定GBB能否产生名字为空的结构体）
 StaticData::M_StructuresInfo DynamicData::getStructureInfobyName(std::string StructureName, StaticData &staticdata){
 	for each(StaticData::M_StructuresInfo structInfo in staticdata.vecStructuresInfo) {
 		if (structInfo.StructureName == StructureName) {
@@ -1095,22 +1084,27 @@ StaticData::M_StructuresInfo DynamicData::getStructureInfobyName(std::string Str
 	}
 	return StaticData::M_StructuresInfo();
 }
-//已有修改
+//增加功能：对描述符的首个Field标识IsThisFirstField为真
 void DynamicData::appendFieldList(const QVector<StaticData::M_FieldInfo> &sFieldList, QVector<StaticData::M_FieldInfo>& dFieldList, StaticData &staticdata){
 	for(StaticData::M_FieldInfo fieldInfo : sFieldList) {
-		if (!fieldInfo.NestedName.empty()) { //结构体，需进一步展开
-			StaticData::M_StructuresInfo _structInfo = getStructureInfobyName(fieldInfo.NestedName, staticdata);
-			if (!_structInfo.StructureName.empty()) {
-				appendFieldList(_structInfo.vecField, dFieldList, staticdata);
-				continue;
-			}
+		StaticData::M_StructuresInfo _structInfo = getStructureInfobyName(fieldInfo.NestedName, staticdata);
+		if (fieldInfo.FieldType!=StaticData::Array &&!_structInfo.vecField.empty()) { //结构体且非Array，需进一步展开
+			appendFieldList(_structInfo.vecField, dFieldList, staticdata);
+			continue;
 		}
-		//if (fieldInfo.FieldName == "Entity Id") {
-		//	StaticData::M_FieldInfo tmpfi;
-		//	tmpfi.ShowField = 0;
-		//	tmpfi.FieldType = StaticData::FieldType::Boolean;
-		//	dFieldList.push_back(tmpfi);
-		//}
+		if (tmpflg) {
+			fieldInfo.IsThisFirstInDes = 1;
+			tmpflg = 0;
+		}
 		dFieldList.push_back(fieldInfo);
 	}
+}
+
+QTableWidgetItem* DynamicData::GetOrCreateCell(QTableWidget*& tableWidget, int RowIndex, int  ColumnIndex) {
+	QTableWidgetItem* cell = tableWidget->item(RowIndex, ColumnIndex);
+	if (cell == Q_NULLPTR) {
+		cell = new QTableWidgetItem();
+		tableWidget->setItem(RowIndex, ColumnIndex, cell);
+	}
+	return cell;
 }

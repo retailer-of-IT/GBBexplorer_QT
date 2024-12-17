@@ -42,131 +42,155 @@ Widget::~Widget()
 {
 	delete ui;
 }
+//返回0表示修改，返回1表示新增
+bool Widget::insert2Model(QStandardItemModel *tModel, int row, int col, const QVariant &data) {
+	QStandardItem *item = tModel->item(row, col);
+	if (item != Q_NULLPTR) {
+		item->setData(data, Qt::DisplayRole);
+		return 0;
+	}
+	else {
+		tModel->setItem(row, col, new QStandardItem(data.toString()));
+		return 1;
+	}
+}
 
 void Widget::keepTableView() {
+	int i, j;	//行、列序号
+	QStandardItem *_item;
 	//实体表的维护
-	for (int i = 0; i < staticdata.vecEntityInfoInGBBEx.size(); i++)
+	for (i = 0; i < staticdata.vecEntityInfoInGBBEx.size(); i++)//以DisplayRole存储
 	{
-		//当前所需插入的记录送的实体类型枚举
+		//第0列：实体类型枚举，其实就是一个int用以区分不同实体类型
 		int EnumType = staticdata.vecEntityInfoInGBBEx[i].EnumType;
-		//当前所需插入的记录的实体类型名
-		QString EntityName = QString::fromStdString(staticdata.vecEntityInfoInGBBEx[i].EntityName);
-		//获取当前每行是否已存在，目前根据EnumType来区分
-		QStandardItem *_item = m_pEntityTableModel->item(i, 0);
-		//三种情况：1.不存在_item； 2.存在_item且与待插入对象一致； 3.存在_item且但待插入对象一致；
-		//情况2，则直接跳过
-		if (_item != Q_NULLPTR && _item->data(Qt::DisplayRole) == EnumType)	{
-			continue;
-		}
-		//情况1直接插入，情况3先把原来的内存释放掉再插入
-		if (_item != Q_NULLPTR) {
-			delete _item;
-			//删掉一整行，正常情况下是0到4这5列，第0列刚刚删掉
-			QStandardItem *old_item;
-			for (int j = 1; j < 5; j++) {
-				old_item = m_pEntityTableModel->item(i, j);
-				if (old_item != Q_NULLPTR) {
-					delete old_item;
-				}
-			}
-		}
-		//插入操作，将所有可见不可修改数据以DisplayRole存储
-		QStandardItem *item = new QStandardItem();
-		//第0列为实体类型枚举，其实就是一个int用以区分不同实体类型
-		item->setData(EnumType, Qt::DisplayRole);
-		m_pEntityTableModel->setItem(i, 0, item);
+		insert2Model(m_pEntityTableModel, i, 0, EnumType);
 		//第1列：类型名
-		m_pEntityTableModel->setItem(i, 1, new QStandardItem(EntityName));
+		QString EntityName = QString::fromStdString(staticdata.vecEntityInfoInGBBEx[i].EntityName);
+		insert2Model(m_pEntityTableModel, i, 1, EntityName);
 		//第2列：该类型的实体数量
 		int n = dD.GetEntityCount(EnumType);
-		m_pEntityTableModel->setItem(i, 2, new QStandardItem(QString::number(n)));	//第2列为该类型实体的数量
+		insert2Model(m_pEntityTableModel, i, 2, n);
 		//第3列：最大数量
 		int MaxEntityNum = staticdata.vecEntityInfoInGBBEx[i].MaxEntityNum;
-		m_pEntityTableModel->setItem(i, 3, new QStandardItem(MaxEntityNum));
+		insert2Model(m_pEntityTableModel, i, 3, MaxEntityNum);
 		//第4列：当前数量占最大数量的百分比
 		double rate = static_cast<double>(n) / MaxEntityNum * 100;	//强转
-		QString formattedRate = QString::number(rate, 'f', 2);	//保留两位小数
-		m_pEntityTableModel->setItem(i, 4, new QStandardItem(formattedRate));
+		insert2Model(m_pEntityTableModel, i, 4, QString::number(rate, 'f', 2));//保留两位小数
 	}
+	//删除表格里多余的记录行
+	_item = m_pEntityTableModel->item(i, 0);
+	while (_item!=Q_NULLPTR) {
+		m_pEntityTableModel->removeRow(i);
+		i++;
+		_item = m_pEntityTableModel->item(i, 0);
+	}
+
 	//消息表的维护-待完成
-	for (int i = 0; i < staticdata.vecMessageInfoInGBBEx.size(); i++)
+	for (i = 0; i < staticdata.vecMessageInfoInGBBEx.size(); i++)
 	{
+		//第0列：消息类型枚举，其实就是一个int用以区分不同实体类型
 		int EnumType = staticdata.vecMessageInfoInGBBEx[i].EnumType;
-		QStandardItem *item = new QStandardItem();
-		item->setData(EnumType, Qt::EditRole);
+		insert2Model(m_pMessageTableModel, i, 0, EnumType);
+		//第1列：类型名
 		QString MessageName = QString::fromStdString(staticdata.vecMessageInfoInGBBEx[i].MessageName);
-		int MaxMessageNum = staticdata.vecMessageInfoInGBBEx[i].MaxMessageNum;
-		QStandardItem *item1 = new QStandardItem();
-		item1->setData(MaxMessageNum, Qt::EditRole);
-		m_pMessageTableModel->setItem(i, 0, item);
-		m_pMessageTableModel->setItem(i, 1, new QStandardItem(MessageName));
+		insert2Model(m_pMessageTableModel, i, 1, MessageName);
+		//第2列：该类型的消息数量
 		int n = dD.GetMessageCount(EnumType);
-		m_pMessageTableModel->setItem(i, 2, new QStandardItem(QString::number(n)));
-		m_pMessageTableModel->setItem(i, 3, item1);
+		insert2Model(m_pMessageTableModel, i, 2, n);
+		//第3列：最大数量
+		int MaxMessageNum = staticdata.vecMessageInfoInGBBEx[i].MaxMessageNum;
+		insert2Model(m_pMessageTableModel, i, 3, MaxMessageNum);
+		//第4列：当前数量占最大数量的百分比
 		double rate = static_cast<double>(n) / MaxMessageNum * 100;//强转
-		QString formattedRate = QString::number(rate, 'f', 2);//保留两位小数
-		m_pMessageTableModel->setItem(i, 4, new QStandardItem(formattedRate));
+		insert2Model(m_pMessageTableModel, i, 4, QString::number(rate, 'f', 2));//保留两位小数
 	}
+	//删除表格里多余的记录行
+	_item = m_pMessageTableModel->item(i, 0);
+	while (_item != Q_NULLPTR) {
+		m_pMessageTableModel->removeRow(i);
+		i++;
+		_item = m_pMessageTableModel->item(i, 0);
+	}
+
 	//描述符表的维护-待完成
 	for (int i = 0; i < staticdata.vecDescriptorsInfoInGBBEx.size(); i++)
 	{
+		//第0列：描述符类型枚举，其实就是一个int用以区分不同实体类型
 		int EnumType = staticdata.vecDescriptorsInfoInGBBEx[i].EnumType;
-		QStandardItem *item = new QStandardItem();
-		item->setData(EnumType, Qt::EditRole);
+		insert2Model(m_pDescriptorTableModel, i, 0, EnumType);
+		//第1列：类型名
 		QString DescriptorName = QString::fromStdString(staticdata.vecDescriptorsInfoInGBBEx[i].DescriptorName);
-		int MaxDescriptorNum = staticdata.vecDescriptorsInfoInGBBEx[i].MaxMessageNum;
-		QStandardItem *item1 = new QStandardItem();
-		item1->setData(MaxDescriptorNum, Qt::EditRole);
-		m_pDescriptorTableModel->setItem(i, 0, item);
-		m_pDescriptorTableModel->setItem(i, 1, new QStandardItem(DescriptorName));
+		insert2Model(m_pDescriptorTableModel, i, 1, DescriptorName);
+		//第2列：该类型的描述符数量
 		int n = dD.GetDescriptorCount(EnumType);
-		m_pDescriptorTableModel->setItem(i, 2, new QStandardItem(QString::number(n)));
-		m_pDescriptorTableModel->setItem(i, 3, item1);
+		insert2Model(m_pDescriptorTableModel, i, 2, n);
+		//第3列：最大数量
+		int MaxDescriptorNum = staticdata.vecDescriptorsInfoInGBBEx[i].MaxMessageNum;
+		insert2Model(m_pDescriptorTableModel, i, 3, MaxDescriptorNum);
+		//第4列：当前数量占最大数量的百分比
 		double rate = static_cast<double>(n) / MaxDescriptorNum * 100;//强转
-		QString formattedRate = QString::number(rate, 'f', 2);//保留两位小数
-		m_pDescriptorTableModel->setItem(i, 4, new QStandardItem(formattedRate));
+		insert2Model(m_pDescriptorTableModel, i, 4, QString::number(rate, 'f', 2));//保留两位小数
+	}
+	//删除表格里多余的记录行
+	_item = m_pDescriptorTableModel->item(i, 0);
+	while (_item != Q_NULLPTR) {
+		m_pDescriptorTableModel->removeRow(i);
+		i++;
+		_item = m_pDescriptorTableModel->item(i, 0);
 	}
 }
 void Widget::initForm()
 {
 	//实体表初始化
 	m_pEntityTableModel = new QStandardItemModel();
+	m_pEntitySFPModel = new QSortFilterProxyModel();
+	m_pEntitySFPModel->setSourceModel(m_pEntityTableModel);
 	m_pEntityTableModel->setHorizontalHeaderItem(0, new QStandardItem("GBB"));
 	m_pEntityTableModel->setHorizontalHeaderItem(1, new QStandardItem("Entities"));
 	m_pEntityTableModel->setHorizontalHeaderItem(2, new QStandardItem(u8"数量"));
 	m_pEntityTableModel->setHorizontalHeaderItem(3, new QStandardItem(u8"最大"));
 	m_pEntityTableModel->setHorizontalHeaderItem(4, new QStandardItem("%"));
-	ui->tableView_Entity->setModel(m_pEntityTableModel);
+	//设置实体表排序
+	ui->tableView_Entity->setSortingEnabled(true);
+	ui->tableView_Entity->horizontalHeader()->setSortIndicatorShown(true);
+	ui->tableView_Entity->setModel(m_pEntitySFPModel);	//展示排序后的数据
 	ui->tableView_Entity->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
 	ui->tableView_Entity->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	ui->tableView_Entity->setFont(QFont("宋体", 15));
-	ui->tableView_Entity->setSortingEnabled(true);
 	ui->tableView_Entity->show();
 	//消息表初始化-待完成
 	m_pMessageTableModel = new QStandardItemModel(this);
+	m_pMessageSFPModel = new QSortFilterProxyModel();
+	m_pMessageSFPModel->setSourceModel(m_pMessageTableModel);
 	m_pMessageTableModel->setHorizontalHeaderItem(0, new QStandardItem("GBB"));
 	m_pMessageTableModel->setHorizontalHeaderItem(1, new QStandardItem("Message"));
 	m_pMessageTableModel->setHorizontalHeaderItem(2, new QStandardItem(u8"数量"));
 	m_pMessageTableModel->setHorizontalHeaderItem(3, new QStandardItem(u8"最大"));
 	m_pMessageTableModel->setHorizontalHeaderItem(4, new QStandardItem("%"));
-	ui->tableView_Message->setModel(m_pMessageTableModel);
+	//设置消息表排序
+	ui->tableView_Message->setSortingEnabled(true);
+	ui->tableView_Message->horizontalHeader()->setSortIndicatorShown(true);
+	ui->tableView_Message->setModel(m_pMessageSFPModel);
 	ui->tableView_Message->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
 	ui->tableView_Message->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	ui->tableView_Message->setFont(QFont("宋体", 15));
-	ui->tableView_Message->setSortingEnabled(true);
 	ui->tableView_Message->show();
 	//描述符表初始化-待完成
 	m_pDescriptorTableModel = new QStandardItemModel(this);
+	m_pDescriptorSFPModel = new QSortFilterProxyModel();
+	m_pDescriptorSFPModel->setSourceModel(m_pDescriptorTableModel);
 	m_pDescriptorTableModel->setHorizontalHeaderItem(0, new QStandardItem("GBB"));
 	m_pDescriptorTableModel->setHorizontalHeaderItem(1, new QStandardItem("Descriptor"));
 	m_pDescriptorTableModel->setHorizontalHeaderItem(2, new QStandardItem(u8"数量"));
 	m_pDescriptorTableModel->setHorizontalHeaderItem(3, new QStandardItem(u8"最大"));
 	m_pDescriptorTableModel->setHorizontalHeaderItem(4, new QStandardItem("%"));
-	ui->tableView_Descriptor->setModel(m_pDescriptorTableModel);
+	//设置描述符表排序
+	ui->tableView_Descriptor->setSortingEnabled(true);
+	ui->tableView_Descriptor->horizontalHeader()->setSortIndicatorShown(true);
+	ui->tableView_Descriptor->setModel(m_pDescriptorSFPModel);
 	ui->tableView_Descriptor->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
 	ui->tableView_Descriptor->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	ui->tableView_Descriptor->setFont(QFont("宋体", 15));
-	ui->tableView_Descriptor->setSortingEnabled(true);
 	ui->tableView_Descriptor->show();
 
 	ui->btnclose->setText(u8"全部关闭");
@@ -176,7 +200,7 @@ void Widget::initForm()
 
 	//标签主页面tabWidget
 	ui->tabWidget->setTabText(0, u8"主窗口");
-	ui->tabWidget->setTabEnabled(0, true);
+	ui->tabWidget->setTabEnabled(0, true); 
 	//设置页面关闭按钮。
 	ui->tabWidget->setTabsClosable(true);
 }
@@ -196,7 +220,7 @@ bool Widget::m_cmp(const std::pair<int, std::string>& a, const std::pair<int, st
 	for (int i = 0; ; i++) {
 		va = m_map(sa[i]);
 		vb = m_map(sb[i]);
-		//		cout<<va<<","<<vb<<"; ";
+//		cout<<va<<","<<vb<<"; ";
 		if (va == vb) {
 			if (sa[i] == 0) return 0;
 			continue;
